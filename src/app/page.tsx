@@ -128,7 +128,7 @@ export default function LandingPage() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />1 upload per month</li>
+                  <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />1 backup per month</li>
                   <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />Basic AI summary</li>
                   <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />Dashboard access</li>
                 </ul>
@@ -150,7 +150,7 @@ export default function LandingPage() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />5 uploads per month</li>
+                  <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />Weekly backups</li>
                   <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />Detailed AI insights</li>
                   <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />Download raw data</li>
                   <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />Priority support</li>
@@ -173,7 +173,7 @@ export default function LandingPage() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />Unlimited uploads</li>
+                  <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />Unlimited backups</li>
                   <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />Advanced AI analysis tools</li>
                   <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />API access (coming soon)</li>
                   <li className="flex items-center"><Check className="mr-2 h-4 w-4 text-accent" />Team features</li>
