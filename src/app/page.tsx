@@ -97,9 +97,9 @@ export default function LandingPage() {
               <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
                 <ShieldCheck className="h-12 w-12 text-primary" />
                 <div className="space-y-2">
-                  <h3 className="font-bold">Secure Your Data</h3>
+                  <h3 className="font-bold">Backup & Secure Your Data</h3>
                   <p className="text-sm text-muted-foreground">
-                    Protect against unauthorized access and abuse with enterprise-grade security features.
+                    Ever lost your account to a hack? We provide a secure backup of your LinkedIn data, so you never lose your connections and content.
                   </p>
                 </div>
               </div>
