@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,11 +20,16 @@ import {
   BrainCircuit,
   Download,
   HelpCircle,
+  Lightbulb,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { summarizeActivityAction } from '@/lib/actions';
+import {
+  summarizeActivityAction,
+  generatePostSuggestionsAction,
+} from '@/lib/actions';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
+import { Textarea } from '@/components/ui/textarea';
 
 // Stat Card Component
 const StatCard = ({
@@ -87,10 +93,10 @@ const DataUpload = ({
       e.dataTransfer.clearData();
     }
   };
-  
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-       setSelectedFile(e.target.files[0]);
+      setSelectedFile(e.target.files[0]);
     }
   };
 
@@ -118,7 +124,9 @@ const DataUpload = ({
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-          className={`relative flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors ${isDragging ? 'border-primary bg-accent' : ''}`}
+          className={`relative flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
+            isDragging ? 'border-primary bg-accent' : ''
+          }`}
         >
           <UploadCloud className="mb-4 h-12 w-12 text-muted-foreground" />
           <p className="font-semibold">
@@ -127,7 +135,12 @@ const DataUpload = ({
           <p className="text-sm text-muted-foreground">
             (Your .zip file from LinkedIn)
           </p>
-          <input type="file" className="absolute inset-0 h-full w-full opacity-0 cursor-pointer" accept=".zip" onChange={handleFileChange} />
+          <input
+            type="file"
+            className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
+            accept=".zip"
+            onChange={handleFileChange}
+          />
         </div>
         {selectedFile && (
           <div className="flex items-center justify-between rounded-md border p-3">
@@ -168,24 +181,118 @@ const DataUpload = ({
   );
 };
 
+// Post Suggestion Component
+const PostSuggestionGenerator = () => {
+  const [prompt, setPrompt] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [error, setError] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
+
+  const handleGenerate = () => {
+    if (!prompt) return;
+    setError('');
+    setSuggestions([]);
+    startTransition(async () => {
+      const result = await generatePostSuggestionsAction({ prompt });
+      if (result.error) {
+        setError(result.error);
+        toast({
+          variant: 'destructive',
+          title: 'Generation Failed',
+          description: result.error,
+        });
+      } else if (result.suggestions) {
+        setSuggestions(result.suggestions);
+        toast({
+          title: 'Suggestions Ready!',
+          description: 'We have generated some post ideas for you.',
+        });
+      }
+    });
+  };
+  
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied to clipboard!" });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Lightbulb className="mr-2 h-5 w-5 text-primary" />
+          Post Idea Generator
+        </CardTitle>
+        <CardDescription>
+          Enter a topic and let AI generate engaging post ideas for you.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Textarea
+          placeholder="e.g., 'the future of artificial intelligence in marketing'"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          disabled={isPending}
+        />
+        <Button onClick={handleGenerate} disabled={!prompt || isPending} className="w-full">
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
+            </>
+          ) : (
+            'Generate Ideas'
+          )}
+        </Button>
+      </CardContent>
+      {(suggestions.length > 0 || error) && (
+        <CardFooter className="flex flex-col items-start space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {suggestions.length > 0 && (
+             <div className="space-y-4 w-full">
+              <h4 className="font-semibold">Here are your suggestions:</h4>
+              {suggestions.map((suggestion, index) => (
+                <div key={index} className="prose prose-sm max-w-none text-foreground border rounded-md p-3 relative">
+                  <p>{suggestion}</p>
+                   <Button variant="ghost" size="sm" className="absolute top-2 right-2" onClick={() => handleCopy(suggestion)}>
+                    Copy
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardFooter>
+      )}
+    </Card>
+  );
+};
+
+
 export default function DashboardPage() {
   const [summary, setSummary] = useState('');
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isAnalyzePending, startAnalyzeTransition] = useTransition();
   const { toast } = useToast();
 
   const handleFileUpload = useCallback(
     (file: File) => {
       setError('');
       setSummary('');
-      startTransition(async () => {
+      startAnalyzeTransition(async () => {
         // In a real app, you would read the ZIP file and extract the content.
         // For this demo, we'll send placeholder data to the AI action.
         const dummyData = {
-          connections: 'firstName,lastName,company,connectedOn\nJohn,Doe,Google,2023-01-01',
+          connections:
+            'firstName,lastName,company,connectedOn\nJohn,Doe,Google,2023-01-01',
           messages: 'from,to,date,content\nJane,Doe,2023-02-01,Hi there',
-          articles: 'title,date,url\nMy First Post,2023-03-01,http://example.com',
+          articles:
+            'title,date,url\nMy First Post,2023-03-01,http://example.com',
           profile: '{ "name": "Demo User", "headline": "AI Enthusiast" }',
         };
 
@@ -237,16 +344,8 @@ export default function DashboardPage() {
           description="Date of most recent message"
         />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="lg:col-span-3">
-          <DataUpload
-            onFileUpload={handleFileUpload}
-            isPending={isPending}
-            selectedFile={selectedFile}
-            setSelectedFile={setSelectedFile}
-          />
-        </div>
-        <div className="lg:col-span-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-7 lg:gap-8">
+         <div className="lg:col-span-4">
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -258,7 +357,7 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isPending && (
+              {isAnalyzePending && (
                 <div className="flex items-center justify-center p-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
@@ -269,29 +368,40 @@ export default function DashboardPage() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              {summary && !isPending && (
+              {summary && !isAnalyzePending && (
                 <div className="prose prose-sm max-w-none text-foreground">
                   {summary.split('\n').map((paragraph, index) => (
                     <p key={index}>{paragraph}</p>
                   ))}
                 </div>
               )}
-              {!isPending && !summary && !error && (
-                <div className="text-center text-sm text-muted-foreground p-8">
+              {!isAnalyzePending && !summary && !error && (
+                <div className="p-8 text-center text-sm text-muted-foreground">
                   Your activity summary will appear here after you upload and
                   analyze your data.
                 </div>
               )}
             </CardContent>
             {summary && (
-              <CardContent>
+              <CardFooter>
                 <Button variant="outline">
                   <Download className="mr-2 h-4 w-4" />
                   Download Raw Data
                 </Button>
-              </CardContent>
+              </CardFooter>
             )}
           </Card>
+        </div>
+        <div className="lg:col-span-3">
+          <div className="space-y-4">
+            <DataUpload
+              onFileUpload={handleFileUpload}
+              isPending={isAnalyzePending}
+              selectedFile={selectedFile}
+              setSelectedFile={setSelectedFile}
+            />
+            <PostSuggestionGenerator />
+          </div>
         </div>
       </div>
     </main>
