@@ -53,7 +53,7 @@ export default function DashboardLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link href="#">
+                <Link href="/dashboard/settings">
                   <Settings />
                   Settings
                 </Link>
