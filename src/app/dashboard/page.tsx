@@ -18,10 +18,12 @@ import {
   Loader2,
   BrainCircuit,
   Download,
+  HelpCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { summarizeActivityAction } from '@/lib/actions';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import Link from 'next/link';
 
 // Stat Card Component
 const StatCard = ({
@@ -95,10 +97,20 @@ const DataUpload = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Upload Your Data</CardTitle>
-        <CardDescription>
-          Drag and drop your LinkedIn data export ZIP file here.
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Upload Your Data</CardTitle>
+            <CardDescription>
+              Drag and drop your LinkedIn data export ZIP file here.
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/guide">
+              <HelpCircle className="mr-2 h-4 w-4" />
+              How to Export
+            </Link>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div
@@ -113,7 +125,7 @@ const DataUpload = ({
             Drag & drop your file here or click to browse
           </p>
           <p className="text-sm text-muted-foreground">
-            (LinkedInData.zip)
+            (Your .zip file from LinkedIn)
           </p>
           <input type="file" className="absolute inset-0 h-full w-full opacity-0 cursor-pointer" accept=".zip" onChange={handleFileChange} />
         </div>
