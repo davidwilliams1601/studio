@@ -21,6 +21,7 @@ import {
   Download,
   HelpCircle,
   Lightbulb,
+  Calendar,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -37,11 +38,13 @@ const StatCard = ({
   value,
   icon: Icon,
   description,
+  children,
 }: {
   title: string;
   value: string;
   icon: React.ElementType;
   description: string;
+  children?: React.ReactNode;
 }) => (
   <Card>
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -51,6 +54,7 @@ const StatCard = ({
     <CardContent>
       <div className="text-2xl font-bold">{value}</div>
       <p className="text-xs text-muted-foreground">{description}</p>
+      {children}
     </CardContent>
   </Card>
 );
@@ -316,6 +320,51 @@ export default function DashboardPage() {
     },
     [toast]
   );
+  
+  const handleAddToCalendar = () => {
+    const nextBackupDate = new Date();
+    nextBackupDate.setDate(nextBackupDate.getDate() + 7); // Assuming weekly backup for Pro plan
+    
+    const formatDate = (date: Date) => {
+      return date.toISOString().replace(/-|:|\.\d\d\d/g,"");
+    }
+
+    const event = {
+      title: "LinkStream Data Backup Reminder",
+      description: "Reminder to perform your weekly LinkedIn data backup on LinkStream.",
+      startTime: formatDate(nextBackupDate),
+      endTime: formatDate(new Date(nextBackupDate.getTime() + 30 * 60000)), // 30 minute duration
+    };
+
+    const calendarUrl = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      `URL:${document.URL}`,
+      `DTSTART:${event.startTime}`,
+      `DTEND:${event.endTime}`,
+      `SUMMARY:${event.title}`,
+      `DESCRIPTION:${event.description}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\n');
+
+    const blob = new Blob([calendarUrl], {type: 'text/calendar;charset=utf-8'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'linkstream-backup-reminder.ics';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+     toast({
+      title: 'Reminder Added!',
+      description: 'The backup reminder has been downloaded.',
+    });
+  };
+  
+  const nextBackupDate = new Date();
+  nextBackupDate.setDate(nextBackupDate.getDate() + 7);
+
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -324,7 +373,7 @@ export default function DashboardPage() {
           Dashboard
         </h1>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Connections"
           value="1,204"
@@ -343,6 +392,16 @@ export default function DashboardPage() {
           icon={MessageSquare}
           description="Date of most recent message"
         />
+        <StatCard
+          title="Next Backup"
+          value={nextBackupDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+          icon={Calendar}
+          description="Based on your Pro plan"
+        >
+          <Button variant="outline" size="sm" className="mt-2 w-full" onClick={handleAddToCalendar}>
+            Add to calendar
+          </Button>
+        </StatCard>
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-7 lg:gap-8">
          <div className="lg:col-span-4">
