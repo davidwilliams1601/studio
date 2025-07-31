@@ -5,6 +5,7 @@ import {
   BrainCircuit,
   UploadCloud,
   LayoutDashboard,
+  ShieldCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -58,7 +59,7 @@ export default function LandingPage() {
               Everything you need to turn your LinkedIn data into a strategic asset.
             </p>
           </div>
-          <div className="mx-auto grid justify-center gap-8 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
+          <div className="mx-auto grid justify-center gap-8 sm:grid-cols-2 md:max-w-[64rem] lg:grid-cols-4">
             <div className="relative overflow-hidden rounded-lg border bg-card p-2">
               <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
                 <UploadCloud className="h-12 w-12 text-primary" />
@@ -88,6 +89,17 @@ export default function LandingPage() {
                   <h3 className="font-bold">Personalized Dashboard</h3>
                   <p className="text-sm text-muted-foreground">
                     Visualize your professional growth with key metrics and activity summaries.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="relative overflow-hidden rounded-lg border bg-card p-2">
+              <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
+                <ShieldCheck className="h-12 w-12 text-primary" />
+                <div className="space-y-2">
+                  <h3 className="font-bold">Secure Your Data</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Protect against unauthorized access and abuse with enterprise-grade security features.
                   </p>
                 </div>
               </div>
