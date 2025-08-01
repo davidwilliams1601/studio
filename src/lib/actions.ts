@@ -130,25 +130,26 @@ async function getFileContent(
 export async function extractAndSummarizeAction(
   input: ExtractAndSummarizeInput
 ): Promise<ExtractAndSummarizeOutput> {
-   // 1. Download file from Firebase Storage into an in-memory buffer
-   const bucket = getStorage().bucket();
-   const file = bucket.file(input.storagePath);
-   const [buffer] = await file.download();
-
-   // 2. Read and extract data from the zip file buffer
-   const zip = await JSZip.loadAsync(buffer);
-
-   const connections = await getFileContent(zip, 'Connections.csv');
-   const messages = await getFileContent(zip, 'messages.csv');
-   const articles = await getFileContent(zip, 'articles.csv');
-   const profile = await getFileContent(zip, 'Profile.json');
-
-   const extractedData = { connections, messages, articles, profile };
-
-   // 3. Call AI to summarize the extracted data
-   const summaryResult = await ai.generate({
-     model: 'googleai/gemini-2.0-flash',
-     prompt: `You are an expert in LinkedIn data analysis. You will analyze the provided LinkedIn data and generate a summary of the user's LinkedIn activity, highlighting key trends and insights.
+   try {
+     // 1. Download file from Firebase Storage into an in-memory buffer
+     const bucket = getStorage().bucket();
+     const file = bucket.file(input.storagePath);
+     const [buffer] = await file.download();
+ 
+     // 2. Read and extract data from the zip file buffer
+     const zip = await JSZip.loadAsync(buffer);
+ 
+     const connections = await getFileContent(zip, 'Connections.csv');
+     const messages = await getFileContent(zip, 'messages.csv');
+     const articles = await getFileContent(zip, 'articles.csv');
+     const profile = await getFileContent(zip, 'Profile.json');
+ 
+     const extractedData = { connections, messages, articles, profile };
+ 
+     // 3. Call AI to summarize the extracted data
+     const summaryResult = await ai.generate({
+       model: 'googleai/gemini-2.0-flash',
+       prompt: `You are an expert in LinkedIn data analysis. You will analyze the provided LinkedIn data and generate a summary of the user's LinkedIn activity, highlighting key trends and insights.
 
 Here is the LinkedIn data:
 
@@ -158,7 +159,16 @@ Articles: ${extractedData.articles}
 Profile: ${extractedData.profile}
 
 Summary:`,
-   });
+     });
 
-   return { summary: summaryResult.text };
+     if (!summaryResult.text) {
+        throw new Error('AI summary generation failed.');
+     }
+ 
+     return { summary: summaryResult.text };
+   } catch (e: any) {
+      console.error("Error in extractAndSummarizeAction:", e);
+      // Return a structured error
+      return { summary: '', error: e.message || 'An unknown server error occurred during analysis.' };
+   }
 }

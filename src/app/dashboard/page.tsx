@@ -332,6 +332,10 @@ export default function DashboardPage() {
           // 2. Call the all-in-one server action to process and summarize
           const result = await extractAndSummarizeAction({ storagePath });
 
+          if (result.error) {
+            throw new Error(result.error);
+          }
+          
           if (result.summary) {
             setSummary(result.summary);
             toast({

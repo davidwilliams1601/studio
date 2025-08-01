@@ -37,6 +37,7 @@ export const ExtractAndSummarizeOutputSchema = z.object({
     .describe(
       'A summary of the LinkedIn activity, highlighting key trends and insights.'
     ),
+  error: z.string().optional(),
 });
 export type ExtractAndSummarizeOutput = z.infer<
   typeof ExtractAndSummarizeOutputSchema
