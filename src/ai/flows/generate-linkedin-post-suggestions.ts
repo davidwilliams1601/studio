@@ -3,22 +3,15 @@
  * @fileOverview Generates LinkedIn post suggestions based on a user-provided prompt.
  *
  * - generateLinkedInPostSuggestions - A function that generates LinkedIn post suggestions.
- * - GenerateLinkedInPostSuggestionsInput - The input type for the generateLinkedInPostSuggestions function.
- * - GenerateLinkedInPostSuggestionsOutput - The return type for the generateLinkedInPostSuggestions function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const GenerateLinkedInPostSuggestionsInputSchema = z.object({
-  prompt: z.string().describe('A description of the type of LinkedIn post to generate.'),
-});
-export type GenerateLinkedInPostSuggestionsInput = z.infer<typeof GenerateLinkedInPostSuggestionsInputSchema>;
-
-const GenerateLinkedInPostSuggestionsOutputSchema = z.object({
-  suggestions: z.array(z.string()).describe('An array of suggested LinkedIn posts based on the prompt.'),
-});
-export type GenerateLinkedInPostSuggestionsOutput = z.infer<typeof GenerateLinkedInPostSuggestionsOutputSchema>;
+import { ai } from '@/ai/genkit';
+import {
+  GenerateLinkedInPostSuggestionsInputSchema,
+  GenerateLinkedInPostSuggestionsOutputSchema,
+  type GenerateLinkedInPostSuggestionsInput,
+  type GenerateLinkedInPostSuggestionsOutput,
+} from '@/ai/schemas';
 
 export async function generateLinkedInPostSuggestions(
   input: GenerateLinkedInPostSuggestionsInput
@@ -28,8 +21,8 @@ export async function generateLinkedInPostSuggestions(
 
 const prompt = ai.definePrompt({
   name: 'generateLinkedInPostSuggestionsPrompt',
-  input: {schema: GenerateLinkedInPostSuggestionsInputSchema},
-  output: {schema: GenerateLinkedInPostSuggestionsOutputSchema},
+  input: { schema: GenerateLinkedInPostSuggestionsInputSchema },
+  output: { schema: GenerateLinkedInPostSuggestionsOutputSchema },
   prompt: `You are a social media expert specializing in creating engaging LinkedIn posts.
 
   Based on the following prompt, generate 3 different LinkedIn post suggestions.
@@ -47,8 +40,8 @@ const generateLinkedInPostSuggestionsFlow = ai.defineFlow(
     inputSchema: GenerateLinkedInPostSuggestionsInputSchema,
     outputSchema: GenerateLinkedInPostSuggestionsOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input) => {
+    const { output } = await prompt(input);
     return output!;
   }
 );

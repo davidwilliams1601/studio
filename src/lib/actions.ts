@@ -1,17 +1,14 @@
 'use server';
 
+import { summarizeLinkedInActivity } from '@/ai/flows/summarize-linkedin-activity';
+import { generateLinkedInPostSuggestions } from '@/ai/flows/generate-linkedin-post-suggestions';
+import { extractLinkedInData } from '@/ai/flows/extract-linkedin-data';
 import {
-  summarizeLinkedInActivity,
   type SummarizeLinkedInActivityInput,
-} from '@/ai/flows/summarize-linkedin-activity';
-import {
-    generateLinkedInPostSuggestions,
-    type GenerateLinkedInPostSuggestionsInput,
-} from '@/ai/flows/generate-linkedin-post-suggestions';
-import {
-    extractLinkedInData,
-    type ExtractLinkedInDataInput,
-} from '@/ai/flows/extract-linkedin-data';
+  type GenerateLinkedInPostSuggestionsInput,
+  type ExtractLinkedInDataInput,
+} from '@/ai/schemas';
+
 import { z } from 'zod';
 import { auth, db } from '@/lib/firebase';
 import { redirect } from 'next/navigation';
@@ -21,30 +18,36 @@ import { headers } from 'next/headers';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
-async function getOrCreateStripeCustomerId(firebaseUID: string, email?: string | null, name?: string | null): Promise<string> {
-    const userDocRef = doc(db, 'users', firebaseUID);
-    const userDocSnap = await getDoc(userDocRef);
-    const userData = userDocSnap.data();
+async function getOrCreateStripeCustomerId(
+  firebaseUID: string,
+  email?: string | null,
+  name?: string | null
+): Promise<string> {
+  const userDocRef = doc(db, 'users', firebaseUID);
+  const userDocSnap = await getDoc(userDocRef);
+  const userData = userDocSnap.data();
 
-    if (userData && userData.stripeCustomerId) {
-        return userData.stripeCustomerId;
-    }
+  if (userData && userData.stripeCustomerId) {
+    return userData.stripeCustomerId;
+  }
 
-    const customer = await stripe.customers.create({
-        email: email ?? undefined,
-        name: name ?? undefined,
-        metadata: {
-            firebaseUID: firebaseUID,
-        },
-    });
+  const customer = await stripe.customers.create({
+    email: email ?? undefined,
+    name: name ?? undefined,
+    metadata: {
+      firebaseUID: firebaseUID,
+    },
+  });
 
-    await setDoc(userDocRef, { stripeCustomerId: customer.id }, { merge: true });
-    return customer.id;
+  await setDoc(userDocRef, { stripeCustomerId: customer.id }, { merge: true });
+  return customer.id;
 }
 
-
 async function createStripePortalSession(customerId: string) {
-  const returnUrl = (headers().get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002') + '/dashboard/settings';
+  const returnUrl =
+    (headers().get('origin') ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      'http://localhost:9002') + '/dashboard/settings';
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
@@ -58,15 +61,19 @@ export async function createStripePortalSessionAction() {
   if (!user) {
     return { error: 'You must be logged in to manage your subscription.' };
   }
-  
+
   try {
-    const customerId = await getOrCreateStripeCustomerId(user.uid, user.email, user.displayName);
+    const customerId = await getOrCreateStripeCustomerId(
+      user.uid,
+      user.email,
+      user.displayName
+    );
     const portalUrl = await createStripePortalSession(customerId);
     redirect(portalUrl);
   } catch (e) {
     console.error(e);
     if (e instanceof Error) {
-        return { error: e.message };
+      return { error: e.message };
     }
     return { error: 'An unexpected error occurred. Please try again.' };
   }
@@ -74,30 +81,32 @@ export async function createStripePortalSessionAction() {
 
 // Extract and Summarize Action
 const ExtractAndSummarizeActionInputSchema = z.object({
-    storagePath: z.string(),
+  storagePath: z.string(),
 });
 
 type ExtractAndSummarizeActionResponse = {
-    summary?: string;
-    error?: string;
-}
+  summary?: string;
+  error?: string;
+};
 
 export async function extractAndSummarizeAction(
-    input: ExtractLinkedInDataInput
+  input: ExtractLinkedInDataInput
 ): Promise<ExtractAndSummarizeActionResponse> {
-    try {
-        const validatedInput = ExtractAndSummarizeActionInputSchema.parse(input);
-        const result = await extractLinkedInData(validatedInput);
-        return { summary: result.summary };
-    } catch (e) {
-        console.error(e);
-        if (e instanceof z.ZodError) {
-            return { error: 'Invalid input data provided.' };
-        }
-        return { error: 'An unexpected error occurred while processing your data. Please try again.' };
+  try {
+    const validatedInput = ExtractAndSummarizeActionInputSchema.parse(input);
+    const result = await extractLinkedInData(validatedInput);
+    return { summary: result.summary };
+  } catch (e) {
+    console.error(e);
+    if (e instanceof z.ZodError) {
+      return { error: 'Invalid input data provided.' };
     }
+    return {
+      error:
+        'An unexpected error occurred while processing your data. Please try again.',
+    };
+  }
 }
-
 
 // Summarize Activity Action
 const SummarizeActivityActionInputSchema = z.object({
@@ -130,26 +139,29 @@ export async function summarizeActivityAction(
 
 // Generate Post Suggestions Action
 const PostSuggestionsActionInputSchema = z.object({
-    prompt: z.string(),
+  prompt: z.string(),
 });
 
 type PostSuggestionsActionResponse = {
-    suggestions?: string[];
-    error?: string;
-}
+  suggestions?: string[];
+  error?: string;
+};
 
 export async function generatePostSuggestionsAction(
-    input: GenerateLinkedInPostSuggestionsInput
+  input: GenerateLinkedInPostSuggestionsInput
 ): Promise<PostSuggestionsActionResponse> {
-    try {
-        const validatedInput = PostSuggestionsActionInputSchema.parse(input);
-        const result = await generateLinkedInPostSuggestions(validatedInput);
-        return { suggestions: result.suggestions };
-    } catch (e) {
-        console.error(e);
-        if (e instanceof z.ZodError) {
-            return { error: 'Invalid prompt provided.' };
-        }
-        return { error: 'An unexpected error occurred while generating suggestions. Please try again.' };
+  try {
+    const validatedInput = PostSuggestionsActionInputSchema.parse(input);
+    const result = await generateLinkedInPostSuggestions(validatedInput);
+    return { suggestions: result.suggestions };
+  } catch (e) {
+    console.error(e);
+    if (e instanceof z.ZodError) {
+      return { error: 'Invalid prompt provided.' };
     }
+    return {
+      error:
+        'An unexpected error occurred while generating suggestions. Please try again.',
+    };
+  }
 }
