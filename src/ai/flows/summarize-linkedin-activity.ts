@@ -11,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const SummarizeLinkedInActivityInputSchema = z.object({
+export const SummarizeLinkedInActivityInputSchema = z.object({
   connections: z.string().describe('The LinkedIn connections data in CSV format.'),
   messages: z.string().describe('The LinkedIn messages data in CSV format.'),
   articles: z.string().describe('The LinkedIn articles data in CSV format.'),
