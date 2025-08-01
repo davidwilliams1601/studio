@@ -8,12 +8,10 @@ async function getFileContent(
   zip: JSZip,
   fileName: string
 ): Promise<string> {
-  // Use a case-insensitive search to find the file
   const files = zip.file(new RegExp(`.*${fileName}$`, 'i'));
   if (files && files.length > 0) {
     return files[0].async('string');
   }
-  // If the file is not found, it's not an error, just return empty.
   console.warn(
     `${fileName} not found in zip. This may be expected. Returning empty string.`
   );
@@ -32,13 +30,11 @@ export async function analyzeLinkedInDataAction(input: {
 
     const zip = await JSZip.loadAsync(buffer);
 
-    // Directly extract each file, handling cases where they might not exist.
     const connections = await getFileContent(zip, 'Connections.csv');
     const messages = await getFileContent(zip, 'messages.csv');
     const articles = await getFileContent(zip, 'articles.csv');
     const profile = await getFileContent(zip, 'Profile.json');
 
-    // Combine the contents into a single text block.
     const combinedData = `
 --- CONNECTIONS ---
 ${connections || 'File not found or empty.'}
@@ -52,7 +48,6 @@ ${articles || 'File not found or empty.'}
 --- PROFILE ---
 ${profile || 'File not found or empty.'}
 `;
-    // Save the combined data to a new file in storage.
     const processedPath = `processed/${storagePath
       .split('/')
       .pop()}-extracted.txt`;
@@ -61,7 +56,6 @@ ${profile || 'File not found or empty.'}
       contentType: 'text/plain',
     });
 
-    // Return the path to the newly created file.
     return { data: { processedPath } };
   } catch (e: any) {
     console.error('Error in analyzeLinkedInDataAction:', e);
