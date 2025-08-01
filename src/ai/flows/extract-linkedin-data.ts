@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { storage } from '@/lib/firebase';
-import { ref, getBytes } from 'firebase/storage';
+import { ref, getStream } from 'firebase/storage';
 import JSZip from 'jszip';
 import {
   ExtractLinkedInDataInputSchema,
@@ -17,6 +17,8 @@ import {
   type ExtractLinkedInDataInput,
   type ExtractLinkedInDataOutput,
 } from '@/ai/schemas';
+import { streamToBuffer } from '@/lib/utils';
+
 
 async function getFileContent(zip: JSZip, fileName: string): Promise<string> {
   const file = zip.file(fileName);
@@ -42,7 +44,10 @@ const extractLinkedInDataFlow = ai.defineFlow(
   async (input) => {
     // 1. Download file from Firebase Storage
     const fileRef = ref(storage, input.storagePath);
-    const fileBuffer = await getBytes(fileRef);
+    // Use getStream for server-side environments and convert to buffer
+    const stream = await getStream(fileRef);
+    const fileBuffer = await streamToBuffer(stream as any);
+
 
     // 2. Unzip the file
     const zip = await JSZip.loadAsync(fileBuffer);
@@ -62,5 +67,3 @@ const extractLinkedInDataFlow = ai.defineFlow(
     };
   }
 );
-
-    
