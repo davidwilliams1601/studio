@@ -214,6 +214,14 @@ export default function LandingPage() {
               Built by Firebase Studio.
             </p>
           </div>
+          <nav className="flex gap-4">
+            <Link
+                href="/faq"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+                FAQ
+            </Link>
+          </nav>
           <p className="text-center text-sm md:text-left">© {new Date().getFullYear()} LinkStream. All rights reserved.</p>
         </div>
       </footer>

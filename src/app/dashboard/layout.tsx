@@ -104,7 +104,7 @@ export default function DashboardLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link href="/dashboard/faq">
+                <Link href="/faq">
                   <LifeBuoy />
                   FAQ
                 </Link>
