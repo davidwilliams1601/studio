@@ -374,6 +374,7 @@ export default function DashboardPage() {
             });
           }
         } catch (e: any) {
+          console.error('An error occurred during the analysis process:', e);
           setError(e.message);
           setProgress('error');
           toast({
@@ -556,5 +557,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-    
