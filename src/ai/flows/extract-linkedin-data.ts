@@ -1,20 +1,18 @@
 'use server';
 
 /**
- * @fileOverview A flow to extract data from a LinkedIn ZIP backup and generate a summary.
+ * @fileOverview A flow to extract data from a LinkedIn ZIP backup.
  *
- * - extractLinkedInData - Downloads, unzips, and analyzes a LinkedIn data export.
+ * - extractLinkedInData - Downloads, unzips, and extracts data from a LinkedIn data export.
  */
 
 import { ai } from '@/ai/genkit';
 import { storage } from '@/lib/firebase';
 import { ref, getBytes } from 'firebase/storage';
 import JSZip from 'jszip';
-import { summarizeLinkedInActivity } from './summarize-linkedin-activity';
 import {
   ExtractLinkedInDataInputSchema,
   ExtractLinkedInDataOutputSchema,
-  SummarizeLinkedInActivityInputSchema,
   type ExtractLinkedInDataInput,
   type ExtractLinkedInDataOutput,
 } from '@/ai/schemas';
@@ -54,21 +52,12 @@ const extractLinkedInDataFlow = ai.defineFlow(
     const articles = await getFileContent(zip, 'articles.csv');
     const profile = await getFileContent(zip, 'Profile.json');
 
-    const analysisInput = {
+    // 4. Return the extracted data
+    return {
       connections,
       messages,
       articles,
       profile,
-    };
-
-    // Validate the extracted data (optional but recommended)
-    SummarizeLinkedInActivityInputSchema.parse(analysisInput);
-
-    // 4. Call the summarization flow
-    const summaryResult = await summarizeLinkedInActivity(analysisInput);
-
-    return {
-      summary: summaryResult.summary,
     };
   }
 );

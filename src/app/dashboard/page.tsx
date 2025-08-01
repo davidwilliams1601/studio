@@ -25,8 +25,9 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
-  extractAndSummarizeAction,
+  extractLinkedInDataAction,
   generatePostSuggestionsAction,
+  summarizeExtractedDataAction,
 } from '@/lib/actions';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
@@ -346,28 +347,25 @@ export default function DashboardPage() {
           await uploadBytes(storageRef, file);
           toast({
             title: 'File Uploaded!',
-            description: 'Your backup is being analyzed.',
+            description: 'Your backup is being processed.',
           });
 
-          // 2. Call AI action to extract data and summarize
+          // 2. Call AI action to extract data
           setProgress('extracting');
-          // A brief timeout to make the "extracting" state visible
-          await new Promise(res => setTimeout(res, 500)); 
-          
-          setProgress('analyzing');
-          const result = await extractAndSummarizeAction({ storagePath });
-          
+          const extractResult = await extractLinkedInDataAction({ storagePath });
 
-          if (result.error) {
-            setError(result.error);
-            setProgress('error');
-            toast({
-              variant: 'destructive',
-              title: 'Analysis Failed',
-              description: result.error,
-            });
-          } else if (result.summary) {
-            setSummary(result.summary);
+          if (extractResult.error || !extractResult.data) {
+             throw new Error(extractResult.error || 'Failed to extract data.');
+          }
+
+          // 3. Call AI action to summarize the extracted data
+          setProgress('analyzing');
+          const summaryResult = await summarizeExtractedDataAction(extractResult.data);
+          
+          if (summaryResult.error) {
+             throw new Error(summaryResult.error);
+          } else if (summaryResult.summary) {
+            setSummary(summaryResult.summary);
             setProgress('done');
             toast({
               title: 'Analysis Complete!',
@@ -504,7 +502,7 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isAnalyzePending && (
+              {isAnalyzePending && progress !== 'idle' && progress !== 'done' && (
                 <div className="flex items-center justify-center p-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>

@@ -7,6 +7,7 @@ import {
   type SummarizeLinkedInActivityInput,
   type GenerateLinkedInPostSuggestionsInput,
   type ExtractLinkedInDataInput,
+  ExtractLinkedInDataOutputSchema,
 } from '@/ai/schemas';
 
 import { z } from 'zod';
@@ -80,34 +81,59 @@ export async function createStripePortalSessionAction() {
   }
 }
 
-// Extract and Summarize Action
-const ExtractAndSummarizeActionInputSchema = z.object({
+// Extract LinkedIn Data Action
+const ExtractActionInputSchema = z.object({
   storagePath: z.string(),
 });
 
-type ExtractAndSummarizeActionResponse = {
+type ExtractActionResponse = {
+  data?: SummarizeLinkedInActivityInput;
+  error?: string;
+};
+
+export async function extractLinkedInDataAction(
+  input: ExtractLinkedInDataInput
+): Promise<ExtractActionResponse> {
+  try {
+    const validatedInput = ExtractActionInputSchema.parse(input);
+    const result = await extractLinkedInData(validatedInput);
+    // Validate the output of the extraction flow
+    const validatedData = ExtractLinkedInDataOutputSchema.parse(result);
+    return { data: validatedData };
+  } catch (e) {
+    console.error(e);
+    if (e instanceof z.ZodError) {
+      return { error: 'Invalid input or output data.' };
+    }
+    return {
+      error:
+        'An unexpected error occurred while extracting your data. Please try again.',
+    };
+  }
+}
+
+// Summarize Extracted Data Action
+type SummarizeActionResponse = {
   summary?: string;
   error?: string;
 };
 
-export async function extractAndSummarizeAction(
-  input: ExtractLinkedInDataInput
-): Promise<ExtractAndSummarizeActionResponse> {
+export async function summarizeExtractedDataAction(
+  input: SummarizeLinkedInActivityInput
+): Promise<SummarizeActionResponse> {
   try {
-    const validatedInput = ExtractAndSummarizeActionInputSchema.parse(input);
-    const result = await extractLinkedInData(validatedInput);
+    // The input is already validated by the previous step's output schema
+    const result = await summarizeLinkedInActivity(input);
     return { summary: result.summary };
   } catch (e) {
     console.error(e);
-    if (e instanceof z.ZodError) {
-      return { error: 'Invalid input data provided.' };
-    }
-    return {
+     return {
       error:
-        'An unexpected error occurred while processing your data. Please try again.',
+        'An unexpected error occurred while analyzing your data with AI. Please try again.',
     };
   }
 }
+
 
 // Generate Post Suggestions Action
 const PostSuggestionsActionInputSchema = z.object({

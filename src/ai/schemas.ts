@@ -11,11 +11,17 @@ export type ExtractLinkedInDataInput = z.infer<
 >;
 
 export const ExtractLinkedInDataOutputSchema = z.object({
-  summary: z.string().describe('The AI-generated summary of the LinkedIn data.'),
+  connections: z
+    .string()
+    .describe('The LinkedIn connections data in CSV format.'),
+  messages: z.string().describe('The LinkedIn messages data in CSV format.'),
+  articles: z.string().describe('The LinkedIn articles data in CSV format.'),
+  profile: z.string().describe('The LinkedIn profile data in JSON format.'),
 });
 export type ExtractLinkedInDataOutput = z.infer<
   typeof ExtractLinkedInDataOutputSchema
 >;
+
 
 // Schemas for generate-linkedin-post-suggestions.ts
 export const GenerateLinkedInPostSuggestionsInputSchema = z.object({
