@@ -24,11 +24,9 @@ import {
   Calendar,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { generateLinkedInPostSuggestions } from '@/ai/flows/generate-linkedin-post-suggestions';
-import { extractAndSummarizeAction } from '@/lib/actions';
+import { analyzeLinkedInDataAction } from './actions';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
-import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes } from 'firebase/storage';
@@ -187,120 +185,13 @@ const DataUpload = ({
   );
 };
 
-// Post Suggestion Component
-const PostSuggestionGenerator = () => {
-  const [prompt, setPrompt] = useState('');
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [error, setError] = useState('');
-  const [isPending, startTransition] = useTransition();
-  const { toast } = useToast();
-
-  const handleGenerate = () => {
-    if (!prompt) return;
-    setError('');
-    setSuggestions([]);
-    startTransition(async () => {
-      try {
-        const result = await generateLinkedInPostSuggestions({ prompt });
-        if (result.suggestions) {
-            setSuggestions(result.suggestions);
-            toast({
-              title: 'Suggestions Ready!',
-              description: 'We have generated some post ideas for you.',
-            });
-        }
-      } catch (e: any) {
-        const errorMessage = e.message || 'An unknown error occurred.';
-        setError(errorMessage);
-        toast({
-          variant: 'destructive',
-          title: 'Generation Failed',
-          description: errorMessage,
-        });
-      }
-    });
-  };
-
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: 'Copied to clipboard!' });
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Lightbulb className="mr-2 h-5 w-5 text-primary" />
-          Post Idea Generator
-        </CardTitle>
-        <CardDescription>
-          Enter a topic and let AI generate engaging post ideas for you.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Textarea
-          placeholder="e.g., 'the future of artificial intelligence in marketing'"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          disabled={isPending}
-        />
-        <Button
-          onClick={handleGenerate}
-          disabled={!prompt || isPending}
-          className="w-full"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
-            </>
-          ) : (
-            'Generate Ideas'
-          )}
-        </Button>
-      </CardContent>
-      {(suggestions.length > 0 || error) && (
-        <CardFooter className="flex flex-col items-start space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {suggestions.length > 0 && (
-            <div className="space-y-4 w-full">
-              <h4 className="font-semibold">Here are your suggestions:</h4>
-              {suggestions.map((suggestion, index) => (
-                <div
-                  key={index}
-                  className="prose prose-sm max-w-none text-foreground border rounded-md p-3 relative"
-                >
-                  <p>{suggestion}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => handleCopy(suggestion)}
-                  >
-                    Copy
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardFooter>
-      )}
-    </Card>
-  );
-};
-
 export default function DashboardPage() {
   const { user } = useAuth();
-  // In a real app, this would come from your auth/user state
   const [userPlan, setUserPlan] = useState('Pro');
-  const [summary, setSummary] = useState('');
-  const [error, setError] = useState('');
+  const [analysisResult, setAnalysisResult] = useState('');
+  const [analysisError, setAnalysisError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isAnalyzePending, startAnalyzeTransition] = useTransition();
+  const [isAnalyzing, startAnalyzeTransition] = useTransition();
   const { toast } = useToast();
 
   const handleFileUpload = useCallback(
@@ -314,12 +205,11 @@ export default function DashboardPage() {
         return;
       }
 
-      setError('');
-      setSummary('');
+      setAnalysisError('');
+      setAnalysisResult('');
 
       startAnalyzeTransition(async () => {
         try {
-          // 1. Upload to Firebase Storage for backup and processing
           const storagePath = `backups/${user.uid}/${Date.now()}-${file.name}`;
           const storageRef = ref(storage, storagePath);
           await uploadBytes(storageRef, file);
@@ -328,15 +218,14 @@ export default function DashboardPage() {
             description: 'Your backup is now being analyzed by AI.',
           });
 
-          // 2. Call the all-in-one server action to process and summarize
-          const result = await extractAndSummarizeAction({ storagePath });
+          const result = await analyzeLinkedInDataAction({ storagePath });
 
           if (result.error) {
             throw new Error(result.error);
           }
           
           if (result.summary) {
-            setSummary(result.summary);
+            setAnalysisResult(result.summary);
             toast({
               title: 'Analysis Complete!',
               description: 'Your LinkedIn activity summary is ready.',
@@ -345,7 +234,7 @@ export default function DashboardPage() {
         } catch (e: any) {
           console.error('An error occurred during the analysis process:', e);
           const errorMessage = e.message || 'An unknown error occurred.';
-          setError(errorMessage);
+          setAnalysisError(errorMessage);
           toast({
             variant: 'destructive',
             title: 'An Unexpected Error Occurred',
@@ -460,8 +349,16 @@ export default function DashboardPage() {
           </StatCard>
         )}
       </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-7 lg:gap-8">
-        <div className="lg:col-span-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="lg:col-span-1">
+           <DataUpload
+              onFileUpload={handleFileUpload}
+              isPending={isAnalyzing}
+              selectedFile={selectedFile}
+              setSelectedFile={setSelectedFile}
+            />
+        </div>
+        <div className="lg:col-span-1">
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -473,34 +370,34 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isAnalyzePending && (
+              {isAnalyzing && (
                 <div className="flex flex-col items-center justify-center p-8 text-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="mt-4 font-semibold">Analyzing with AI...</p>
                   <p className="text-sm text-muted-foreground">This may take a few moments...</p>
                 </div>
               )}
-              {error && !isAnalyzePending && (
+              {analysisError && !isAnalyzing && (
                 <Alert variant="destructive">
                   <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>{analysisError}</AlertDescription>
                 </Alert>
               )}
-              {summary && !isAnalyzePending && (
+              {analysisResult && !isAnalyzing && (
                 <div className="prose prose-sm max-w-none text-foreground">
-                  {summary.split('\n').map((paragraph, index) => (
+                  {analysisResult.split('\n').map((paragraph, index) => (
                     <p key={index}>{paragraph}</p>
                   ))}
                 </div>
               )}
-              {!isAnalyzePending && !summary && !error && (
+              {!isAnalyzing && !analysisResult && !analysisError && (
                 <div className="p-8 text-center text-sm text-muted-foreground">
                   Your activity summary will appear here after you upload and
                   analyze your data.
                 </div>
               )}
             </CardContent>
-            {summary && (userPlan === 'Pro' || userPlan === 'Business') && (
+            {analysisResult && (userPlan === 'Pro' || userPlan === 'Business') && (
               <CardFooter>
                 <Button variant="outline">
                   <Download className="mr-2 h-4 w-4" />
@@ -509,17 +406,6 @@ export default function DashboardPage() {
               </CardFooter>
             )}
           </Card>
-        </div>
-        <div className="lg:col-span-3">
-          <div className="space-y-4">
-            <DataUpload
-              onFileUpload={handleFileUpload}
-              isPending={isAnalyzePending}
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
-            />
-            <PostSuggestionGenerator />
-          </div>
         </div>
       </div>
     </main>
