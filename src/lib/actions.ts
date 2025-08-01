@@ -9,10 +9,9 @@ import {
 } from '@/ai/schemas';
 
 import { z } from 'zod';
-import { auth, db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase-admin';
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { headers } from 'next/headers';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -39,7 +38,7 @@ export async function createUserAction(
       },
     });
 
-    await setDoc(doc(db, 'users', uid), {
+    await db.collection('users').doc(uid).set({
       uid: uid,
       email: email,
       displayName: displayName,
@@ -54,27 +53,27 @@ export async function createUserAction(
 }
 
 async function getOrCreateStripeCustomerId(
-  firebaseUID: string,
-  email?: string | null,
-  name?: string | null
+  firebaseUID: string
 ): Promise<string> {
-  const userDocRef = doc(db, 'users', firebaseUID);
-  const userDocSnap = await getDoc(userDocRef);
+  const userDocRef = db.collection('users').doc(firebaseUID);
+  const userDocSnap = await userDocRef.get();
   const userData = userDocSnap.data();
 
   if (userData && userData.stripeCustomerId) {
     return userData.stripeCustomerId;
   }
+  
+  const user = await auth.getUser(firebaseUID);
 
   const customer = await stripe.customers.create({
-    email: email ?? undefined,
-    name: name ?? undefined,
+    email: user.email ?? undefined,
+    name: user.displayName ?? undefined,
     metadata: {
       firebaseUID: firebaseUID,
     },
   });
 
-  await setDoc(userDocRef, { stripeCustomerId: customer.id }, { merge: true });
+  await userDocRef.set({ stripeCustomerId: customer.id }, { merge: true });
   return customer.id;
 }
 
@@ -90,19 +89,20 @@ async function createStripePortalSession(customerId: string) {
   return portalSession.url;
 }
 
-export async function createStripePortalSessionAction() {
-  const user = auth.currentUser;
+const PortalSessionInputSchema = z.object({
+  uid: z.string(),
+});
+type PortalSessionInput = z.infer<typeof PortalSessionInputSchema>;
 
-  if (!user) {
+export async function createStripePortalSessionAction(input: PortalSessionInput) {
+  const { uid } = PortalSessionInputSchema.parse(input);
+
+  if (!uid) {
     return { error: 'You must be logged in to manage your subscription.' };
   }
 
   try {
-    const customerId = await getOrCreateStripeCustomerId(
-      user.uid,
-      user.email,
-      user.displayName
-    );
+    const customerId = await getOrCreateStripeCustomerId(uid);
     const portalUrl = await createStripePortalSession(customerId);
     redirect(portalUrl);
   } catch (e) {

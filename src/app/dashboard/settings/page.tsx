@@ -35,8 +35,10 @@ import Link from 'next/link';
 import { createStripePortalSessionAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function SettingsPage() {
+  const { user } = useAuth();
   // In a real app, this would come from your auth/user state
   const [userPlan, setUserPlan] = useState('Pro');
   const isBusinessPlan = userPlan === 'Business';
@@ -44,8 +46,16 @@ export default function SettingsPage() {
   const { toast } = useToast();
 
   const handleManageSubscription = () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to manage your subscription.',
+      });
+      return;
+    }
     startTransition(async () => {
-        const result = await createStripePortalSessionAction();
+        const result = await createStripePortalSessionAction({ uid: user.uid });
         if (result?.error) {
             toast({
                 variant: 'destructive',
@@ -74,11 +84,11 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" defaultValue="User Name" />
+              <Input id="name" defaultValue={user?.displayName ?? ''} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" defaultValue="user@example.com" />
+              <Input id="email" type="email" defaultValue={user?.email ?? ''} />
             </div>
           </CardContent>
           <CardFooter>
@@ -103,7 +113,7 @@ export default function SettingsPage() {
               </p>
             </div>
             <form action={handleManageSubscription}>
-              <Button disabled={isPending}>
+              <Button disabled={isPending || !user}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Manage Subscription
               </Button>
