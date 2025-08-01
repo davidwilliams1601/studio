@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition, useCallback, ChangeEvent } from 'react';
@@ -7,58 +8,21 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  Users,
-  FileText,
-  MessageSquare,
   UploadCloud,
   File,
   Loader2,
-  BrainCircuit,
-  Download,
   HelpCircle,
-  Lightbulb,
-  Calendar,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { analyzeLinkedInDataAction } from './actions';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes } from 'firebase/storage';
 
-// Stat Card Component
-const StatCard = ({
-  title,
-  value,
-  icon: Icon,
-  description,
-  children,
-}: {
-  title: string;
-  value: string;
-  icon: React.ElementType;
-  description: string;
-  children?: React.ReactNode;
-}) => (
-  <Card>
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      <Icon className="h-4 w-4 text-muted-foreground" />
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
-      <p className="text-xs text-muted-foreground">{description}</p>
-      {children}
-    </CardContent>
-  </Card>
-);
-
-// Data Upload Component
 const DataUpload = ({
   onFileUpload,
   isPending,
@@ -174,10 +138,10 @@ const DataUpload = ({
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
-              Uploading & Analyzing...
+              Uploading & Processing...
             </>
           ) : (
-            'Analyze My Data'
+            'Process My Data'
           )}
         </Button>
       </CardContent>
@@ -187,11 +151,8 @@ const DataUpload = ({
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [userPlan, setUserPlan] = useState('Pro');
-  const [analysisResult, setAnalysisResult] = useState('');
-  const [analysisError, setAnalysisError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isAnalyzing, startAnalyzeTransition] = useTransition();
+  const [isProcessing, startProcessingTransition] = useTransition();
   const { toast } = useToast();
 
   const handleFileUpload = useCallback(
@@ -205,17 +166,14 @@ export default function DashboardPage() {
         return;
       }
 
-      setAnalysisError('');
-      setAnalysisResult('');
-
-      startAnalyzeTransition(async () => {
+      startProcessingTransition(async () => {
         try {
           const storagePath = `backups/${user.uid}/${Date.now()}-${file.name}`;
           const storageRef = ref(storage, storagePath);
           await uploadBytes(storageRef, file);
           toast({
             title: 'File Uploaded!',
-            description: 'Your backup is now being analyzed by AI.',
+            description: 'Now processing your backup...',
           });
 
           const result = await analyzeLinkedInDataAction({ storagePath });
@@ -224,17 +182,34 @@ export default function DashboardPage() {
             throw new Error(result.error);
           }
           
-          if (result.summary) {
-            setAnalysisResult(result.summary);
-            toast({
-              title: 'Analysis Complete!',
-              description: 'Your LinkedIn activity summary is ready.',
-            });
+          if (result.data) {
+              const newWindow = window.open();
+              if (newWindow) {
+                newWindow.document.write('<pre>');
+                newWindow.document.write('<h1>Extracted Data</h1>');
+                
+                Object.entries(result.data).forEach(([key, value]) => {
+                    newWindow.document.write(`<h2>${key}</h2>`);
+                    newWindow.document.write(`<textarea rows="20" cols="100" readonly>${value || 'File not found or empty.'}</textarea><hr/>`);
+                });
+
+                newWindow.document.write('</pre>');
+                newWindow.document.close();
+                 toast({
+                    title: 'Processing Complete!',
+                    description: 'Extracted data has been opened in a new tab.',
+                 });
+              } else {
+                toast({
+                    variant: 'destructive',
+                    title: 'Could not open new window',
+                    description: 'Please disable your pop-up blocker and try again.',
+                });
+              }
           }
         } catch (e: any) {
-          console.error('An error occurred during the analysis process:', e);
+          console.error('An error occurred during processing:', e);
           const errorMessage = e.message || 'An unknown error occurred.';
-          setAnalysisError(errorMessage);
           toast({
             variant: 'destructive',
             title: 'An Unexpected Error Occurred',
@@ -246,62 +221,6 @@ export default function DashboardPage() {
     [user, toast]
   );
 
-  const handleAddToCalendar = () => {
-    const nextBackupDate = new Date();
-    const backupInterval = userPlan === 'Pro' ? 7 : 30; // Weekly for Pro, Monthly for Free
-    nextBackupDate.setDate(nextBackupDate.getDate() + backupInterval);
-
-    const formatDate = (date: Date) => {
-      return date.toISOString().replace(/-|:|\.\d\d\d/g, '');
-    };
-
-    const event = {
-      title: 'LinkStream Data Backup Reminder',
-      description: `Reminder to perform your ${
-        userPlan === 'Pro' ? 'weekly' : 'monthly'
-      } LinkedIn data backup on LinkStream.`,
-      startTime: formatDate(nextBackupDate),
-      endTime: formatDate(new Date(nextBackupDate.getTime() + 30 * 60000)), // 30 minute duration
-    };
-
-    const calendarUrl = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'BEGIN:VEVENT',
-      `URL:${document.URL}`,
-      `DTSTART:${event.startTime}`,
-      `DTEND:${event.endTime}`,
-      `SUMMARY:${event.title}`,
-      `DESCRIPTION:${event.description}`,
-      'END:VEVENT',
-      'END:VCALENDAR',
-    ].join('\n');
-
-    const blob = new Blob([calendarUrl], {
-      type: 'text/calendar;charset=utf-8',
-    });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'linkstream-backup-reminder.ics';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast({
-      title: 'Reminder Added!',
-      description: 'The backup reminder has been downloaded.',
-    });
-  };
-
-  const getNextBackupDate = () => {
-    const date = new Date();
-    if (userPlan === 'Pro') date.setDate(date.getDate() + 7);
-    else if (userPlan === 'Free') date.setDate(date.getDate() + 30);
-    else return null; // Business has unlimited, so no 'next' date
-    return date;
-  };
-
-  const nextBackupDate = getNextBackupDate();
-
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div className="flex items-center">
@@ -309,103 +228,14 @@ export default function DashboardPage() {
           Dashboard
         </h1>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Connections"
-          value="1,204"
-          icon={Users}
-          description="+23 since last upload"
-        />
-        <StatCard
-          title="Recent Posts"
-          value="5"
-          icon={FileText}
-          description="in the last 30 days"
-        />
-        <StatCard
-          title="Recent Messages"
-          value="Mar 15, 2024"
-          icon={MessageSquare}
-          description="Date of most recent message"
-        />
-        {nextBackupDate && (
-          <StatCard
-            title="Next Backup"
-            value={nextBackupDate.toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-            })}
-            icon={Calendar}
-            description={`Based on your ${userPlan} plan`}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 w-full"
-              onClick={handleAddToCalendar}
-            >
-              Add to calendar
-            </Button>
-          </StatCard>
-        )}
-      </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4">
         <div className="lg:col-span-1">
            <DataUpload
               onFileUpload={handleFileUpload}
-              isPending={isAnalyzing}
+              isPending={isProcessing}
               selectedFile={selectedFile}
               setSelectedFile={setSelectedFile}
             />
-        </div>
-        <div className="lg:col-span-1">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <BrainCircuit className="mr-2 h-5 w-5 text-primary" />
-                AI-Powered Summary
-              </CardTitle>
-              <CardDescription>
-                Key trends and insights from your LinkedIn activity.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isAnalyzing && (
-                <div className="flex flex-col items-center justify-center p-8 text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="mt-4 font-semibold">Analyzing with AI...</p>
-                  <p className="text-sm text-muted-foreground">This may take a few moments...</p>
-                </div>
-              )}
-              {analysisError && !isAnalyzing && (
-                <Alert variant="destructive">
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{analysisError}</AlertDescription>
-                </Alert>
-              )}
-              {analysisResult && !isAnalyzing && (
-                <div className="prose prose-sm max-w-none text-foreground">
-                  {analysisResult.split('\n').map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))}
-                </div>
-              )}
-              {!isAnalyzing && !analysisResult && !analysisError && (
-                <div className="p-8 text-center text-sm text-muted-foreground">
-                  Your activity summary will appear here after you upload and
-                  analyze your data.
-                </div>
-              )}
-            </CardContent>
-            {analysisResult && (userPlan === 'Pro' || userPlan === 'Business') && (
-              <CardFooter>
-                <Button variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Raw Data
-                </Button>
-              </CardFooter>
-            )}
-          </Card>
         </div>
       </div>
     </main>

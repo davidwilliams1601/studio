@@ -19,27 +19,3 @@ export const GenerateLinkedInPostSuggestionsOutputSchema = z.object({
 export type GenerateLinkedInPostSuggestionsOutput = z.infer<
   typeof GenerateLinkedInPostSuggestionsOutputSchema
 >;
-
-// Schemas for extractAndSummarize action
-export const ExtractAndSummarizeInputSchema = z.object({
-  storagePath: z
-    .string()
-    .describe(
-      'The path to the LinkedIn data ZIP file in Firebase Storage.'
-    ),
-});
-export type ExtractAndSummarizeInput = z.infer<
-  typeof ExtractAndSummarizeInputSchema
->;
-
-export const ExtractAndSummarizeOutputSchema = z.object({
-  summary: z
-    .string()
-    .describe(
-      'A summary of the LinkedIn activity, highlighting key trends and insights.'
-    ),
-  error: z.string().optional(),
-});
-export type ExtractAndSummarizeOutput = z.infer<
-  typeof ExtractAndSummarizeOutputSchema
->;

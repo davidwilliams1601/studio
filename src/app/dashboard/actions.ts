@@ -1,14 +1,9 @@
+
 'use server';
 
 import { getStorage } from 'firebase-admin/storage';
 import JSZip from 'jszip';
 import { app } from '@/lib/firebase-admin';
-import {
-  ExtractAndSummarizeInput,
-  ExtractAndSummarizeOutput,
-  ExtractAndSummarizeInputSchema,
-} from '@/ai/schemas';
-import { ai } from '@/ai/genkit';
 
 async function getFileContent(
   zip: JSZip,
@@ -25,10 +20,10 @@ async function getFileContent(
 }
 
 export async function analyzeLinkedInDataAction(
-  input: ExtractAndSummarizeInput
-): Promise<ExtractAndSummarizeOutput> {
+  input: {storagePath: string}
+): Promise<{ data?: Record<string, string>, error?: string }> {
   try {
-    const { storagePath } = ExtractAndSummarizeInputSchema.parse(input);
+    const { storagePath } = input;
 
     const bucket = getStorage(app).bucket();
     const file = bucket.file(storagePath);
@@ -42,32 +37,12 @@ export async function analyzeLinkedInDataAction(
     const profile = await getFileContent(zip, 'Profile.json');
 
     const extractedData = { connections, messages, articles, profile };
+    
+    return { data: extractedData };
 
-    const summaryResult = await ai.generate({
-      model: 'googleai/gemini-pro',
-      prompt: `You are an expert in LinkedIn data analysis. You will analyze the provided LinkedIn data and generate a summary of the user's LinkedIn activity, highlighting key trends and insights.
-
-Here is the LinkedIn data:
-
-Connections: ${extractedData.connections}
-Messages: ${extractedData.messages}
-Articles: ${extractedData.articles}
-Profile: ${extractedData.profile}
-
-Summary:`,
-    });
-
-    const summary = summaryResult.text;
-
-    if (!summary) {
-      throw new Error('AI summary generation failed.');
-    }
-
-    return { summary };
   } catch (e: any) {
     console.error('Error in analyzeLinkedInDataAction:', e);
     return {
-      summary: '',
       error: e.message || 'An unknown server error occurred during analysis.',
     };
   }
