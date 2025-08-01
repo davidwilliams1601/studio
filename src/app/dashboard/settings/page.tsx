@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import {
   Card,
   CardContent,
@@ -32,11 +32,29 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
+import { createStripePortalSessionAction } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function SettingsPage() {
   // In a real app, this would come from your auth/user state
-  const [userPlan, setUserPlan] = useState('Pro'); 
+  const [userPlan, setUserPlan] = useState('Pro');
   const isBusinessPlan = userPlan === 'Business';
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
+
+  const handleManageSubscription = async () => {
+    startTransition(async () => {
+        const result = await createStripePortalSessionAction();
+        if (result?.error) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: result.error,
+            });
+        }
+    });
+  }
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -84,7 +102,12 @@ export default function SettingsPage() {
                 Your next backup is scheduled for a week from now.
               </p>
             </div>
-            <Button>Manage Subscription</Button>
+            <form action={handleManageSubscription}>
+              <Button disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Manage Subscription
+              </Button>
+            </form>
           </CardContent>
         </Card>
         
@@ -113,7 +136,7 @@ export default function SettingsPage() {
             <CardDescription>
               Customize the look and feel of the application.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
             <div className="flex items-center justify-between">
                 <div>
