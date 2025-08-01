@@ -9,7 +9,12 @@ import { headers } from 'next/headers';
 import { getStorage } from 'firebase-admin/storage';
 import JSZip from 'jszip';
 import { ai } from '@/ai/genkit';
-import type { ExtractAndSummarizeInput, ExtractAndSummarizeOutput } from '@/ai/schemas';
+import {
+  ExtractAndSummarizeInputSchema,
+  ExtractAndSummarizeOutputSchema,
+  type ExtractAndSummarizeInput,
+  type ExtractAndSummarizeOutput,
+} from '@/ai/schemas';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -131,9 +136,11 @@ export async function extractAndSummarizeAction(
   input: ExtractAndSummarizeInput
 ): Promise<ExtractAndSummarizeOutput> {
    try {
+     const { storagePath } = ExtractAndSummarizeInputSchema.parse(input);
+     
      // 1. Download file from Firebase Storage into an in-memory buffer
      const bucket = getStorage().bucket();
-     const file = bucket.file(input.storagePath);
+     const file = bucket.file(storagePath);
      const [buffer] = await file.download();
  
      // 2. Read and extract data from the zip file buffer
@@ -148,7 +155,7 @@ export async function extractAndSummarizeAction(
  
      // 3. Call AI to summarize the extracted data
      const summaryResult = await ai.generate({
-       model: 'googleai/gemini-2.0-flash',
+       model: 'googleai/gemini-pro',
        prompt: `You are an expert in LinkedIn data analysis. You will analyze the provided LinkedIn data and generate a summary of the user's LinkedIn activity, highlighting key trends and insights.
 
 Here is the LinkedIn data:
@@ -161,11 +168,13 @@ Profile: ${extractedData.profile}
 Summary:`,
      });
 
-     if (!summaryResult.text) {
+     const summary = summaryResult.text;
+
+     if (!summary) {
         throw new Error('AI summary generation failed.');
      }
  
-     return { summary: summaryResult.text };
+     return { summary };
    } catch (e: any) {
       console.error("Error in extractAndSummarizeAction:", e);
       // Return a structured error
