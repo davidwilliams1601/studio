@@ -6,6 +6,7 @@ import {
   UploadCloud,
   LayoutDashboard,
   ShieldCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -39,7 +40,7 @@ export default function LandingPage() {
           </h1>
           <p className="mx-auto mt-6 max-w-[700px] text-lg text-muted-foreground md:text-xl">
             LinkStream uses AI to analyze your LinkedIn data, revealing powerful
-            insights to grow your professional network and career.
+            insights to grow your professional network and career. Never lose your data to a hack again.
           </p>
           <div className="mt-8 flex gap-4">
             <Button asChild size="lg">
@@ -99,11 +100,28 @@ export default function LandingPage() {
                 <div className="space-y-2">
                   <h3 className="font-bold">Backup & Secure Your Data</h3>
                   <p className="text-sm text-muted-foreground">
-                    Ever lost your account to a hack? We provide a secure backup of your LinkedIn data, so you never lose your connections and content.
+                    We provide a secure backup of your LinkedIn data, so you never lose your connections and content.
                   </p>
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+        
+        <section id="security" className="bg-secondary">
+          <div className="container grid items-center gap-8 py-24 md:grid-cols-2 lg:py-32">
+              <div className="space-y-4">
+                  <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary">
+                      Peace of Mind
+                  </div>
+                  <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-4xl">Don't Let a Hack Erase Your Hard Work</h2>
+                  <p className="text-muted-foreground md:text-lg">
+                      Losing your LinkedIn account to a hacker is devastating. Years of building connections, sharing content, and establishing your professional brand can vanish in an instant. LinkStream was born from this exact experience. We provide a secure, independent backup of your most valuable professional data, ensuring that if the worst happens, you're not left with nothing.
+                  </p>
+              </div>
+               <div className="flex items-center justify-center">
+                  <AlertTriangle className="h-32 w-32 text-primary/50" />
+              </div>
           </div>
         </section>
 
