@@ -62,9 +62,8 @@ const extractAndSummarizeFlow = ai.defineFlow(
     const extractedData = { connections, messages, articles, profile };
 
     // 3. Call AI to summarize the extracted data
-    // Using a structured prompt with JSON output might be more reliable in the future,
-    // but for now, we'll keep the existing text summarization.
     const summaryResult = await ai.generate({
+      model: 'googleai/gemini-2.0-flash',
       prompt: `You are an expert in LinkedIn data analysis. You will analyze the provided LinkedIn data and generate a summary of the user's LinkedIn activity, highlighting key trends and insights.
 
 Here is the LinkedIn data:
