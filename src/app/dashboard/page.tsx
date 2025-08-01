@@ -9,13 +9,22 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, File, Loader2, HelpCircle } from 'lucide-react';
+import {
+  UploadCloud,
+  File,
+  Loader2,
+  HelpCircle,
+  Users,
+  MessageSquare,
+  FileText,
+  Download,
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { analyzeLinkedInDataAction } from './actions';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { storage } from '@/lib/firebase';
-import { ref, uploadBytes } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const DataUpload = ({
   onFileUpload,
@@ -143,9 +152,81 @@ const DataUpload = ({
   );
 };
 
+type AnalysisResult = {
+  processedPath: string;
+  connectionCount: number;
+  messageCount: number;
+  articleCount: number;
+};
+
+const DashboardStats = ({ stats }: { stats: AnalysisResult }) => {
+    const handleDownload = async () => {
+        try {
+            const url = await getDownloadURL(ref(storage, stats.processedPath));
+            // This opens the download URL in a new tab.
+            // For force-download, a more complex setup with backend headers is needed.
+            window.open(url, '_blank');
+        } catch (error) {
+            console.error("Error getting download URL:", error);
+            alert("Could not get download link.");
+        }
+    };
+    
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Analysis Complete</CardTitle>
+        <CardDescription>
+          Here's a summary of your LinkedIn data.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Connections</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.connectionCount}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Messages</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.messageCount}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Articles</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.articleCount}</div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="mt-6 flex justify-center">
+            <Button variant="outline" onClick={handleDownload}>
+                <Download className="mr-2 h-4 w-4" />
+                Download Extracted Data
+            </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
+    null
+  );
   const [isProcessing, startProcessingTransition] = useTransition();
   const { toast } = useToast();
 
@@ -160,9 +241,10 @@ export default function DashboardPage() {
         return;
       }
 
+      setAnalysisResult(null); // Reset previous results
+
       startProcessingTransition(async () => {
         try {
-          // 1. Upload the file to a secure, user-specific path
           const storagePath = `backups/${user.uid}/${Date.now()}-${file.name}`;
           const storageRef = ref(storage, storagePath);
           await uploadBytes(storageRef, file);
@@ -171,18 +253,18 @@ export default function DashboardPage() {
             description: 'Now processing your backup...',
           });
 
-          // 2. Call the server action to process the file
           const result = await analyzeLinkedInDataAction({ storagePath });
 
           if (result.error) {
             throw new Error(result.error);
           }
-          
+
           if (result.data) {
-              toast({
-                title: 'Processing Complete!',
-                description: `Extracted data saved to: ${result.data.processedPath}`,
-              });
+            setAnalysisResult(result.data);
+            toast({
+              title: 'Processing Complete!',
+              description: 'Your dashboard has been updated.',
+            });
           }
         } catch (e: any) {
           console.error('An error occurred during processing:', e);
@@ -207,12 +289,16 @@ export default function DashboardPage() {
       </div>
       <div className="grid grid-cols-1 gap-4">
         <div className="lg:col-span-1">
-           <DataUpload
+          {analysisResult ? (
+            <DashboardStats stats={analysisResult} />
+          ) : (
+            <DataUpload
               onFileUpload={handleFileUpload}
               isPending={isProcessing}
               selectedFile={selectedFile}
               setSelectedFile={setSelectedFile}
             />
+          )}
         </div>
       </div>
     </main>
