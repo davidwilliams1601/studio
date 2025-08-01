@@ -13,15 +13,55 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
+import { useState } from 'react';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you'd handle Firebase authentication here.
-    // For this demo, we'll just redirect to the dashboard.
-    router.push('/dashboard');
+    setIsLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({ title: 'Login Successful!' });
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      toast({ title: 'Login Successful!' });
+      router.push('/dashboard');
+    } catch (error: any) {
+       toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: error.message,
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
   
   const GoogleIcon = () => (
@@ -52,6 +92,9 @@ export default function LoginPage() {
                 type="email"
                 placeholder="m@example.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading || isGoogleLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -64,13 +107,22 @@ export default function LoginPage() {
                   Forgot your password?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading || isGoogleLoading}
+              />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login
             </Button>
-            <Button variant="outline" className="w-full">
-              <GoogleIcon /> Login with Google
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+              {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+              Login with Google
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">

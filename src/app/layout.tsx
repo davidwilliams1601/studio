@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from '@/hooks/use-auth';
 
 const fontBody = Inter({
   subsets: ['latin'],
@@ -46,8 +47,10 @@ export default function RootLayout({
           fontHeadline.variable
         )}
       >
-        {children}
-        <Toaster />
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

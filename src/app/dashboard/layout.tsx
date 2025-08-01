@@ -1,3 +1,6 @@
+
+'use client';
+
 import {
   SidebarProvider,
   Sidebar,
@@ -18,16 +21,47 @@ import {
   User,
   BookMarked,
   Users,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/hooks/use-auth';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      toast({ title: 'Signed out successfully.' });
+      router.push('/login');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to sign out',
+        description: error.message,
+      });
+    }
+  };
+  
+  if (loading) {
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    )
+  }
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -82,18 +116,18 @@ export default function DashboardLayout({
           <Separator className="my-2" />
           <div className="flex items-center gap-3 px-2">
             <Avatar>
-              <AvatarImage src="https://placehold.co/40x40" />
-              <AvatarFallback>U</AvatarFallback>
+              <AvatarImage src={user?.photoURL ?? undefined} />
+              <AvatarFallback>{user?.displayName?.charAt(0) ?? user?.email?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 overflow-hidden">
-              <p className="truncate font-semibold">User Name</p>
+              <p className="truncate font-semibold">{user?.displayName ?? 'User'}</p>
               <p className="truncate text-xs text-muted-foreground">
-                user@example.com
+                {user?.email}
               </p>
             </div>
-            <Link href="/">
+            <button onClick={handleSignOut}>
               <LogOut className="h-5 w-5 text-muted-foreground hover:text-foreground" />
-            </Link>
+            </button>
           </div>
         </SidebarFooter>
       </Sidebar>

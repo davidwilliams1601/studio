@@ -13,15 +13,56 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
+import { useState } from 'react';
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you'd handle Firebase user creation here.
-    // For this demo, we'll just redirect to the dashboard.
-    router.push('/dashboard');
+    setIsLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: fullName });
+      toast({ title: 'Account Created Successfully!' });
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Signup Failed',
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      toast({ title: 'Account Created Successfully!' });
+      router.push('/dashboard');
+    } catch (error: any) {
+       toast({
+        variant: 'destructive',
+        title: 'Signup Failed',
+        description: error.message,
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
   
   const GoogleIcon = () => (
@@ -47,7 +88,14 @@ export default function SignupPage() {
           <form onSubmit={handleSignup} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="full-name">Full Name</Label>
-              <Input id="full-name" placeholder="John Doe" required />
+              <Input
+                id="full-name"
+                placeholder="John Doe"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={isLoading || isGoogleLoading}
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -56,17 +104,29 @@ export default function SignupPage() {
                 type="email"
                 placeholder="m@example.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading || isGoogleLoading}
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required />
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading || isGoogleLoading}
+              />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create account
             </Button>
-            <Button variant="outline" className="w-full">
-              <GoogleIcon /> Sign up with Google
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+              {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+              Sign up with Google
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
