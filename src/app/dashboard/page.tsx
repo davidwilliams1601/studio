@@ -27,7 +27,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import {
   generatePostSuggestionsAction,
-  summarizeExtractedDataAction,
+  processAndSummarizeDataAction,
 } from '@/lib/actions';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
@@ -35,35 +35,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes } from 'firebase/storage';
-import JSZip from 'jszip';
-
-type AnalysisProgress =
-  | 'idle'
-  | 'uploading'
-  | 'extracting'
-  | 'analyzing'
-  | 'done'
-  | 'error';
-
-const progressMessages: Record<AnalysisProgress, string> = {
-  idle: 'Analyze My Data',
-  uploading: 'Uploading file...',
-  extracting: 'Extracting data...',
-  analyzing: 'Analyzing with AI...',
-  done: 'Analysis Complete!',
-  error: 'Analysis Failed',
-};
-
-// Helper function to read a file from the zip
-async function getFileContent(zip: JSZip, fileName: string): Promise<string> {
-  const file = zip.file(fileName);
-  if (!file) {
-    console.warn(`${fileName} not found in zip. Returning empty string.`);
-    return '';
-  }
-  return file.async('string');
-}
-
 
 // Stat Card Component
 const StatCard = ({
@@ -98,13 +69,11 @@ const DataUpload = ({
   isPending,
   selectedFile,
   setSelectedFile,
-  progress,
 }: {
   onFileUpload: (file: File) => void;
   isPending: boolean;
   selectedFile: File | null;
   setSelectedFile: (file: File | null) => void;
-  progress: AnalysisProgress;
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -210,7 +179,7 @@ const DataUpload = ({
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
-              {progressMessages[progress]}
+              Uploading & Analyzing...
             </>
           ) : (
             'Analyze My Data'
@@ -331,7 +300,6 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState('');
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [progress, setProgress] = useState<AnalysisProgress>('idle');
   const [isAnalyzePending, startAnalyzeTransition] = useTransition();
   const { toast } = useToast();
 
@@ -348,40 +316,30 @@ export default function DashboardPage() {
 
       setError('');
       setSummary('');
-      setProgress('idle');
 
       startAnalyzeTransition(async () => {
         try {
-          // 1. Upload to Firebase Storage for backup
-          setProgress('uploading');
-          const storagePath = `backups/${user.uid}/${file.name}`;
+          // 1. Upload to Firebase Storage for backup and processing
+          const storagePath = `backups/${user.uid}/${Date.now()}-${file.name}`;
           const storageRef = ref(storage, storagePath);
           await uploadBytes(storageRef, file);
           toast({
             title: 'File Uploaded!',
-            description: 'Your backup has been stored securely.',
+            description: 'Your backup is now being analyzed by AI.',
           });
 
-          // 2. Extract data from the zip file on the client
-          setProgress('extracting');
-          const zip = await JSZip.loadAsync(file);
-          const connections = await getFileContent(zip, 'Connections.csv');
-          const messages = await getFileContent(zip, 'messages.csv');
-          const articles = await getFileContent(zip, 'articles.csv');
-          const profile = await getFileContent(zip, 'Profile.json');
-          
-          const extractedData = { connections, messages, articles, profile };
+          // 2. Call the all-in-one server action to process and summarize
+          const result = await processAndSummarizeDataAction({ storagePath });
 
-          // 3. Call AI action to summarize the extracted data
-          setProgress('analyzing');
-          const summaryResult = await summarizeExtractedDataAction(extractedData);
-          
-          if (summaryResult.error) {
-            setError(summaryResult.error);
-            setProgress('error');
-          } else if (summaryResult.summary) {
-            setSummary(summaryResult.summary);
-            setProgress('done');
+          if (result.error) {
+            setError(result.error);
+            toast({
+              variant: 'destructive',
+              title: 'Analysis Failed',
+              description: result.error,
+            });
+          } else if (result.summary) {
+            setSummary(result.summary);
             toast({
               title: 'Analysis Complete!',
               description: 'Your LinkedIn activity summary is ready.',
@@ -391,7 +349,6 @@ export default function DashboardPage() {
           console.error('An error occurred during the analysis process:', e);
           const errorMessage = e.message || 'An unknown error occurred.';
           setError(errorMessage);
-          setProgress('error');
           toast({
             variant: 'destructive',
             title: 'An Unexpected Error Occurred',
@@ -519,14 +476,14 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isAnalyzePending && progress !== 'idle' && progress !== 'done' && (
+              {isAnalyzePending && (
                 <div className="flex flex-col items-center justify-center p-8 text-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="mt-4 font-semibold">{progressMessages[progress]}</p>
+                  <p className="mt-4 font-semibold">Analyzing with AI...</p>
                   <p className="text-sm text-muted-foreground">This may take a few moments...</p>
                 </div>
               )}
-              {error && (
+              {error && !isAnalyzePending && (
                 <Alert variant="destructive">
                   <AlertTitle>Error</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
@@ -563,7 +520,6 @@ export default function DashboardPage() {
               isPending={isAnalyzePending}
               selectedFile={selectedFile}
               setSelectedFile={setSelectedFile}
-              progress={progress}
             />
             <PostSuggestionGenerator />
           </div>

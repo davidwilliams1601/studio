@@ -1,11 +1,11 @@
 
 'use server';
 
-import { summarizeLinkedInActivity } from '@/ai/flows/summarize-linkedin-activity';
+import { extractAndSummarize } from '@/ai/flows/extractAndSummarizeFlow';
 import { generateLinkedInPostSuggestions } from '@/ai/flows/generate-linkedin-post-suggestions';
 import {
-  type SummarizeLinkedInActivityInput,
   type GenerateLinkedInPostSuggestionsInput,
+  type ExtractAndSummarizeInput,
 } from '@/ai/schemas';
 
 import { z } from 'zod';
@@ -14,7 +14,6 @@ import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { headers } from 'next/headers';
-
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -79,28 +78,26 @@ export async function createStripePortalSessionAction() {
   }
 }
 
-// Summarize Extracted Data Action
-type SummarizeActionResponse = {
+// All-in-one data processing action
+type ProcessActionResponse = {
   summary?: string;
   error?: string;
 };
 
-export async function summarizeExtractedDataAction(
-  input: SummarizeLinkedInActivityInput
-): Promise<SummarizeActionResponse> {
+export async function processAndSummarizeDataAction(
+  input: ExtractAndSummarizeInput
+): Promise<ProcessActionResponse> {
   try {
-    // The input is now coming directly from the client, already extracted.
-    const result = await summarizeLinkedInActivity(input);
+    const result = await extractAndSummarize(input);
     return { summary: result.summary };
   } catch (e) {
-    console.error(e);
-     return {
+    console.error('Error in processAndSummarizeDataAction:', e);
+    return {
       error:
-        'An unexpected error occurred while analyzing your data with AI. Please try again.',
+        'An unexpected error occurred while analyzing your data with AI. Please check the server logs for more details.',
     };
   }
 }
-
 
 // Generate Post Suggestions Action
 const PostSuggestionsActionInputSchema = z.object({
@@ -130,5 +127,3 @@ export async function generatePostSuggestionsAction(
     };
   }
 }
-
-    

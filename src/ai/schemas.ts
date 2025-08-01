@@ -13,36 +13,31 @@ export type GenerateLinkedInPostSuggestionsInput = z.infer<
 export const GenerateLinkedInPostSuggestionsOutputSchema = z.object({
   suggestions: z
     .array(z.string())
-    .describe(
-      'An array of suggested LinkedIn posts based on the prompt.'
-    ),
+    .describe('An array of suggested LinkedIn posts based on the prompt.'),
 });
 export type GenerateLinkedInPostSuggestionsOutput = z.infer<
   typeof GenerateLinkedInPostSuggestionsOutputSchema
 >;
 
-// Schemas for summarize-linkedin-activity.ts
-export const SummarizeLinkedInActivityInputSchema = z.object({
-  connections: z
+// Schemas for extractAndSummarizeFlow.ts
+export const ExtractAndSummarizeInputSchema = z.object({
+  storagePath: z
     .string()
-    .describe('The LinkedIn connections data in CSV format.'),
-  messages: z.string().describe('The LinkedIn messages data in CSV format.'),
-  articles: z.string().describe('The LinkedIn articles data in CSV format.'),
-  profile: z.string().describe('The LinkedIn profile data in JSON format.'),
+    .describe(
+      'The path to the LinkedIn data ZIP file in Firebase Storage.'
+    ),
 });
-export type SummarizeLinkedInActivityInput = z.infer<
-  typeof SummarizeLinkedInActivityInputSchema
+export type ExtractAndSummarizeInput = z.infer<
+  typeof ExtractAndSummarizeInputSchema
 >;
 
-export const SummarizeLinkedInActivityOutputSchema = z.object({
+export const ExtractAndSummarizeOutputSchema = z.object({
   summary: z
     .string()
     .describe(
       'A summary of the LinkedIn activity, highlighting key trends and insights.'
     ),
 });
-export type SummarizeLinkedInActivityOutput = z.infer<
-  typeof SummarizeLinkedInActivityOutputSchema
+export type ExtractAndSummarizeOutput = z.infer<
+  typeof ExtractAndSummarizeOutputSchema
 >;
-
-    
