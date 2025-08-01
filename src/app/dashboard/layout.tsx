@@ -17,6 +17,7 @@ import {
   LogOut,
   User,
   BookMarked,
+  Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -48,6 +49,14 @@ export default function DashboardLayout({
                 <Link href="/dashboard/guide">
                   <BookMarked />
                   Export Guide
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/dashboard/team">
+                  <Users />
+                  Team
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

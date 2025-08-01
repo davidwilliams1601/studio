@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   return (
@@ -56,9 +58,9 @@ export default function SettingsPage() {
               <Input id="email" type="email" defaultValue="user@example.com" />
             </div>
           </CardContent>
-          <CardContent>
+          <CardFooter>
             <Button>Save Changes</Button>
-          </CardContent>
+          </CardFooter>
         </Card>
 
         <Card>
@@ -81,6 +83,20 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
         
+        <Card>
+          <CardHeader>
+            <CardTitle>Team</CardTitle>
+            <CardDescription>
+                Manage your team members and settings. This feature is only available on the Business plan.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+             <Button asChild>
+                <Link href="/dashboard/team">Manage Team</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Theme</CardTitle>
