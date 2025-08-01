@@ -6,6 +6,8 @@ import { auth, db } from '@/lib/firebase-admin';
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
+import { extractAndSummarize } from '@/ai/flows/extractAndSummarizeFlow';
+import type { ExtractAndSummarizeInput } from '@/ai/schemas';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -105,4 +107,8 @@ export async function createStripePortalSessionAction(input: PortalSessionInput)
     }
     return { error: 'An unexpected error occurred. Please try again.' };
   }
+}
+
+export async function extractAndSummarizeAction(input: ExtractAndSummarizeInput) {
+    return await extractAndSummarize(input);
 }
