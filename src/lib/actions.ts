@@ -11,21 +11,17 @@ import {
 import { z } from 'zod';
 import { auth } from '@/lib/firebase';
 import { redirect } from 'next/navigation';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 // Placeholder for Stripe logic
 async function createStripePortalSession(customerId: string) {
-  // This is a placeholder. In a real app, you would use the Stripe Node.js
-  // library to create a Customer Portal session.
-  //
-  //   const portalSession = await stripe.billingPortal.sessions.create({
-  //     customer: customerId,
-  //     return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings`,
-  //   });
-  //   return portalSession.url;
-  //
-  // For now, we'll just redirect to a placeholder page.
-  console.log(`Creating Stripe portal session for customer: ${customerId}`);
-  return '/dashboard/settings'; // In a real app, this would be the Stripe portal URL
+  const portalSession = await stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings`,
+  });
+  return portalSession.url;
 }
 
 export async function createStripePortalSessionAction() {
@@ -36,7 +32,8 @@ export async function createStripePortalSessionAction() {
   }
 
   // In a real application, you would retrieve the Stripe customer ID
-  // associated with the user from your database.
+  // associated with the user from your database. For this example, we'll
+  // use a placeholder. You should also create the customer if they don't exist.
   const customerId = 'cus_placeholder_12345'; // Placeholder
 
   try {
@@ -44,6 +41,9 @@ export async function createStripePortalSessionAction() {
     redirect(portalUrl);
   } catch (e) {
     console.error(e);
+    if (e instanceof Error) {
+        return { error: e.message };
+    }
     return { error: 'An unexpected error occurred. Please try again.' };
   }
 }
