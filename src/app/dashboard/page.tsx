@@ -335,6 +335,7 @@ export default function DashboardPage() {
 
       setError('');
       setSummary('');
+      setProgress('idle');
 
       startAnalyzeTransition(async () => {
         try {
@@ -350,8 +351,12 @@ export default function DashboardPage() {
 
           // 2. Call AI action to extract data and summarize
           setProgress('extracting');
-          const result = await extractAndSummarizeAction({ storagePath });
+          // A brief timeout to make the "extracting" state visible
+          await new Promise(res => setTimeout(res, 500)); 
+          
           setProgress('analyzing');
+          const result = await extractAndSummarizeAction({ storagePath });
+          
 
           if (result.error) {
             setError(result.error);

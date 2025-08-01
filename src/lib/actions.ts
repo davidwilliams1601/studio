@@ -15,9 +15,6 @@ import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { headers } from 'next/headers';
-import { storage } from '@/lib/firebase';
-import { ref, uploadBytes } from 'firebase/storage';
-import JSZip from 'jszip';
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
