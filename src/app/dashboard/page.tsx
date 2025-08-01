@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useTransition, useCallback, ChangeEvent } from 'react';
@@ -10,12 +9,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  UploadCloud,
-  File,
-  Loader2,
-  HelpCircle,
-} from 'lucide-react';
+import { UploadCloud, File, Loader2, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { analyzeLinkedInDataAction } from './actions';
 import Link from 'next/link';
@@ -168,6 +162,7 @@ export default function DashboardPage() {
 
       startProcessingTransition(async () => {
         try {
+          // 1. Upload the file to a secure, user-specific path
           const storagePath = `backups/${user.uid}/${Date.now()}-${file.name}`;
           const storageRef = ref(storage, storagePath);
           await uploadBytes(storageRef, file);
@@ -176,6 +171,7 @@ export default function DashboardPage() {
             description: 'Now processing your backup...',
           });
 
+          // 2. Call the server action to process the file
           const result = await analyzeLinkedInDataAction({ storagePath });
 
           if (result.error) {
