@@ -278,6 +278,8 @@ const PostSuggestionGenerator = () => {
 
 
 export default function DashboardPage() {
+  // In a real app, this would come from your auth/user state
+  const [userPlan, setUserPlan] = useState('Pro'); 
   const [summary, setSummary] = useState('');
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -323,7 +325,8 @@ export default function DashboardPage() {
   
   const handleAddToCalendar = () => {
     const nextBackupDate = new Date();
-    nextBackupDate.setDate(nextBackupDate.getDate() + 7); // Assuming weekly backup for Pro plan
+    const backupInterval = userPlan === 'Pro' ? 7 : 30; // Weekly for Pro, Monthly for Free
+    nextBackupDate.setDate(nextBackupDate.getDate() + backupInterval);
     
     const formatDate = (date: Date) => {
       return date.toISOString().replace(/-|:|\.\d\d\d/g,"");
@@ -331,7 +334,7 @@ export default function DashboardPage() {
 
     const event = {
       title: "LinkStream Data Backup Reminder",
-      description: "Reminder to perform your weekly LinkedIn data backup on LinkStream.",
+      description: `Reminder to perform your ${userPlan === 'Pro' ? 'weekly' : 'monthly'} LinkedIn data backup on LinkStream.`,
       startTime: formatDate(nextBackupDate),
       endTime: formatDate(new Date(nextBackupDate.getTime() + 30 * 60000)), // 30 minute duration
     };
@@ -362,9 +365,15 @@ export default function DashboardPage() {
     });
   };
   
-  const nextBackupDate = new Date();
-  nextBackupDate.setDate(nextBackupDate.getDate() + 7);
+  const getNextBackupDate = () => {
+    const date = new Date();
+    if (userPlan === 'Pro') date.setDate(date.getDate() + 7);
+    else if (userPlan === 'Free') date.setDate(date.getDate() + 30);
+    else return null; // Business has unlimited, so no 'next' date
+    return date;
+  }
 
+  const nextBackupDate = getNextBackupDate();
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -392,16 +401,18 @@ export default function DashboardPage() {
           icon={MessageSquare}
           description="Date of most recent message"
         />
-        <StatCard
-          title="Next Backup"
-          value={nextBackupDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
-          icon={Calendar}
-          description="Based on your Pro plan"
-        >
-          <Button variant="outline" size="sm" className="mt-2 w-full" onClick={handleAddToCalendar}>
-            Add to calendar
-          </Button>
-        </StatCard>
+        {nextBackupDate && (
+          <StatCard
+            title="Next Backup"
+            value={nextBackupDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+            icon={Calendar}
+            description={`Based on your ${userPlan} plan`}
+          >
+            <Button variant="outline" size="sm" className="mt-2 w-full" onClick={handleAddToCalendar}>
+              Add to calendar
+            </Button>
+          </StatCard>
+        )}
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-7 lg:gap-8">
          <div className="lg:col-span-4">
@@ -441,7 +452,7 @@ export default function DashboardPage() {
                 </div>
               )}
             </CardContent>
-            {summary && (
+            {summary && (userPlan === 'Pro' || userPlan === 'Business') && (
               <CardFooter>
                 <Button variant="outline">
                   <Download className="mr-2 h-4 w-4" />

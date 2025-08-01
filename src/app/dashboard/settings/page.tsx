@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -33,6 +34,10 @@ import {
 import Link from 'next/link';
 
 export default function SettingsPage() {
+  // In a real app, this would come from your auth/user state
+  const [userPlan, setUserPlan] = useState('Pro'); 
+  const isBusinessPlan = userPlan === 'Business';
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div className="flex items-center">
@@ -73,7 +78,7 @@ export default function SettingsPage() {
           <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium">
-                You are currently on the <span className="text-primary">Pro</span> plan.
+                You are currently on the <span className="text-primary">{userPlan}</span> plan.
               </p>
               <p className="text-sm text-muted-foreground">
                 Your next backup is scheduled for a week from now.
@@ -91,9 +96,14 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <Button asChild>
+             <Button asChild disabled={!isBusinessPlan}>
                 <Link href="/dashboard/team">Manage Team</Link>
             </Button>
+             {!isBusinessPlan && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Upgrade to the Business plan to unlock team features.
+              </p>
+            )}
           </CardContent>
         </Card>
 
