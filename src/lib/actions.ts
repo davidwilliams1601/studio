@@ -62,7 +62,7 @@ async function getOrCreateStripeCustomerId(
   if (userData && userData.stripeCustomerId) {
     return userData.stripeCustomerId;
   }
-  
+
   const user = await auth.getUser(firebaseUID);
 
   const customer = await stripe.customers.create({
