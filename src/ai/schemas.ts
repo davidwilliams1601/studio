@@ -1,28 +1,5 @@
 import { z } from 'genkit';
 
-// Schemas for extract-linkedin-data.ts
-export const ExtractLinkedInDataInputSchema = z.object({
-  storagePath: z
-    .string()
-    .describe('The path to the LinkedIn data ZIP file in Firebase Storage.'),
-});
-export type ExtractLinkedInDataInput = z.infer<
-  typeof ExtractLinkedInDataInputSchema
->;
-
-export const ExtractLinkedInDataOutputSchema = z.object({
-  connections: z
-    .string()
-    .describe('The LinkedIn connections data in CSV format.'),
-  messages: z.string().describe('The LinkedIn messages data in CSV format.'),
-  articles: z.string().describe('The LinkedIn articles data in CSV format.'),
-  profile: z.string().describe('The LinkedIn profile data in JSON format.'),
-});
-export type ExtractLinkedInDataOutput = z.infer<
-  typeof ExtractLinkedInDataOutputSchema
->;
-
-
 // Schemas for generate-linkedin-post-suggestions.ts
 export const GenerateLinkedInPostSuggestionsInputSchema = z.object({
   prompt: z
@@ -67,3 +44,5 @@ export const SummarizeLinkedInActivityOutputSchema = z.object({
 export type SummarizeLinkedInActivityOutput = z.infer<
   typeof SummarizeLinkedInActivityOutputSchema
 >;
+
+    

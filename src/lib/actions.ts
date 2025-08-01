@@ -3,12 +3,9 @@
 
 import { summarizeLinkedInActivity } from '@/ai/flows/summarize-linkedin-activity';
 import { generateLinkedInPostSuggestions } from '@/ai/flows/generate-linkedin-post-suggestions';
-import { extractLinkedInData } from '@/ai/flows/extract-linkedin-data';
 import {
   type SummarizeLinkedInActivityInput,
   type GenerateLinkedInPostSuggestionsInput,
-  type ExtractLinkedInDataInput,
-  ExtractLinkedInDataOutputSchema,
 } from '@/ai/schemas';
 
 import { z } from 'zod';
@@ -82,37 +79,6 @@ export async function createStripePortalSessionAction() {
   }
 }
 
-// Extract LinkedIn Data Action
-const ExtractActionInputSchema = z.object({
-  storagePath: z.string(),
-});
-
-type ExtractActionResponse = {
-  data?: SummarizeLinkedInActivityInput;
-  error?: string;
-};
-
-export async function extractLinkedInDataAction(
-  input: ExtractLinkedInDataInput
-): Promise<ExtractActionResponse> {
-  try {
-    const validatedInput = ExtractActionInputSchema.parse(input);
-    const result = await extractLinkedInData(validatedInput);
-    // Validate the output of the extraction flow
-    const validatedData = ExtractLinkedInDataOutputSchema.parse(result);
-    return { data: validatedData };
-  } catch (e) {
-    console.error(e);
-    if (e instanceof z.ZodError) {
-      return { error: 'Invalid input or output data.' };
-    }
-    return {
-      error:
-        'An unexpected error occurred while extracting your data. Please try again.',
-    };
-  }
-}
-
 // Summarize Extracted Data Action
 type SummarizeActionResponse = {
   summary?: string;
@@ -123,7 +89,7 @@ export async function summarizeExtractedDataAction(
   input: SummarizeLinkedInActivityInput
 ): Promise<SummarizeActionResponse> {
   try {
-    // The input is already validated by the previous step's output schema
+    // The input is now coming directly from the client, already extracted.
     const result = await summarizeLinkedInActivity(input);
     return { summary: result.summary };
   } catch (e) {

@@ -26,7 +26,6 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
-  extractLinkedInDataAction,
   generatePostSuggestionsAction,
   summarizeExtractedDataAction,
 } from '@/lib/actions';
@@ -36,6 +35,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes } from 'firebase/storage';
+import JSZip from 'jszip';
 
 type AnalysisProgress =
   | 'idle'
@@ -53,6 +53,17 @@ const progressMessages: Record<AnalysisProgress, string> = {
   done: 'Analysis Complete!',
   error: 'Analysis Failed',
 };
+
+// Helper function to read a file from the zip
+async function getFileContent(zip: JSZip, fileName: string): Promise<string> {
+  const file = zip.file(fileName);
+  if (!file) {
+    console.warn(`${fileName} not found in zip. Returning empty string.`);
+    return '';
+  }
+  return file.async('string');
+}
+
 
 // Stat Card Component
 const StatCard = ({
@@ -341,27 +352,29 @@ export default function DashboardPage() {
 
       startAnalyzeTransition(async () => {
         try {
-          // 1. Upload to Firebase Storage
+          // 1. Upload to Firebase Storage for backup
           setProgress('uploading');
           const storagePath = `backups/${user.uid}/${file.name}`;
           const storageRef = ref(storage, storagePath);
           await uploadBytes(storageRef, file);
           toast({
             title: 'File Uploaded!',
-            description: 'Your backup is now being processed.',
+            description: 'Your backup has been stored securely.',
           });
 
-          // 2. Call AI action to extract data
+          // 2. Extract data from the zip file on the client
           setProgress('extracting');
-          const extractResult = await extractLinkedInDataAction({ storagePath });
-
-          if (extractResult.error || !extractResult.data) {
-             throw new Error(extractResult.error || 'Failed to extract data.');
-          }
+          const zip = await JSZip.loadAsync(file);
+          const connections = await getFileContent(zip, 'Connections.csv');
+          const messages = await getFileContent(zip, 'messages.csv');
+          const articles = await getFileContent(zip, 'articles.csv');
+          const profile = await getFileContent(zip, 'Profile.json');
+          
+          const extractedData = { connections, messages, articles, profile };
 
           // 3. Call AI action to summarize the extracted data
           setProgress('analyzing');
-          const summaryResult = await summarizeExtractedDataAction(extractResult.data);
+          const summaryResult = await summarizeExtractedDataAction(extractedData);
           
           if (summaryResult.error) {
              throw new Error(summaryResult.error);
@@ -375,12 +388,13 @@ export default function DashboardPage() {
           }
         } catch (e: any) {
           console.error('An error occurred during the analysis process:', e);
-          setError(e.message);
+          const errorMessage = e.message || 'An unknown error occurred.';
+          setError(errorMessage);
           setProgress('error');
           toast({
             variant: 'destructive',
             title: 'An Unexpected Error Occurred',
-            description: e.message,
+            description: errorMessage,
           });
         }
       });
@@ -557,3 +571,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+    
