@@ -31,6 +31,9 @@ import {
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/hooks/use-auth';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes } from 'firebase/storage';
 
 // Stat Card Component
 const StatCard = ({
@@ -278,6 +281,7 @@ const PostSuggestionGenerator = () => {
 
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   // In a real app, this would come from your auth/user state
   const [userPlan, setUserPlan] = useState('Pro'); 
   const [summary, setSummary] = useState('');
@@ -288,39 +292,66 @@ export default function DashboardPage() {
 
   const handleFileUpload = useCallback(
     (file: File) => {
+      if (!user) {
+        toast({
+          variant: 'destructive',
+          title: 'Not authenticated',
+          description: 'You must be logged in to upload a file.',
+        });
+        return;
+      }
+
       setError('');
       setSummary('');
       startAnalyzeTransition(async () => {
-        // In a real app, you would read the ZIP file and extract the content.
-        // For this demo, we'll send placeholder data to the AI action.
-        const dummyData = {
-          connections:
-            'firstName,lastName,company,connectedOn\nJohn,Doe,Google,2023-01-01',
-          messages: 'from,to,date,content\nJane,Doe,2023-02-01,Hi there',
-          articles:
-            'title,date,url\nMy First Post,2023-03-01,http://example.com',
-          profile: '{ "name": "Demo User", "headline": "AI Enthusiast" }',
-        };
+        try {
+          // 1. Upload to Firebase Storage
+          const storagePath = `backups/${user.uid}/${file.name}`;
+          const storageRef = ref(storage, storagePath);
+          await uploadBytes(storageRef, file);
+          toast({
+            title: 'File Uploaded!',
+            description: 'Your backup is securely stored.',
+          });
 
-        const result = await summarizeActivityAction(dummyData);
+          // 2. Call AI action (still using dummy data for now)
+          // TODO: Replace with real data extraction from the uploaded ZIP
+          const dummyData = {
+            connections:
+              'firstName,lastName,company,connectedOn\nJohn,Doe,Google,2023-01-01',
+            messages: 'from,to,date,content\nJane,Doe,2023-02-01,Hi there',
+            articles:
+              'title,date,url\nMy First Post,2023-03-01,http://example.com',
+            profile: '{ "name": "Demo User", "headline": "AI Enthusiast" }',
+          };
 
-        if (result.error) {
-          setError(result.error);
+          const result = await summarizeActivityAction(dummyData);
+
+          if (result.error) {
+            setError(result.error);
+            toast({
+              variant: 'destructive',
+              title: 'Analysis Failed',
+              description: result.error,
+            });
+          } else if (result.summary) {
+            setSummary(result.summary);
+            toast({
+              title: 'Analysis Complete!',
+              description: 'Your LinkedIn activity summary is ready.',
+            });
+          }
+        } catch (e: any) {
+          setError(e.message);
           toast({
             variant: 'destructive',
-            title: 'Analysis Failed',
-            description: result.error,
-          });
-        } else if (result.summary) {
-          setSummary(result.summary);
-          toast({
-            title: 'Analysis Complete!',
-            description: 'Your LinkedIn activity summary is ready.',
+            title: 'Upload Failed',
+            description: e.message,
           });
         }
       });
     },
-    [toast]
+    [user, toast]
   );
   
   const handleAddToCalendar = () => {

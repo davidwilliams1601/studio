@@ -40,7 +40,7 @@ async function getOrCreateStripeCustomerId(firebaseUID: string, email?: string |
 
 
 async function createStripePortalSession(customerId: string) {
-  const returnUrl = headers().get('origin') + '/dashboard/settings';
+  const returnUrl = (headers().get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002') + '/dashboard/settings';
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
