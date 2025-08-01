@@ -35,6 +35,23 @@ import { useAuth } from '@/hooks/use-auth';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes } from 'firebase/storage';
 
+type AnalysisProgress =
+  | 'idle'
+  | 'uploading'
+  | 'extracting'
+  | 'analyzing'
+  | 'done'
+  | 'error';
+
+const progressMessages: Record<AnalysisProgress, string> = {
+  idle: 'Analyze My Data',
+  uploading: 'Uploading file...',
+  extracting: 'Extracting data...',
+  analyzing: 'Analyzing with AI...',
+  done: 'Analysis Complete!',
+  error: 'Analysis Failed',
+};
+
 // Stat Card Component
 const StatCard = ({
   title,
@@ -68,11 +85,13 @@ const DataUpload = ({
   isPending,
   selectedFile,
   setSelectedFile,
+  progress,
 }: {
   onFileUpload: (file: File) => void;
   isPending: boolean;
   selectedFile: File | null;
   setSelectedFile: (file: File | null) => void;
+  progress: AnalysisProgress;
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -177,7 +196,8 @@ const DataUpload = ({
         >
           {isPending ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
+              {progressMessages[progress]}
             </>
           ) : (
             'Analyze My Data'
@@ -218,10 +238,10 @@ const PostSuggestionGenerator = () => {
       }
     });
   };
-  
+
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: "Copied to clipboard!" });
+    toast({ title: 'Copied to clipboard!' });
   };
 
   return (
@@ -242,7 +262,11 @@ const PostSuggestionGenerator = () => {
           onChange={(e) => setPrompt(e.target.value)}
           disabled={isPending}
         />
-        <Button onClick={handleGenerate} disabled={!prompt || isPending} className="w-full">
+        <Button
+          onClick={handleGenerate}
+          disabled={!prompt || isPending}
+          className="w-full"
+        >
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
@@ -261,12 +285,20 @@ const PostSuggestionGenerator = () => {
             </Alert>
           )}
           {suggestions.length > 0 && (
-             <div className="space-y-4 w-full">
+            <div className="space-y-4 w-full">
               <h4 className="font-semibold">Here are your suggestions:</h4>
               {suggestions.map((suggestion, index) => (
-                <div key={index} className="prose prose-sm max-w-none text-foreground border rounded-md p-3 relative">
+                <div
+                  key={index}
+                  className="prose prose-sm max-w-none text-foreground border rounded-md p-3 relative"
+                >
                   <p>{suggestion}</p>
-                   <Button variant="ghost" size="sm" className="absolute top-2 right-2" onClick={() => handleCopy(suggestion)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => handleCopy(suggestion)}
+                  >
                     Copy
                   </Button>
                 </div>
@@ -279,14 +311,14 @@ const PostSuggestionGenerator = () => {
   );
 };
 
-
 export default function DashboardPage() {
   const { user } = useAuth();
   // In a real app, this would come from your auth/user state
-  const [userPlan, setUserPlan] = useState('Pro'); 
+  const [userPlan, setUserPlan] = useState('Pro');
   const [summary, setSummary] = useState('');
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState<AnalysisProgress>('idle');
   const [isAnalyzePending, startAnalyzeTransition] = useTransition();
   const { toast } = useToast();
 
@@ -303,9 +335,11 @@ export default function DashboardPage() {
 
       setError('');
       setSummary('');
+
       startAnalyzeTransition(async () => {
         try {
           // 1. Upload to Firebase Storage
+          setProgress('uploading');
           const storagePath = `backups/${user.uid}/${file.name}`;
           const storageRef = ref(storage, storagePath);
           await uploadBytes(storageRef, file);
@@ -315,10 +349,13 @@ export default function DashboardPage() {
           });
 
           // 2. Call AI action to extract data and summarize
+          setProgress('extracting');
           const result = await extractAndSummarizeAction({ storagePath });
+          setProgress('analyzing');
 
           if (result.error) {
             setError(result.error);
+            setProgress('error');
             toast({
               variant: 'destructive',
               title: 'Analysis Failed',
@@ -326,6 +363,7 @@ export default function DashboardPage() {
             });
           } else if (result.summary) {
             setSummary(result.summary);
+            setProgress('done');
             toast({
               title: 'Analysis Complete!',
               description: 'Your LinkedIn activity summary is ready.',
@@ -333,9 +371,10 @@ export default function DashboardPage() {
           }
         } catch (e: any) {
           setError(e.message);
+          setProgress('error');
           toast({
             variant: 'destructive',
-            title: 'Upload Failed',
+            title: 'An Unexpected Error Occurred',
             description: e.message,
           });
         }
@@ -343,19 +382,21 @@ export default function DashboardPage() {
     },
     [user, toast]
   );
-  
+
   const handleAddToCalendar = () => {
     const nextBackupDate = new Date();
     const backupInterval = userPlan === 'Pro' ? 7 : 30; // Weekly for Pro, Monthly for Free
     nextBackupDate.setDate(nextBackupDate.getDate() + backupInterval);
-    
+
     const formatDate = (date: Date) => {
-      return date.toISOString().replace(/-|:|\.\d\d\d/g,"");
-    }
+      return date.toISOString().replace(/-|:|\.\d\d\d/g, '');
+    };
 
     const event = {
-      title: "LinkStream Data Backup Reminder",
-      description: `Reminder to perform your ${userPlan === 'Pro' ? 'weekly' : 'monthly'} LinkedIn data backup on LinkStream.`,
+      title: 'LinkStream Data Backup Reminder',
+      description: `Reminder to perform your ${
+        userPlan === 'Pro' ? 'weekly' : 'monthly'
+      } LinkedIn data backup on LinkStream.`,
       startTime: formatDate(nextBackupDate),
       endTime: formatDate(new Date(nextBackupDate.getTime() + 30 * 60000)), // 30 minute duration
     };
@@ -370,29 +411,31 @@ export default function DashboardPage() {
       `SUMMARY:${event.title}`,
       `DESCRIPTION:${event.description}`,
       'END:VEVENT',
-      'END:VCALENDAR'
+      'END:VCALENDAR',
     ].join('\n');
 
-    const blob = new Blob([calendarUrl], {type: 'text/calendar;charset=utf-8'});
+    const blob = new Blob([calendarUrl], {
+      type: 'text/calendar;charset=utf-8',
+    });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'linkstream-backup-reminder.ics';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-     toast({
+    toast({
       title: 'Reminder Added!',
       description: 'The backup reminder has been downloaded.',
     });
   };
-  
+
   const getNextBackupDate = () => {
     const date = new Date();
     if (userPlan === 'Pro') date.setDate(date.getDate() + 7);
     else if (userPlan === 'Free') date.setDate(date.getDate() + 30);
     else return null; // Business has unlimited, so no 'next' date
     return date;
-  }
+  };
 
   const nextBackupDate = getNextBackupDate();
 
@@ -425,18 +468,26 @@ export default function DashboardPage() {
         {nextBackupDate && (
           <StatCard
             title="Next Backup"
-            value={nextBackupDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+            value={nextBackupDate.toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+            })}
             icon={Calendar}
             description={`Based on your ${userPlan} plan`}
           >
-            <Button variant="outline" size="sm" className="mt-2 w-full" onClick={handleAddToCalendar}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2 w-full"
+              onClick={handleAddToCalendar}
+            >
               Add to calendar
             </Button>
           </StatCard>
         )}
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-7 lg:gap-8">
-         <div className="lg:col-span-4">
+        <div className="lg:col-span-4">
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -490,6 +541,7 @@ export default function DashboardPage() {
               isPending={isAnalyzePending}
               selectedFile={selectedFile}
               setSelectedFile={setSelectedFile}
+              progress={progress}
             />
             <PostSuggestionGenerator />
           </div>

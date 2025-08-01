@@ -15,6 +15,10 @@ import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { headers } from 'next/headers';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes } from 'firebase/storage';
+import JSZip from 'jszip';
+
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -105,35 +109,6 @@ export async function extractAndSummarizeAction(
       error:
         'An unexpected error occurred while processing your data. Please try again.',
     };
-  }
-}
-
-// Summarize Activity Action
-const SummarizeActivityActionInputSchema = z.object({
-  connections: z.string(),
-  messages: z.string(),
-  articles: z.string(),
-  profile: z.string(),
-});
-
-type SummarizeActivityActionResponse = {
-  summary?: string;
-  error?: string;
-};
-
-export async function summarizeActivityAction(
-  input: SummarizeLinkedInActivityInput
-): Promise<SummarizeActivityActionResponse> {
-  try {
-    const validatedInput = SummarizeActivityActionInputSchema.parse(input);
-    const result = await summarizeLinkedInActivity(validatedInput);
-    return { summary: result.summary };
-  } catch (e) {
-    console.error(e);
-    if (e instanceof z.ZodError) {
-      return { error: 'Invalid input data provided.' };
-    }
-    return { error: 'An unexpected error occurred. Please try again.' };
   }
 }
 
