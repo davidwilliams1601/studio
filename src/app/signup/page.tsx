@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -15,15 +16,10 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { doc, setDoc } from 'firebase/firestore';
-import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY as string, {
-  apiVersion: '2024-06-20',
-});
+import { createUserAction } from '@/lib/actions';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -38,25 +34,26 @@ export default function SignupPage() {
     setIsLoading(true);
     try {
       // 1. Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
-      
+
       // 2. Update user profile in Firebase Auth
       await updateProfile(user, { displayName: fullName });
-      
-      // 3. Create a new customer in Stripe
-      const customer = await stripe.customers.create({
-        email: user.email,
-        name: fullName,
-      });
 
-      // 4. Create user document in Firestore and store Stripe Customer ID
-      await setDoc(doc(db, 'users', user.uid), {
+      // 3. Create Stripe customer and Firestore document via server action
+      const result = await createUserAction({
         uid: user.uid,
         email: user.email,
         displayName: fullName,
-        stripeCustomerId: customer.id,
       });
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
       toast({ title: 'Account Created Successfully!' });
       router.push('/dashboard');

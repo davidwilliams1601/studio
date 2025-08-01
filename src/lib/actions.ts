@@ -17,6 +17,42 @@ import { headers } from 'next/headers';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
+const CreateUserInputSchema = z.object({
+  uid: z.string(),
+  email: z.string().email().nullable(),
+  displayName: z.string().nullable(),
+});
+
+type CreateUserInput = z.infer<typeof CreateUserInputSchema>;
+
+export async function createUserAction(
+  input: CreateUserInput
+): Promise<{ error?: string }> {
+  try {
+    const { uid, email, displayName } = CreateUserInputSchema.parse(input);
+
+    const customer = await stripe.customers.create({
+      email: email ?? undefined,
+      name: displayName ?? undefined,
+      metadata: {
+        firebaseUID: uid,
+      },
+    });
+
+    await setDoc(doc(db, 'users', uid), {
+      uid: uid,
+      email: email,
+      displayName: displayName,
+      stripeCustomerId: customer.id,
+    });
+
+    return {};
+  } catch (e: any) {
+    console.error(e);
+    return { error: e.message || 'An unexpected error occurred.' };
+  }
+}
+
 async function getOrCreateStripeCustomerId(
   firebaseUID: string,
   email?: string | null,
