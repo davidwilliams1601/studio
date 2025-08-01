@@ -43,7 +43,7 @@ export default function SettingsPage() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
-  const handleManageSubscription = async () => {
+  const handleManageSubscription = () => {
     startTransition(async () => {
         const result = await createStripePortalSessionAction();
         if (result?.error) {
@@ -136,7 +136,7 @@ export default function SettingsPage() {
             <CardDescription>
               Customize the look and feel of the application.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
                 <div>
