@@ -61,7 +61,7 @@ export default function LandingPage() {
                   </div>
                   <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-4xl">Your Digital Reputation is Under Constant Attack</h2>
                   <p className="text-muted-foreground md:text-lg">
-                      Every day, thousands of social media accounts are compromised. Losing your LinkedIn profile means losing years of connections, conversations, and credibility you've worked hard to build. Don't wait for a "password reset" email that never comes. LinkStream provides the ultimate insurance policy for your professional identity.
+                      In 2021, data from over 93% of all LinkedIn users was scraped by hackers. With social media account takeovers increasing by 1,000% in the last two years, your professional identity is a valuable target. Losing your profile means losing connections, conversations, and credibility. Don't wait for disaster. LinkStream provides the ultimate insurance policy for your professional identity.
                   </p>
               </div>
                <div className="flex items-center justify-center">
