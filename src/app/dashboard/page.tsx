@@ -25,10 +25,8 @@ import {
   Calendar,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  generatePostSuggestionsAction,
-  processAndSummarizeDataAction,
-} from '@/lib/actions';
+import { generateLinkedInPostSuggestions } from '@/ai/flows/generate-linkedin-post-suggestions';
+import { extractAndSummarize } from '@/ai/flows/extractAndSummarizeFlow';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
@@ -203,19 +201,22 @@ const PostSuggestionGenerator = () => {
     setError('');
     setSuggestions([]);
     startTransition(async () => {
-      const result = await generatePostSuggestionsAction({ prompt });
-      if (result.error) {
-        setError(result.error);
+      try {
+        const result = await generateLinkedInPostSuggestions({ prompt });
+        if (result.suggestions) {
+            setSuggestions(result.suggestions);
+            toast({
+              title: 'Suggestions Ready!',
+              description: 'We have generated some post ideas for you.',
+            });
+        }
+      } catch (e: any) {
+        const errorMessage = e.message || 'An unknown error occurred.';
+        setError(errorMessage);
         toast({
           variant: 'destructive',
           title: 'Generation Failed',
-          description: result.error,
-        });
-      } else if (result.suggestions) {
-        setSuggestions(result.suggestions);
-        toast({
-          title: 'Suggestions Ready!',
-          description: 'We have generated some post ideas for you.',
+          description: errorMessage,
         });
       }
     });
@@ -329,16 +330,9 @@ export default function DashboardPage() {
           });
 
           // 2. Call the all-in-one server action to process and summarize
-          const result = await processAndSummarizeDataAction({ storagePath });
+          const result = await extractAndSummarize({ storagePath });
 
-          if (result.error) {
-            setError(result.error);
-            toast({
-              variant: 'destructive',
-              title: 'Analysis Failed',
-              description: result.error,
-            });
-          } else if (result.summary) {
+          if (result.summary) {
             setSummary(result.summary);
             toast({
               title: 'Analysis Complete!',
