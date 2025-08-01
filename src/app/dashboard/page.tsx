@@ -377,7 +377,8 @@ export default function DashboardPage() {
           const summaryResult = await summarizeExtractedDataAction(extractedData);
           
           if (summaryResult.error) {
-             throw new Error(summaryResult.error);
+            setError(summaryResult.error);
+            setProgress('error');
           } else if (summaryResult.summary) {
             setSummary(summaryResult.summary);
             setProgress('done');
@@ -571,5 +572,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-    
