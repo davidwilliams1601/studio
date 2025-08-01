@@ -4,12 +4,12 @@ import { getStorage } from 'firebase/storage';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  projectId: "linkstream-ystti",
-  appId: "1:748864193227:web:d9235f33570ecbfb56514e",
-  storageBucket: "linkstream-ystti.firebasestorage.app",
-  apiKey: "AIzaSyArrUkpwPbwJm3L9SvrhsaN_tRrbhby9h0",
-  authDomain: "linkstream-ystti.firebaseapp.com",
-  messagingSenderId: "748864193227"
+  "projectId": "linkstream-ystti",
+  "appId": "1:748864193227:web:d9235f33570ecbfb56514e",
+  "storageBucket": "linkstream-ystti.firebasestorage.app",
+  "apiKey": "AIzaSyArrUkpwPbwJm3L9SvrhsaN_tRrbhby9h0",
+  "authDomain": "linkstream-ystti.firebaseapp.com",
+  "messagingSenderId": "748864193227"
 };
 
 // Initialize Firebase

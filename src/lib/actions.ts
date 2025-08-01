@@ -6,8 +6,10 @@ import { auth, db } from '@/lib/firebase-admin';
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
-import { extractAndSummarize } from '@/ai/flows/extractAndSummarizeFlow';
-import type { ExtractAndSummarizeInput } from '@/ai/schemas';
+import { getStorage } from 'firebase-admin/storage';
+import JSZip from 'jszip';
+import { ai } from '@/ai/genkit';
+import type { ExtractAndSummarizeInput, ExtractAndSummarizeOutput } from '@/ai/schemas';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -109,6 +111,54 @@ export async function createStripePortalSessionAction(input: PortalSessionInput)
   }
 }
 
-export async function extractAndSummarizeAction(input: ExtractAndSummarizeInput) {
-    return await extractAndSummarize(input);
+
+// Helper function to read a file from the zip, case-insensitively
+async function getFileContent(
+  zip: JSZip,
+  fileName: string
+): Promise<string> {
+  // JSZip's file method can take a RegExp. 'i' flag makes it case-insensitive.
+  const files = zip.file(new RegExp(`^${fileName}$`, 'i'));
+  if (files && files.length > 0) {
+    return files[0].async('string');
+  }
+  // It's possible some files are not in the export if the user has no data for them.
+  console.warn(`${fileName} not found in zip. This may be expected. Returning empty string.`);
+  return '';
+}
+
+export async function extractAndSummarizeAction(
+  input: ExtractAndSummarizeInput
+): Promise<ExtractAndSummarizeOutput> {
+   // 1. Download file from Firebase Storage into an in-memory buffer
+   const bucket = getStorage().bucket();
+   const file = bucket.file(input.storagePath);
+   const [buffer] = await file.download();
+
+   // 2. Read and extract data from the zip file buffer
+   const zip = await JSZip.loadAsync(buffer);
+
+   const connections = await getFileContent(zip, 'Connections.csv');
+   const messages = await getFileContent(zip, 'messages.csv');
+   const articles = await getFileContent(zip, 'articles.csv');
+   const profile = await getFileContent(zip, 'Profile.json');
+
+   const extractedData = { connections, messages, articles, profile };
+
+   // 3. Call AI to summarize the extracted data
+   const summaryResult = await ai.generate({
+     model: 'googleai/gemini-2.0-flash',
+     prompt: `You are an expert in LinkedIn data analysis. You will analyze the provided LinkedIn data and generate a summary of the user's LinkedIn activity, highlighting key trends and insights.
+
+Here is the LinkedIn data:
+
+Connections: ${extractedData.connections}
+Messages: ${extractedData.messages}
+Articles: ${extractedData.articles}
+Profile: ${extractedData.profile}
+
+Summary:`,
+   });
+
+   return { summary: summaryResult.text };
 }

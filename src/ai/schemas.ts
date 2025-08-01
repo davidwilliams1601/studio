@@ -19,7 +19,7 @@ export type GenerateLinkedInPostSuggestionsOutput = z.infer<
   typeof GenerateLinkedInPostSuggestionsOutputSchema
 >;
 
-// Schemas for extractAndSummarizeFlow.ts
+// Schemas for extractAndSummarize action
 export const ExtractAndSummarizeInputSchema = z.object({
   storagePath: z
     .string()
