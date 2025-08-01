@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateLinkedInPostSuggestions } from '@/ai/flows/generate-linkedin-post-suggestions';
-import { extractAndSummarizeAction } from './actions';
+import { extractAndSummarizeAction } from '@/lib/actions';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
