@@ -7,6 +7,9 @@ import {
   LayoutDashboard,
   ShieldCheck,
   AlertTriangle,
+  Database,
+  Sparkles,
+  HardDrive,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -36,92 +39,129 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="container flex flex-col items-center py-24 text-center sm:py-32">
           <h1 className="font-headline text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-            Unlock Your LinkedIn Potential
+            Your LinkedIn data. Secured and Analyzed.
           </h1>
           <p className="mx-auto mt-6 max-w-[700px] text-lg text-muted-foreground md:text-xl">
-            LinkStream uses AI to analyze your LinkedIn data, revealing powerful
-            insights to grow your professional network and career. Never lose your data to a hack again.
+            Stop worrying about losing your account. LinkStream creates a secure, living backup of your LinkedIn data and uses AI to reveal powerful insights for your career growth.
           </p>
           <div className="mt-8 flex gap-4">
             <Button asChild size="lg">
               <Link href="/signup">
-                Get Started for Free <ArrowRight className="ml-2 h-4 w-4" />
+                Secure Your Network Now <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
         </section>
 
-        <section id="features" className="container space-y-12 py-8 md:py-12 lg:py-24">
-          <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-            <h2 className="font-headline text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
-              Features
-            </h2>
-            <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-              Everything you need to turn your LinkedIn data into a strategic asset.
-            </p>
-          </div>
-          <div className="mx-auto grid justify-center gap-8 sm:grid-cols-2 md:max-w-[64rem] lg:grid-cols-4">
-            <div className="relative overflow-hidden rounded-lg border bg-card p-2">
-              <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-                <UploadCloud className="h-12 w-12 text-primary" />
-                <div className="space-y-2">
-                  <h3 className="font-bold">Easy Data Upload</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Securely upload your LinkedIn ZIP export with a simple drag-and-drop interface.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="relative overflow-hidden rounded-lg border bg-card p-2">
-              <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-                <BrainCircuit className="h-12 w-12 text-primary" />
-                <div className="space-y-2">
-                  <h3 className="font-bold">AI-Powered Analysis</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Our GenAI model extracts key insights from your connections, messages, and posts.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="relative overflow-hidden rounded-lg border bg-card p-2">
-              <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-                <LayoutDashboard className="h-12 w-12 text-primary" />
-                <div className="space-y-2">
-                  <h3 className="font-bold">Personalized Dashboard</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Visualize your professional growth with key metrics and activity summaries.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="relative overflow-hidden rounded-lg border bg-card p-2">
-              <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-                <ShieldCheck className="h-12 w-12 text-primary" />
-                <div className="space-y-2">
-                  <h3 className="font-bold">Backup & Secure Your Data</h3>
-                  <p className="text-sm text-muted-foreground">
-                    We provide a secure backup of your LinkedIn data, so you never lose your connections and content.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-        
         <section id="security" className="bg-secondary">
           <div className="container grid items-center gap-8 py-24 md:grid-cols-2 lg:py-32">
               <div className="space-y-4">
-                  <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary">
-                      Peace of Mind
+                  <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm font-bold text-primary">
+                      Your #1 Asset
                   </div>
                   <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-4xl">Don't Let a Hack Erase Your Hard Work</h2>
                   <p className="text-muted-foreground md:text-lg">
-                      Losing your LinkedIn account to a hacker is devastating. Years of building connections, sharing content, and establishing your professional brand can vanish in an instant. LinkStream was born from this exact experience. We provide a secure, independent backup of your most valuable professional data, ensuring that if the worst happens, you're not left with nothing.
+                      Losing your LinkedIn account is devastating. Years of building connections and establishing your professional brand can vanish in an instant. LinkStream was born from this exact experience. We provide a secure, independent backup of your most valuable professional data, ensuring you're always protected.
                   </p>
               </div>
                <div className="flex items-center justify-center">
                   <AlertTriangle className="h-32 w-32 text-primary/50" />
               </div>
+          </div>
+        </section>
+
+        <section className="container py-24">
+            <div className="mx-auto flex max-w-2xl flex-col items-center space-y-4 text-center">
+                <h2 className="font-headline text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
+                    More Than a Backup. A Strategic Advantage.
+                </h2>
+                <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
+                    A local file on your hard drive is static. LinkStream brings your data to life.
+                </p>
+            </div>
+            <div className="mt-12 grid gap-8 md:grid-cols-2">
+                <Card className="p-6">
+                    <div className="flex items-center gap-4">
+                        <div className="rounded-full bg-muted p-3">
+                           <HardDrive className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="font-headline text-2xl font-bold">Local Backup</h3>
+                    </div>
+                    <ul className="mt-6 space-y-3 text-muted-foreground">
+                        <li className="flex items-start gap-3"><Check className="h-5 w-5 mt-0.5 shrink-0 text-destructive/50" /><div>A single, static file</div></li>
+                        <li className="flex items-start gap-3"><Check className="h-5 w-5 mt-0.5 shrink-0 text-destructive/50" /><div>No insights or analysis</div></li>
+                        <li className="flex items-start gap-3"><Check className="h-5 w-5 mt-0.5 shrink-0 text-destructive/50" /><div>Difficult to search or use</div></li>
+                         <li className="flex items-start gap-3"><Check className="h-5 w-5 mt-0.5 shrink-0 text-destructive/50" /><div>Requires manual, regular downloads</div></li>
+                    </ul>
+                </Card>
+                <Card className="border-2 border-primary p-6">
+                     <div className="flex items-center gap-4">
+                        <div className="rounded-full bg-primary/10 p-3">
+                           <Logo />
+                        </div>
+                        <h3 className="font-headline text-2xl font-bold">LinkStream</h3>
+                    </div>
+                     <ul className="mt-6 space-y-3 text-foreground">
+                        <li className="flex items-start gap-3"><Check className="h-5 w-5 mt-0.5 shrink-0 text-accent" /><div>A secure, living vault of your data</div></li>
+                        <li className="flex items-start gap-3"><Check className="h-5 w-5 mt-0.5 shrink-0 text-accent" /><div>AI-powered insights and trends</div></li>
+                        <li className="flex items-start gap-3"><Check className="h-5 w-5 mt-0.5 shrink-0 text-accent" /><div>Personalized dashboard to track growth</div></li>
+                        <li className="flex items-start gap-3"><Check className="h-5 w-5 mt-0.5 shrink-0 text-accent" /><div>AI content generation to boost engagement</div></li>
+                    </ul>
+                </Card>
+            </div>
+        </section>
+
+
+        <section id="features" className="container space-y-12 py-8 md:py-12 lg:py-24">
+          <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
+            <h2 className="font-headline text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
+              How It Works
+            </h2>
+            <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
+              Turn your raw LinkedIn data into your greatest professional asset in three simple steps.
+            </p>
+          </div>
+          <div className="mx-auto grid justify-center gap-8 sm:grid-cols-2 md:max-w-[64rem] lg:grid-cols-3">
+            <div className="relative overflow-hidden rounded-lg border bg-card p-2">
+              <div className="flex h-full flex-col justify-between rounded-md p-6">
+                <div className="mb-4">
+                    <UploadCloud className="h-12 w-12 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-bold">1. Upload Your Archive</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Securely upload your LinkedIn ZIP export with our simple drag-and-drop interface.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="relative overflow-hidden rounded-lg border bg-card p-2">
+              <div className="flex h-full flex-col justify-between rounded-md p-6">
+                 <div className="mb-4">
+                    <BrainCircuit className="h-12 w-12 text-primary" />
+                 </div>
+                <div className="space-y-2">
+                  <h3 className="font-bold">2. Get AI-Powered Insights</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Our AI analyzes your activity to find key trends, highlight important connections, and summarize your professional journey.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="relative overflow-hidden rounded-lg border bg-card p-2">
+              <div className="flex h-full flex-col justify-between rounded-md p-6">
+                <div className="mb-4">
+                    <LayoutDashboard className="h-12 w-12 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-bold">3. Grow Your Network</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Use your personalized dashboard and content ideas to engage your audience and build your brand.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
           </div>
         </section>
 
