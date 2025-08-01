@@ -1,15 +1,14 @@
-
 'use server';
 
-import { getStorage } from 'firebase-admin/storage';
+import {getStorage} from 'firebase-admin/storage';
 import JSZip from 'jszip';
-import { app } from '@/lib/firebase-admin';
+import {app} from '@/lib/firebase-admin';
 
 async function getFileContent(
   zip: JSZip,
   fileName: string
 ): Promise<string> {
-  const files = zip.file(new RegExp(`^${fileName}$`, 'i'));
+  const files = zip.file(new RegExp(`.*${fileName}$`, 'i'));
   if (files && files.length > 0) {
     return files[0].async('string');
   }
@@ -19,11 +18,11 @@ async function getFileContent(
   return '';
 }
 
-export async function analyzeLinkedInDataAction(
-  input: {storagePath: string}
-): Promise<{ data?: Record<string, string>, error?: string }> {
+export async function analyzeLinkedInDataAction(input: {
+  storagePath: string;
+}): Promise<{data?: {processedPath: string}; error?: string}> {
   try {
-    const { storagePath } = input;
+    const {storagePath} = input;
 
     const bucket = getStorage(app).bucket();
     const file = bucket.file(storagePath);
@@ -36,10 +35,28 @@ export async function analyzeLinkedInDataAction(
     const articles = await getFileContent(zip, 'articles.csv');
     const profile = await getFileContent(zip, 'Profile.json');
 
-    const extractedData = { connections, messages, articles, profile };
-    
-    return { data: extractedData };
+    const combinedData = `
+--- CONNECTIONS ---
+${connections || 'File not found or empty.'}
 
+--- MESSAGES ---
+${messages || 'File not found or empty.'}
+
+--- ARTICLES ---
+${articles || 'File not found or empty.'}
+
+--- PROFILE ---
+${profile || 'File not found or empty.'}
+`;
+    const processedPath = `processed/${storagePath
+      .split('/')
+      .pop()}-extracted.txt`;
+    const processedFile = bucket.file(processedPath);
+    await processedFile.save(Buffer.from(combinedData), {
+      contentType: 'text/plain',
+    });
+
+    return {data: {processedPath}};
   } catch (e: any) {
     console.error('Error in analyzeLinkedInDataAction:', e);
     return {

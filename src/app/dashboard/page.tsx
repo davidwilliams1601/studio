@@ -183,29 +183,10 @@ export default function DashboardPage() {
           }
           
           if (result.data) {
-              const newWindow = window.open();
-              if (newWindow) {
-                newWindow.document.write('<pre>');
-                newWindow.document.write('<h1>Extracted Data</h1>');
-                
-                Object.entries(result.data).forEach(([key, value]) => {
-                    newWindow.document.write(`<h2>${key}</h2>`);
-                    newWindow.document.write(`<textarea rows="20" cols="100" readonly>${value || 'File not found or empty.'}</textarea><hr/>`);
-                });
-
-                newWindow.document.write('</pre>');
-                newWindow.document.close();
-                 toast({
-                    title: 'Processing Complete!',
-                    description: 'Extracted data has been opened in a new tab.',
-                 });
-              } else {
-                toast({
-                    variant: 'destructive',
-                    title: 'Could not open new window',
-                    description: 'Please disable your pop-up blocker and try again.',
-                });
-              }
+              toast({
+                title: 'Processing Complete!',
+                description: `Extracted data saved to: ${result.data.processedPath}`,
+              });
           }
         } catch (e: any) {
           console.error('An error occurred during processing:', e);
