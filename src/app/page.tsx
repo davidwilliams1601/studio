@@ -57,11 +57,11 @@ export default function LandingPage() {
           <div className="container grid items-center gap-8 py-24 md:grid-cols-2 lg:py-32">
               <div className="space-y-4">
                   <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm font-bold text-primary">
-                      Your #1 Asset
+                      A Growing Threat
                   </div>
-                  <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-4xl">Don't Let a Hack Erase Your Hard Work</h2>
+                  <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-4xl">Your Digital Reputation is Under Constant Attack</h2>
                   <p className="text-muted-foreground md:text-lg">
-                      Losing your LinkedIn account is devastating. Years of building connections and establishing your professional brand can vanish in an instant. LinkStream was born from this exact experience. We provide a secure, independent backup of your most valuable professional data, ensuring you're always protected.
+                      Every day, thousands of social media accounts are compromised. Losing your LinkedIn profile means losing years of connections, conversations, and credibility you've worked hard to build. Don't wait for a "password reset" email that never comes. LinkStream provides the ultimate insurance policy for your professional identity.
                   </p>
               </div>
                <div className="flex items-center justify-center">
