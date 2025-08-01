@@ -4,20 +4,7 @@ import { getStorage } from 'firebase-admin/storage';
 import JSZip from 'jszip';
 import { app } from '@/lib/firebase-admin';
 
-async function getFileContent(
-  zip: JSZip,
-  fileName: string
-): Promise<string> {
-  const files = zip.file(new RegExp(`.*${fileName}$`, 'i'));
-  if (files && files.length > 0) {
-    return files[0].async('string');
-  }
-  console.warn(
-    `${fileName} not found in zip. This may be expected. Returning empty string.`
-  );
-  return '';
-}
-
+// This function now returns a more robust, serializable object.
 export async function analyzeLinkedInDataAction(input: {
   storagePath: string;
 }): Promise<{ data?: { processedPath: string }; error?: string }> {
@@ -30,23 +17,32 @@ export async function analyzeLinkedInDataAction(input: {
 
     const zip = await JSZip.loadAsync(buffer);
 
-    const connections = await getFileContent(zip, 'Connections.csv');
-    const messages = await getFileContent(zip, 'messages.csv');
-    const articles = await getFileContent(zip, 'articles.csv');
-    const profile = await getFileContent(zip, 'Profile.json');
+    // Simplified and more robust file extraction
+    const connectionsFile = zip.file(/connections.csv/i)[0];
+    const connections = connectionsFile ? await connectionsFile.async('string') : 'File not found or empty.';
+
+    const messagesFile = zip.file(/messages.csv/i)[0];
+    const messages = messagesFile ? await messagesFile.async('string') : 'File not found or empty.';
+
+    const articlesFile = zip.file(/articles.csv/i)[0];
+    const articles = articlesFile ? await articlesFile.async('string') : 'File not found or empty.';
+    
+    const profileFile = zip.file(/profile.json/i)[0];
+    const profile = profileFile ? await profileFile.async('string') : 'File not found or empty.';
+
 
     const combinedData = `
 --- CONNECTIONS ---
-${connections || 'File not found or empty.'}
+${connections}
 
 --- MESSAGES ---
-${messages || 'File not found or empty.'}
+${messages}
 
 --- ARTICLES ---
-${articles || 'File not found or empty.'}
+${articles}
 
 --- PROFILE ---
-${profile || 'File not found or empty.'}
+${profile}
 `;
     const processedPath = `processed/${storagePath
       .split('/')
@@ -59,8 +55,9 @@ ${profile || 'File not found or empty.'}
     return { data: { processedPath } };
   } catch (e: any) {
     console.error('Error in analyzeLinkedInDataAction:', e);
+    // Return a simple, serializable error object. This is the key fix.
     return {
-      error: e.message || 'An unknown server error occurred during analysis.',
+      error: 'An unexpected error occurred during analysis. Please check the server logs.',
     };
   }
 }
