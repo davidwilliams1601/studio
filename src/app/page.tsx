@@ -186,7 +186,7 @@ export default function LandingPage() {
                 <CardDescription>For power users and teams</CardDescription>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">£15</span>
-                  <span className="ml-1 text-muted-foreground">/month</span>
+                  <span className="ml-1 text-muted-foreground">/seat/month</span>
                 </div>
               </CardHeader>
               <CardContent>
@@ -199,7 +199,7 @@ export default function LandingPage() {
               </CardContent>
               <CardFooter>
                 <Button className="w-full" asChild>
-                  <Link href="/signup">Contact Sales</Link>
+                  <Link href="/signup">Choose Business</Link>
                 </Button>
               </CardFooter>
             </Card>
