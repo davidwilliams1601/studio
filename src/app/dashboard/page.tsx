@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition, useCallback, ChangeEvent } from 'react';
@@ -347,7 +348,7 @@ export default function DashboardPage() {
           await uploadBytes(storageRef, file);
           toast({
             title: 'File Uploaded!',
-            description: 'Your backup is being processed.',
+            description: 'Your backup is now being processed.',
           });
 
           // 2. Call AI action to extract data
@@ -503,8 +504,10 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               {isAnalyzePending && progress !== 'idle' && progress !== 'done' && (
-                <div className="flex items-center justify-center p-8">
+                <div className="flex flex-col items-center justify-center p-8 text-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="mt-4 font-semibold">{progressMessages[progress]}</p>
+                  <p className="text-sm text-muted-foreground">This may take a few moments...</p>
                 </div>
               )}
               {error && (
@@ -553,3 +556,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+    
