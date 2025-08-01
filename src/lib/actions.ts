@@ -8,6 +8,10 @@ import {
     generateLinkedInPostSuggestions,
     type GenerateLinkedInPostSuggestionsInput,
 } from '@/ai/flows/generate-linkedin-post-suggestions';
+import {
+    extractLinkedInData,
+    type ExtractLinkedInDataInput,
+} from '@/ai/flows/extract-linkedin-data';
 import { z } from 'zod';
 import { auth, db } from '@/lib/firebase';
 import { redirect } from 'next/navigation';
@@ -66,6 +70,32 @@ export async function createStripePortalSessionAction() {
     }
     return { error: 'An unexpected error occurred. Please try again.' };
   }
+}
+
+// Extract and Summarize Action
+const ExtractAndSummarizeActionInputSchema = z.object({
+    storagePath: z.string(),
+});
+
+type ExtractAndSummarizeActionResponse = {
+    summary?: string;
+    error?: string;
+}
+
+export async function extractAndSummarizeAction(
+    input: ExtractLinkedInDataInput
+): Promise<ExtractAndSummarizeActionResponse> {
+    try {
+        const validatedInput = ExtractAndSummarizeActionInputSchema.parse(input);
+        const result = await extractLinkedInData(validatedInput);
+        return { summary: result.summary };
+    } catch (e) {
+        console.error(e);
+        if (e instanceof z.ZodError) {
+            return { error: 'Invalid input data provided.' };
+        }
+        return { error: 'An unexpected error occurred while processing your data. Please try again.' };
+    }
 }
 
 

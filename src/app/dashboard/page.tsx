@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
-  summarizeActivityAction,
+  extractAndSummarizeAction,
   generatePostSuggestionsAction,
 } from '@/lib/actions';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -311,21 +311,11 @@ export default function DashboardPage() {
           await uploadBytes(storageRef, file);
           toast({
             title: 'File Uploaded!',
-            description: 'Your backup is securely stored.',
+            description: 'Your backup is being analyzed.',
           });
 
-          // 2. Call AI action (still using dummy data for now)
-          // TODO: Replace with real data extraction from the uploaded ZIP
-          const dummyData = {
-            connections:
-              'firstName,lastName,company,connectedOn\nJohn,Doe,Google,2023-01-01',
-            messages: 'from,to,date,content\nJane,Doe,2023-02-01,Hi there',
-            articles:
-              'title,date,url\nMy First Post,2023-03-01,http://example.com',
-            profile: '{ "name": "Demo User", "headline": "AI Enthusiast" }',
-          };
-
-          const result = await summarizeActivityAction(dummyData);
+          // 2. Call AI action to extract data and summarize
+          const result = await extractAndSummarizeAction({ storagePath });
 
           if (result.error) {
             setError(result.error);
