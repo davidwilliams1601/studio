@@ -20,7 +20,6 @@ import {
   Download,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { analyzeLinkedInDataAction } from './actions';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { storage } from '@/lib/firebase';
@@ -245,6 +244,7 @@ export default function DashboardPage() {
 
       startProcessingTransition(async () => {
         try {
+          // Step 1: Upload file to Firebase Storage
           const storagePath = `backups/${user.uid}/${Date.now()}-${file.name}`;
           const storageRef = ref(storage, storagePath);
           await uploadBytes(storageRef, file);
@@ -253,7 +253,14 @@ export default function DashboardPage() {
             description: 'Now processing your backup...',
           });
 
-          const result = await analyzeLinkedInDataAction({ storagePath });
+          // Step 2: Call the API route to process the file
+          const res = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ storagePath }),
+          });
+
+          const result = await res.json();
 
           if (result.error) {
             throw new Error(result.error);
