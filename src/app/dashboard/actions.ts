@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getStorage } from 'firebase-admin/storage';
 import JSZip from 'jszip';
 import { ai } from '@/ai/genkit';
+import { app } from '@/lib/firebase-admin'; // Import the initialized admin app
 
 const ExtractAndSummarizeInputSchema = z.object({
   storagePath: z
@@ -49,7 +50,8 @@ export async function extractAndSummarizeAction(
     const { storagePath } = ExtractAndSummarizeInputSchema.parse(input);
 
     // 1. Download file from Firebase Storage into an in-memory buffer
-    const bucket = getStorage().bucket();
+    // By importing 'app' from firebase-admin, we ensure it's initialized
+    const bucket = getStorage(app).bucket();
     const file = bucket.file(storagePath);
     const [buffer] = await file.download();
 
