@@ -42,6 +42,7 @@ export default function DashboardPage() {
   const [isProcessing, startProcessingTransition] = useTransition();
   const { toast } = useToast();
 
+  // Alternative approach using FormData instead of JSON
   const handleFileUpload = useCallback(
     (file: File) => {
       if (!user) {
@@ -55,30 +56,66 @@ export default function DashboardPage() {
 
       startProcessingTransition(async () => {
         try {
-          // Upload file to Firebase Storage
+          console.log('Starting alternative upload approach...');
+
+          // Upload file to Firebase Storage first
           const storagePath = `backups/${user.uid}/${Date.now()}-${file.name}`;
           const storageRef = ref(storage, storagePath);
           await uploadBytes(storageRef, file);
+
+          console.log('File uploaded to Firebase Storage:', storagePath);
 
           toast({
             title: "File uploaded",
             description: "Analyzing your LinkedIn data...",
           });
 
-          // Analyze the uploaded file by calling the API route
-          const res = await fetch('/api/analyze', {
+          // Try using FormData instead of JSON
+          const formData = new FormData();
+          formData.append('storagePath', storagePath);
+
+          console.log('Making FormData request...');
+
+          const response = await fetch('/api/analyze-form', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ storagePath }),
+            body: formData,
           });
 
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+          console.log('Response received:', {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+          });
+
+          // Check if response is ok before trying to parse
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
           }
 
-          const result = await res.json();
-          
+          // Get the content type to see what we're dealing with
+          const contentType = response.headers.get('content-type');
+          console.log('Response content type:', contentType);
+
+          let result;
+          if (contentType && contentType.includes('application/json')) {
+            result = await response.json();
+          } else {
+            const textResponse = await response.text();
+            console.log('Non-JSON response received:', textResponse);
+            
+            // Try to parse it anyway
+            try {
+              result = JSON.parse(textResponse);
+            } catch (parseError) {
+              console.error('Failed to parse as JSON:', parseError);
+              throw new Error('Server returned invalid response format');
+            }
+          }
+
+          console.log('Parsed result:', result);
+
           if (result.error) {
             throw new Error(result.error);
           }
@@ -93,11 +130,128 @@ export default function DashboardPage() {
             throw new Error('No data returned from analysis');
           }
 
-        } catch (e: any) {
-          console.error('Upload/analysis error:', e);
+        } catch (error: any) {
+          console.error('Upload/analysis error:', error);
+          
           toast({
             title: "Processing failed",
-            description: e.message || "An error occurred during processing",
+            description: error.message || "An error occurred during processing",
+            variant: "destructive",
+          });
+          setAnalysisResult(null);
+        }
+      });
+    },
+    [user, toast]
+  );
+
+  // Client-side processing as backup
+  const handleFileUploadClientSide = useCallback(
+    async (file: File) => {
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to upload files.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      startProcessingTransition(async () => {
+        try {
+          console.log('Starting client-side processing...');
+
+          // Import JSZip dynamically to avoid SSR issues
+          const JSZip = (await import('jszip')).default;
+
+          // Read the file
+          const arrayBuffer = await file.arrayBuffer();
+          const zip = await JSZip.loadAsync(arrayBuffer);
+
+          console.log('ZIP loaded on client side');
+          console.log('Files in ZIP:', Object.keys(zip.files));
+
+          let connectionCount = 0;
+          let messageCount = 0;
+          let articleCount = 0;
+
+          // Look for connections file
+          const connectionFiles = ['Connections.csv', 'connections.csv'];
+          for (const fileName of connectionFiles) {
+            const connectionsFile = zip.file(fileName);
+            if (connectionsFile) {
+              const content = await connectionsFile.async('string');
+              const lines = content.split('\n').filter(line => line.trim());
+              connectionCount = Math.max(0, lines.length - 1); // Subtract header
+              console.log('Found connections:', connectionCount);
+              break;
+            }
+          }
+
+          // Look for messages (count CSV files in messages folder or direct file)
+          const messagesFolder = zip.folder('messages') || zip.folder('Messages');
+          if (messagesFolder) {
+            messagesFolder.forEach((relativePath, file) => {
+              if (file.name.endsWith('.csv') && !file.dir) {
+                messageCount++;
+              }
+            });
+          } else {
+            // Look for direct messages file
+            const messageFiles = ['messages.csv', 'Messages.csv'];
+            for (const fileName of messageFiles) {
+              const messagesFile = zip.file(fileName);
+              if (messagesFile) {
+                const content = await messagesFile.async('string');
+                const lines = content.split('\n').filter(line => line.trim());
+                messageCount = Math.max(0, lines.length - 1);
+                break;
+              }
+            }
+          }
+
+          // Look for articles/posts
+          const articleFiles = ['Posts.csv', 'posts.csv', 'articles.csv', 'Articles.csv'];
+          for (const fileName of articleFiles) {
+            const articlesFile = zip.file(fileName);
+            if (articlesFile) {
+              const content = await articlesFile.async('string');
+              const lines = content.split('\n').filter(line => line.trim());
+              articleCount = Math.max(0, lines.length - 1);
+              console.log('Found articles:', articleCount);
+              break;
+            }
+          }
+
+          console.log('Client-side analysis complete:', {
+            connectionCount,
+            messageCount,
+            articleCount
+          });
+
+          // Upload the file to storage for backup
+          const storagePath = `backups/${user.uid}/${Date.now()}-${file.name}`;
+          const storageRef = ref(storage, storagePath);
+          await uploadBytes(storageRef, file);
+
+          setAnalysisResult({
+            processedPath: storagePath,
+            connectionCount,
+            messageCount,
+            articleCount,
+          });
+
+          toast({
+            title: "Analysis complete",
+            description: "Your LinkedIn data has been successfully analyzed.",
+          });
+
+        } catch (error: any) {
+          console.error('Client-side processing error:', error);
+          
+          toast({
+            title: "Processing failed",
+            description: error.message || "An error occurred during processing",
             variant: "destructive",
           });
           setAnalysisResult(null);
@@ -110,6 +264,8 @@ export default function DashboardPage() {
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('File selected:', file.name, 'Size:', file.size);
+      
       if (!file.name.endsWith('.zip')) {
         toast({
           title: "Invalid file type",
@@ -120,7 +276,9 @@ export default function DashboardPage() {
       }
       
       setSelectedFile(file);
-      handleFileUpload(file);
+      
+      // Try client-side processing first as it's more reliable
+      handleFileUploadClientSide(file);
     }
   };
 
@@ -184,7 +342,7 @@ export default function DashboardPage() {
                   <div className="text-center">
                     <p className="font-medium">Processing your LinkedIn data...</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      This may take a few moments depending on your data size.
+                      Analyzing your data locally for faster processing.
                     </p>
                   </div>
                 </div>
@@ -255,7 +413,8 @@ export default function DashboardPage() {
                   <div className="text-sm text-muted-foreground">
                     <p className="font-medium mb-1 text-foreground">About this analysis:</p>
                     <ul className="space-y-1 text-xs">
-                      <li>• Data is processed and securely stored in your account.</li>
+                      <li>• Data is processed locally in your browser for privacy.</li>
+                      <li>• File is securely backed up to your cloud storage.</li>
                       <li>• Connections count includes all your professional contacts.</li>
                       <li>• Messages may include both sent and received conversations.</li>
                       <li>• Posts include articles, updates, and shared content.</li>
