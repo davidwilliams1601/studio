@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useTransition, useCallback, ChangeEvent } from 'react';
 import {
   Card,
@@ -18,6 +17,8 @@ import {
   MessageSquare,
   FileText,
   Download,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -25,199 +26,11 @@ import { useAuth } from '@/hooks/use-auth';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-const DataUpload = ({
-  onFileUpload,
-  isPending,
-  selectedFile,
-  setSelectedFile,
-}: {
-  onFileUpload: (file: File) => void;
-  isPending: boolean;
-  selectedFile: File | null;
-  setSelectedFile: (file: File | null) => void;
-}) => {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Necessary to allow drop
-  };
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      if (file.type === 'application/zip') {
-        setSelectedFile(file);
-      } else {
-        alert('Please upload a ZIP file.');
-      }
-      e.dataTransfer.clearData();
-    }
-  };
-
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Upload Your Data</CardTitle>
-            <CardDescription>
-              Drag and drop your LinkedIn data export ZIP file here.
-            </CardDescription>
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/guide">
-              <HelpCircle className="mr-2 h-4 w-4" />
-              How to Export
-            </Link>
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          className={`relative flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
-            isDragging ? 'border-primary bg-accent' : ''
-          }`}
-        >
-          <UploadCloud className="mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="font-semibold">
-            Drag & drop your file here or click to browse
-          </p>
-          <p className="text-sm text-muted-foreground">
-            (Your .zip file from LinkedIn)
-          </p>
-          <input
-            type="file"
-            className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
-            accept=".zip"
-            onChange={handleFileChange}
-          />
-        </div>
-        {selectedFile && (
-          <div className="flex items-center justify-between rounded-md border p-3">
-            <div className="flex items-center gap-3">
-              <File className="h-6 w-6 text-primary" />
-              <div>
-                <p className="font-medium">{selectedFile.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedFile(null)}
-            >
-              <span className="sr-only">Remove file</span>
-              &times;
-            </Button>
-          </div>
-        )}
-        <Button
-          onClick={() => selectedFile && onFileUpload(selectedFile)}
-          disabled={!selectedFile || isPending}
-          className="w-full"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
-              Uploading & Processing...
-            </>
-          ) : (
-            'Process My Data'
-          )}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-};
-
 type AnalysisResult = {
   processedPath: string;
   connectionCount: number;
   messageCount: number;
   articleCount: number;
-};
-
-const DashboardStats = ({ stats }: { stats: AnalysisResult }) => {
-    const handleDownload = async () => {
-        try {
-            const url = await getDownloadURL(ref(storage, stats.processedPath));
-            // This opens the download URL in a new tab.
-            // For force-download, a more complex setup with backend headers is needed.
-            window.open(url, '_blank');
-        } catch (error) {
-            console.error("Error getting download URL:", error);
-            alert("Could not get download link.");
-        }
-    };
-    
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Analysis Complete</CardTitle>
-        <CardDescription>
-          Here's a summary of your LinkedIn data.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Connections</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.connectionCount}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Messages</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.messageCount}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Articles</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.articleCount}</div>
-            </CardContent>
-          </Card>
-        </div>
-        <div className="mt-6 flex justify-center">
-            <Button variant="outline" onClick={handleDownload}>
-                <Download className="mr-2 h-4 w-4" />
-                Download Extracted Data
-            </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
 };
 
 export default function DashboardPage() {
@@ -233,27 +46,26 @@ export default function DashboardPage() {
     (file: File) => {
       if (!user) {
         toast({
-          variant: 'destructive',
-          title: 'Not authenticated',
-          description: 'You must be logged in to upload a file.',
+          title: "Authentication required",
+          description: "Please log in to upload files.",
+          variant: "destructive",
         });
         return;
       }
 
-      setAnalysisResult(null); // Reset previous results
-
       startProcessingTransition(async () => {
         try {
-          // Step 1: Upload file to Firebase Storage
+          // Upload file to Firebase Storage
           const storagePath = `backups/${user.uid}/${Date.now()}-${file.name}`;
           const storageRef = ref(storage, storagePath);
           await uploadBytes(storageRef, file);
+
           toast({
-            title: 'File Uploaded!',
-            description: 'Now processing your backup...',
+            title: "File uploaded",
+            description: "Analyzing your LinkedIn data...",
           });
 
-          // Step 2: Call the API route to process the file
+          // Analyze the uploaded file by calling the API route
           const res = await fetch('/api/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -261,7 +73,7 @@ export default function DashboardPage() {
           });
 
           const result = await res.json();
-
+          
           if (result.error) {
             throw new Error(result.error);
           }
@@ -269,44 +81,210 @@ export default function DashboardPage() {
           if (result.data) {
             setAnalysisResult(result.data);
             toast({
-              title: 'Processing Complete!',
-              description: 'Your dashboard has been updated.',
+              title: "Analysis complete",
+              description: "Your LinkedIn data has been successfully analyzed.",
             });
           }
+
         } catch (e: any) {
-          console.error('An error occurred during processing:', e);
-          const errorMessage = e.message || 'An unknown error occurred.';
+          console.error('Upload/analysis error:', e);
           toast({
-            variant: 'destructive',
-            title: 'An Unexpected Error Occurred',
-            description: errorMessage,
+            title: "Processing failed",
+            description: e.message || "An error occurred during processing",
+            variant: "destructive",
           });
+          setAnalysisResult(null);
         }
       });
     },
     [user, toast]
   );
 
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!file.name.endsWith('.zip')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a ZIP file containing your LinkedIn data export.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setSelectedFile(file);
+      handleFileUpload(file);
+    }
+  };
+
+  const resetUpload = () => {
+    setSelectedFile(null);
+    setAnalysisResult(null);
+  };
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-      <div className="flex items-center">
-        <h1 className="font-headline text-lg font-semibold md:text-2xl">
-          Dashboard
-        </h1>
+      <div className="mb-8 text-center">
+        <h1 className="font-headline text-3xl font-bold">LinkedIn Data Dashboard</h1>
+        <p className="text-muted-foreground mt-2">
+          Upload your LinkedIn data export to analyze your network and activity.
+        </p>
       </div>
-      <div className="grid grid-cols-1 gap-4">
-        <div className="lg:col-span-1">
-          {analysisResult ? (
-            <DashboardStats stats={analysisResult} />
-          ) : (
-            <DataUpload
-              onFileUpload={handleFileUpload}
-              isPending={isProcessing}
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
-            />
-          )}
-        </div>
+
+      <div className="grid gap-6 max-w-4xl mx-auto w-full">
+        {/* Upload Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UploadCloud className="h-5 w-5" />
+              Upload LinkedIn Data
+            </CardTitle>
+            <CardDescription>
+              Select your LinkedIn data export ZIP file to begin analysis.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {!isProcessing && !analysisResult && (
+                <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
+                  <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <div className="space-y-2">
+                    <p className="text-lg font-medium">
+                      Choose your LinkedIn data file
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Upload a ZIP file from your LinkedIn data export
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".zip"
+                    onChange={handleFileSelect}
+                    className="mt-4 block w-full text-sm text-muted-foreground
+                             file:mr-4 file:py-2 file:px-4
+                             file:rounded-md file:border-0
+                             file:text-sm file:font-medium
+                             file:bg-primary/10 file:text-primary
+                             hover:file:bg-primary/20
+                             cursor-pointer"
+                  />
+                </div>
+              )}
+
+              {isProcessing && (
+                <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <div className="text-center">
+                    <p className="font-medium">Processing your LinkedIn data...</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      This may take a few moments depending on your data size.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {analysisResult && (
+                <div className="flex items-center justify-between p-4 bg-accent/20 rounded-lg border border-accent">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-accent" />
+                    <div>
+                      <p className="font-medium text-accent-foreground">Analysis Complete</p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedFile?.name} processed successfully
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={resetUpload}>
+                    Upload New File
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Results Card */}
+        {analysisResult && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Analysis Results
+              </CardTitle>
+              <CardDescription>
+                Overview of your LinkedIn data and activity.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center p-6 bg-secondary rounded-lg">
+                  <Users className="mx-auto h-10 w-10 text-primary mb-3" />
+                  <p className="text-3xl font-bold">
+                    {analysisResult.connectionCount.toLocaleString()}
+                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Connections</p>
+                </div>
+
+                <div className="text-center p-6 bg-secondary rounded-lg">
+                  <MessageSquare className="mx-auto h-10 w-10 text-primary mb-3" />
+                  <p className="text-3xl font-bold">
+                    {analysisResult.messageCount.toLocaleString()}
+                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Messages</p>
+                </div>
+
+                <div className="text-center p-6 bg-secondary rounded-lg">
+                  <FileText className="mx-auto h-10 w-10 text-primary mb-3" />
+                  <p className="text-3xl font-bold">
+                    {analysisResult.articleCount.toLocaleString()}
+                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Posts</p>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-secondary/50 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <HelpCircle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-muted-foreground">
+                    <p className="font-medium mb-1 text-foreground">About this analysis:</p>
+                    <ul className="space-y-1 text-xs">
+                      <li>• Data is processed and securely stored in your account.</li>
+                      <li>• Connections count includes all your professional contacts.</li>
+                      <li>• Messages may include both sent and received conversations.</li>
+                      <li>• Posts include articles, updates, and shared content.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Help Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5" />
+              How to Export Your LinkedIn Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p>To get your LinkedIn data export:</p>
+              <ol className="list-decimal list-inside space-y-2 ml-2">
+                <li>Go to LinkedIn Settings & Privacy</li>
+                <li>Click on "Data Privacy" in the left sidebar</li>
+                <li>Select "Get a copy of your data"</li>
+                <li>Choose "Want something in particular? Select the data files you're most interested in"</li>
+                <li>Select the data types you want (Connections, Messages, Posts, etc.)</li>
+                <li>Click "Request archive" and wait for the email with your download link</li>
+              </ol>
+              <p className="text-xs text-muted-foreground mt-4">
+                Note: LinkedIn may take up to 24 hours to prepare your data export.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
