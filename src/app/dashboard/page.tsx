@@ -72,6 +72,11 @@ export default function DashboardPage() {
             body: JSON.stringify({ storagePath }),
           });
 
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+          }
+
           const result = await res.json();
           
           if (result.error) {
@@ -84,6 +89,8 @@ export default function DashboardPage() {
               title: "Analysis complete",
               description: "Your LinkedIn data has been successfully analyzed.",
             });
+          } else {
+            throw new Error('No data returned from analysis');
           }
 
         } catch (e: any) {
