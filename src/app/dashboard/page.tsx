@@ -218,7 +218,7 @@ export default function DashboardPage() {
               }
             }
             
-            messageCount = Math.round((totalMessages / sampleSize) * messageThreads);
+            messageCount = messageThreads > 0 && sampleSize > 0 ? Math.round((totalMessages / sampleSize) * messageThreads) : 0;
             messageAnalysis.totalConversations = messageThreads;
           } else {
             // Look for direct messages file
@@ -332,7 +332,7 @@ export default function DashboardPage() {
             topLocations,
             messageAnalysis: {
               totalConversations: messageAnalysis.totalConversations,
-              avgMessagesPerConversation: messageCount > 0 ? Math.round(messageCount / messageThreads) : 0,
+              avgMessagesPerConversation: messageThreads > 0 ? Math.round(messageCount / messageThreads) : 0,
               mostActiveContacts
             },
             postAnalysis: {
@@ -541,7 +541,7 @@ export default function DashboardPage() {
 
             {/* Network Tab */}
             <TabsContent value="network" className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -594,13 +594,92 @@ export default function DashboardPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      Top Positions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {analysisResult.topPositions?.slice(0, 6).map((position, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <span className="text-sm font-medium truncate mr-2">{position.title}</span>
+                          <span className="text-sm text-muted-foreground">{position.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-3">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Globe className="h-5 w-5" />
+                      Network Insights
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-medium">Network Density</span>
+                          <span className="text-sm text-muted-foreground">
+                            {analysisResult.networkInsights?.networkDensity.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-secondary rounded-full h-2">
+                          <div 
+                            className="bg-blue-500 h-2 rounded-full" 
+                            style={{width: `${Math.min(analysisResult.networkInsights?.networkDensity || 0, 100)}%`}}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Ratio of your conversations to connections.</p>
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-medium">Diversity Score</span>
+                          <span className="text-sm text-muted-foreground">
+                            {analysisResult.networkInsights?.diversityScore.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-secondary rounded-full h-2">
+                          <div 
+                            className="bg-green-500 h-2 rounded-full" 
+                            style={{width: `${Math.min(analysisResult.networkInsights?.diversityScore || 0, 100)}%`}}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Based on the number of unique companies in your network.</p>
+                      </div>
+
+                       <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-medium">Influencer Index</span>
+                           <span className="text-sm text-muted-foreground">
+                            {analysisResult.networkInsights?.influencerConnections.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="w-full bg-secondary rounded-full h-2">
+                          <div 
+                            className="bg-purple-500 h-2 rounded-full" 
+                            style={{width: `${Math.min(((analysisResult.networkInsights?.influencerConnections || 0) / analysisResult.connectionCount) * 100, 100)}%`}}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Connections at your top 3 companies.</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
 
             {/* Activity Tab */}
             <TabsContent value="activity" className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
-                 <Card>
+                <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <MessageSquare className="h-5 w-5" />
@@ -688,7 +767,7 @@ export default function DashboardPage() {
                 </Card>
               </div>
             </TabsContent>
-
+            
             {/* Insights Tab */}
             <TabsContent value="insights" className="space-y-6">
               <div className="grid gap-6">
@@ -812,11 +891,135 @@ export default function DashboardPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Action Items
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <h5 className="font-medium mb-3">This Week</h5>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded" />
+                            <span className="text-sm">Connect with 5 new professionals in your industry</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded" />
+                            <span className="text-sm">Comment on 3 posts from your network</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded" />
+                            <span className="text-sm">Share an industry article with your insights</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded" />
+                            <span className="text-sm">Send follow-up messages to 2 recent connections</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h5 className="font-medium mb-3">This Month</h5>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded" />
+                            <span className="text-sm">Write and publish an original thought leadership post</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded" />
+                            <span className="text-sm">Join 2 industry-relevant LinkedIn groups</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded" />
+                            <span className="text-sm">Optimize your profile with keywords from top positions</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded" />
+                            <span className="text-sm">Schedule 15-min coffee chats with 3 key connections</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
           </Tabs>
         )}
-        
+
+        {/* Data Export Card */}
+        {analysisResult && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="h-5 w-5" />
+                Export Your Analysis
+              </CardTitle>
+              <CardDescription>
+                Download your analysis results for further use or record keeping.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    if (!analysisResult) return;
+                    const dataStr = JSON.stringify(analysisResult, null, 2);
+                    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                    const exportFileDefaultName = `linkedin-analysis-${new Date().toISOString().split('T')[0]}.json`;
+                    const linkElement = document.createElement('a');
+                    linkElement.setAttribute('href', dataUri);
+                    linkElement.setAttribute('download', exportFileDefaultName);
+                    linkElement.click();
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download JSON
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    if (!analysisResult) return;
+                    // Create a CSV export of key metrics
+                    const csvData = [
+                      ['Metric', 'Value'],
+                      ['Total Connections', analysisResult.connectionCount],
+                      ['Total Messages', analysisResult.messageCount],
+                      ['Message Threads', analysisResult.messageThreads || 0],
+                      ['Total Posts', analysisResult.articleCount],
+                      ['Post Engagements', analysisResult.postEngagements || 0],
+                      ['Network Density', `${analysisResult.networkInsights?.networkDensity.toFixed(1)}%`],
+                      ['Diversity Score', `${analysisResult.networkInsights?.diversityScore.toFixed(1)}%`],
+                      ['Top Company', analysisResult.topCompanies?.[0]?.name || 'N/A'],
+                      ['Top Location', analysisResult.topLocations?.[0]?.location || 'N/A'],
+                      ['Avg Messages per Conversation', analysisResult.messageAnalysis?.avgMessagesPerConversation || 0],
+                      ['Avg Engagement per Post', analysisResult.postAnalysis?.avgEngagementPerPost || 0]
+                    ];
+                    
+                    const csvContent = csvData.map(row => row.join(',')).join('\n');
+                    const dataUri = 'data:text/csv;charset=utf-8,'+ encodeURIComponent(csvContent);
+                    const exportFileDefaultName = `linkedin-metrics-${new Date().toISOString().split('T')[0]}.csv`;
+                    const linkElement = document.createElement('a');
+                    linkElement.setAttribute('href', dataUri);
+                    linkElement.setAttribute('download', exportFileDefaultName);
+                    linkElement.click();
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download CSV
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Help Card */}
         <Card>
           <CardHeader>
@@ -846,4 +1049,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
