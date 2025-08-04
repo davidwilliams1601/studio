@@ -36,12 +36,14 @@ import { createStripePortalSessionAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { SubscriptionManager } from '@/components/subscription-manager';
+import type { SubscriptionTier } from '@/lib/subscription-tiers';
 
 export default function SettingsPage() {
   const { user } = useAuth();
   // In a real app, this would come from your auth/user state
-  const [userPlan, setUserPlan] = useState('Pro');
-  const isBusinessPlan = userPlan === 'Business';
+  const [userPlan, setUserPlan] = useState<SubscriptionTier>('pro');
+  const isBusinessPlan = userPlan === 'business';
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -96,31 +98,12 @@ export default function SettingsPage() {
           </CardFooter>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Subscription</CardTitle>
-            <CardDescription>
-              Manage your current plan and billing details.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-medium">
-                You are currently on the <span className="text-primary">{userPlan}</span> plan.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Your next backup is scheduled for a week from now.
-              </p>
-            </div>
-            <form action={handleManageSubscription}>
-              <Button disabled={isPending || !user}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Manage Subscription
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-        
+        <SubscriptionManager 
+            currentTier={userPlan}
+            backupsThisMonth={1}
+            lastBackupDate={new Date()}
+        />
+
         <Card>
           <CardHeader>
             <CardTitle>Team</CardTitle>
