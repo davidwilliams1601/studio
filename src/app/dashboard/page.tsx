@@ -132,22 +132,52 @@ export default function DashboardPage() {
             postingDates: [] as string[]
           };
 
-          // Parse CSV helper function
+          // Enhanced CSV parser that handles quotes and commas properly
           const parseCSV = (csvContent: string) => {
+            if (!csvContent || csvContent.trim().length === 0) return [];
+            
             const lines = csvContent.split('\n').filter(line => line.trim());
             if (lines.length === 0) return [];
             
-            const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-            const data = [];
+            console.log('Parsing CSV with', lines.length, 'lines');
+            console.log('First few lines:', lines.slice(0, 3));
             
+            // Better CSV parsing that handles quoted fields
+            const parseLine = (line: string) => {
+              const result = [];
+              let current = '';
+              let inQuotes = false;
+              
+              for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                  inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                  result.push(current.trim());
+                  current = '';
+                } else {
+                  current += char;
+                }
+              }
+              result.push(current.trim());
+              return result;
+            };
+            
+            const headers = parseLine(lines[0]);
+            console.log('CSV Headers:', headers);
+            
+            const data = [];
             for (let i = 1; i < lines.length; i++) {
-              const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
+              const values = parseLine(lines[i]);
               const row: {[key: string]: string} = {};
               headers.forEach((header, index) => {
                 row[header] = values[index] || '';
               });
               data.push(row);
             }
+            
+            console.log('Parsed', data.length, 'rows');
             return data;
           };
 
@@ -332,7 +362,7 @@ export default function DashboardPage() {
             topLocations,
             messageAnalysis: {
               totalConversations: messageAnalysis.totalConversations,
-              avgMessagesPerConversation: messageThreads > 0 ? Math.round(messageCount / messageThreads) : 0,
+              avgMessagesPerConversation: messageCount > 0 ? Math.round(messageCount / messageThreads) : 0,
               mostActiveContacts
             },
             postAnalysis: {
