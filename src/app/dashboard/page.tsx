@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useTransition, useCallback, ChangeEvent } from 'react';
 import {
@@ -96,13 +95,13 @@ export default function DashboardPage() {
         - Post Engagements: ${data.postEngagements}
         
         NETWORK COMPOSITION:
-        - Industries: ${data.industryBreakdown?.map((i: any) => `${i.industry} ${i.percentage}%`).join(', ') || 'Mixed'}
-        - Company Sizes: ${data.companySizeAnalysis?.map((c: any) => `${c.size} ${c.percentage}%`).join(', ') || 'Various'}
-        - Seniority Levels: ${data.seniorityAnalysis?.map((s: any) => `${s.level} ${s.percentage}%`).join(', ') || 'Mixed'}
-        - Geographic Distribution: ${data.geographicOpportunities?.map((g: any) => g.location).join(', ') || 'Global'}
+        - Industries: ${data.industryBreakdown?.map((i:any) => `${i.industry} ${i.percentage}%`).join(', ') || 'Mixed'}
+        - Company Sizes: ${data.companySizeAnalysis?.map((c:any) => `${c.size} ${c.percentage}%`).join(', ') || 'Various'}
+        - Seniority Levels: ${data.seniorityAnalysis?.map((s:any) => `${s.level} ${s.percentage}%`).join(', ') || 'Mixed'}
+        - Geographic Distribution: ${data.geographicOpportunities?.map((g:any) => g.location).join(', ') || 'Global'}
         
         STRATEGIC CONTEXT:
-        - Network Gaps Identified: ${data.networkGaps?.map((g: any) => g.gap).join(', ') || 'None identified'}
+        - Network Gaps Identified: ${data.networkGaps?.map((g:any) => g.gap).join(', ') || 'None identified'}
         - Key Strategic Connections: ${data.strategicConnections?.length || 0} identified
         
         Provide strategic professional networking analysis with specific actionable insights for career advancement.
@@ -167,7 +166,6 @@ export default function DashboardPage() {
   const analyzeNetworkIntelligence = (connectionsData: any[]) => {
     const industries: {[key: string]: number} = {};
     const companySizes: {[key: string]: number} = {};
-    const companyStages: {[key: string]: number} = {};
     const seniority: {[key: string]: number} = {};
     const locations: {[key: string]: number} = {};
     const strategicConnections: any[] = [];
@@ -423,7 +421,7 @@ export default function DashboardPage() {
           };
 
           console.log('Strategic analysis complete:', finalResult);
-          setAnalysisResult(finalResult as AnalysisResult);
+          setAnalysisResult(finalResult);
 
           toast({
             title: "Strategic analysis complete!",
