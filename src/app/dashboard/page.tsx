@@ -362,7 +362,7 @@ export default function DashboardPage() {
             topLocations,
             messageAnalysis: {
               totalConversations: messageAnalysis.totalConversations,
-              avgMessagesPerConversation: messageCount > 0 ? Math.round(messageCount / messageThreads) : 0,
+              avgMessagesPerConversation: messageCount > 0 && messageThreads > 0 ? Math.round(messageCount / messageThreads) : 0,
               mostActiveContacts
             },
             postAnalysis: {
@@ -571,7 +571,7 @@ export default function DashboardPage() {
 
             {/* Network Tab */}
             <TabsContent value="network" className="space-y-6">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -624,7 +624,6 @@ export default function DashboardPage() {
                     </div>
                   </CardContent>
                 </Card>
-
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -643,7 +642,6 @@ export default function DashboardPage() {
                     </div>
                   </CardContent>
                 </Card>
-
                 <Card className="lg:col-span-3">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
