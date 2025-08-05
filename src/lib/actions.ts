@@ -7,10 +7,6 @@ import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
 
-if (!auth || !db) {
-  throw new Error('Firebase Admin has not been initialized. Check your environment variables.');
-}
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 const CreateUserInputSchema = z.object({

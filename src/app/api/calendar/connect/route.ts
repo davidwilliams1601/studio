@@ -3,10 +3,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase-admin';
 
-if (!db) {
-  throw new Error('Firebase Admin has not been initialized. Check your environment variables.');
-}
-
 export async function POST(req: NextRequest) {
   try {
     const { code, userId } = await req.json();

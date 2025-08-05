@@ -14,27 +14,22 @@ if (!admin.apps.length) {
         credential: admin.credential.cert(serviceAccount),
         storageBucket: 'linkstream-ystti.appspot.com',
       });
-      console.log('✓ Firebase Admin initialized with service account key.');
     } else {
-      // Fallback for environments where GOOGLE_APPLICATION_CREDENTIALS might be set
-      // or for Firebase Hosting/Functions environments.
       app = admin.initializeApp({
         storageBucket: 'linkstream-ystti.appspot.com',
       });
-      console.log('✓ Firebase Admin initialized with default credentials.');
     }
   } catch (error: any) {
-     console.error('❌ Failed to initialize Firebase Admin:', error.message);
-     // If initialization fails, subsequent calls will also fail,
-     // but we prevent the app from crashing at the module level.
+     console.error('Failed to initialize Firebase Admin:', error.message);
+     // We will throw here to make it clear that initialization failed.
+     throw new Error('Firebase Admin SDK initialization failed. Check your service account credentials.');
   }
 } else {
   app = admin.app();
 }
 
+const auth = admin.auth();
+const db = admin.firestore();
+const storage = admin.storage();
 
-export const auth = app ? admin.auth(app) : undefined;
-export const db = app ? admin.firestore(app) : undefined;
-export const storage = app ? admin.storage(app) : undefined;
-
-export { app };
+export { app, auth, db, storage };

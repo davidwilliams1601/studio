@@ -5,10 +5,6 @@ import { CalendarReminderService } from '@/lib/calendar-integration';
 import { SubscriptionTier, getUserTierLimits } from '@/lib/subscription-tiers';
 import { db } from '@/lib/firebase-admin';
 
-if (!db) {
-  throw new Error('Firebase Admin has not been initialized. Check your environment variables.');
-}
-
 export async function POST(req: NextRequest) {
   try {
     const { 

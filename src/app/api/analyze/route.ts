@@ -5,10 +5,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { storage } from '@/lib/firebase-admin';
 import JSZip from 'jszip';
 
-if (!storage) {
-  throw new Error('Firebase Admin has not been initialized. Check your environment variables.');
-}
-
 
 function parseCsv(csv: string): string[][] {
   if (!csv) return [];
