@@ -1,8 +1,13 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { CalendarReminderService } from '@/lib/calendar-integration';
 import { shouldSendReminder } from '@/lib/subscription-tiers';
 import { db } from '@/lib/firebase-admin';
+
+if (!db) {
+  throw new Error('Firebase Admin has not been initialized. Check your environment variables.');
+}
 
 // This would be called by a cron job (Vercel Cron, GitHub Actions, etc.)
 export async function GET(req: NextRequest) {

@@ -1,10 +1,15 @@
+
 'use server';
 
 import { z } from 'zod';
-import { auth, db, app } from '@/lib/firebase-admin';
+import { auth, db } from '@/lib/firebase-admin';
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
+
+if (!auth || !db) {
+  throw new Error('Firebase Admin has not been initialized. Check your environment variables.');
+}
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 

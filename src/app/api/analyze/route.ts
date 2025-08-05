@@ -1,8 +1,14 @@
 
+'use server';
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getStorage } from 'firebase-admin/storage';
+import { storage } from '@/lib/firebase-admin';
 import JSZip from 'jszip';
-import { app } from '@/lib/firebase-admin';
+
+if (!storage) {
+  throw new Error('Firebase Admin has not been initialized. Check your environment variables.');
+}
+
 
 function parseCsv(csv: string): string[][] {
   if (!csv) return [];
@@ -36,7 +42,7 @@ export async function POST(req: NextRequest) {
     // Initialize Firebase Admin
     let bucket;
     try {
-      bucket = getStorage(app).bucket();
+      bucket = storage.bucket();
       console.log('Firebase storage bucket initialized');
     } catch (firebaseError) {
       console.error('Firebase initialization error:', firebaseError);
@@ -202,8 +208,11 @@ export async function POST(req: NextRequest) {
     // Optionally save processed data
     let processedPath = '';
     try {
-      const profileFile = zip.file(/profile.json/i)[0];
-      const profileContent = profileFile ? await profileFile.async('string') : 'File not found or empty.';
+      const profileFiles = Object.values(zip.files).filter(file => file.name.toLowerCase().endsWith('profile.json'));
+      let profileContent = 'File not found or empty.';
+      if (profileFiles.length > 0) {
+        profileContent = await profileFiles[0].async('string');
+      }
 
       const combinedData = `
 --- CONNECTIONS ---

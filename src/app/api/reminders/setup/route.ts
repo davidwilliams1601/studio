@@ -1,8 +1,13 @@
+
 // src/app/api/reminders/setup/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { CalendarReminderService } from '@/lib/calendar-integration';
 import { SubscriptionTier, getUserTierLimits } from '@/lib/subscription-tiers';
 import { db } from '@/lib/firebase-admin';
+
+if (!db) {
+  throw new Error('Firebase Admin has not been initialized. Check your environment variables.');
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,11 +57,11 @@ export async function POST(req: NextRequest) {
           calendarIntegration.calendarId
         );
       }
-      
-      // Always provide ICS as fallback
-      icsFile = CalendarReminderService.generateICSFile(calendarEvent);
     }
-
+    
+    // Always provide ICS as fallback, regardless of integration status
+    icsFile = CalendarReminderService.generateICSFile(calendarEvent);
+    
     // Store reminder settings in database
     await db.collection('users').doc(userId).update({
       reminderSettings: {

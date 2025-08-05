@@ -1,6 +1,11 @@
+
 // src/app/api/calendar/connect/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase-admin';
+
+if (!db) {
+  throw new Error('Firebase Admin has not been initialized. Check your environment variables.');
+}
 
 export async function POST(req: NextRequest) {
   try {
