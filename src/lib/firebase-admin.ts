@@ -1,15 +1,19 @@
-
 'use server';
 
 import * as admin from 'firebase-admin';
 
+let app: admin.app.App;
+
 if (!admin.apps.length) {
-  admin.initializeApp({
+  app = admin.initializeApp({
     storageBucket: 'linkstream-ystti.appspot.com',
   });
+} else {
+  app = admin.app();
 }
 
-export const app = admin.app();
-export const auth = admin.auth();
-export const db = admin.firestore();
-export const storage = admin.storage();
+export const auth = admin.auth(app);
+export const db = admin.firestore(app);
+export const storage = admin.storage(app);
+
+export { app };
