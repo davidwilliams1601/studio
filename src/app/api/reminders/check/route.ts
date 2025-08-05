@@ -1,9 +1,8 @@
 
-
 import { NextRequest, NextResponse } from 'next/server';
 import { CalendarReminderService } from '@/lib/calendar-integration';
 import { shouldSendReminder } from '@/lib/subscription-tiers';
-import { db } from '@/lib/firebase-admin';
+import { getDb } from '@/lib/firebase-admin';
 
 // This would be called by a cron job (Vercel Cron, GitHub Actions, etc.)
 export async function GET(req: NextRequest) {
@@ -17,7 +16,8 @@ export async function GET(req: NextRequest) {
 
     const now = new Date();
     const remindersSent = [];
-
+    
+    const db = await getDb();
     // Query users who might need reminders
     const usersSnapshot = await db.collection('users')
       .where('reminderSettings.nextReminderDate', '<=', now)

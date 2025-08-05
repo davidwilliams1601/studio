@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { auth, db } from '@/lib/firebase-admin';
+import { getAuth, getDb } from '@/lib/firebase-admin';
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
@@ -29,7 +29,8 @@ export async function createUserAction(
         firebaseUID: uid,
       },
     });
-
+    
+    const db = await getDb();
     await db.collection('users').doc(uid).set({
       uid: uid,
       email: email,
@@ -47,6 +48,7 @@ export async function createUserAction(
 async function getOrCreateStripeCustomerId(
   firebaseUID: string
 ): Promise<string> {
+  const db = await getDb();
   const userDocRef = db.collection('users').doc(firebaseUID);
   const userDocSnap = await userDocRef.get();
   const userData = userDocSnap.data();
@@ -54,7 +56,8 @@ async function getOrCreateStripeCustomerId(
   if (userData && userData.stripeCustomerId) {
     return userData.stripeCustomerId;
   }
-
+  
+  const auth = await getAuth();
   const user = await auth.getUser(firebaseUID);
 
   const customer = await stripe.customers.create({

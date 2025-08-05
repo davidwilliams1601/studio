@@ -1,7 +1,7 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { storage } from '@/lib/firebase-admin';
+import { getStorage } from '@/lib/firebase-admin';
 import JSZip from 'jszip';
 
 
@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
     // Initialize Firebase Admin
     let bucket;
     try {
+      const storage = await getStorage();
       bucket = storage.bucket();
       console.log('Firebase storage bucket initialized');
     } catch (firebaseError) {

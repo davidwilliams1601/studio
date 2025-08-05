@@ -1,7 +1,6 @@
-
 // src/app/api/calendar/connect/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase-admin';
+import { getDb } from '@/lib/firebase-admin';
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,6 +34,7 @@ export async function POST(req: NextRequest) {
       throw new Error(tokens.error_description || 'Failed to get access token');
     }
 
+    const db = await getDb();
     // Store calendar integration
     await db.collection('users').doc(userId).update({
       calendarIntegration: {
