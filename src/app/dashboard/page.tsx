@@ -1,12 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase";
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -23,6 +28,46 @@ export default function Dashboard() {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.name.endsWith(".zip")) {
+      alert("Please upload a ZIP file containing your LinkedIn data export.");
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress("Uploading file...");
+
+    try {
+      // Upload to Firebase Storage
+      const storagePath = `uploads/${user.uid}/${Date.now()}-${file.name}`;
+      const storageRef = ref(storage, storagePath);
+      
+      setUploadProgress("Uploading to cloud storage...");
+      await uploadBytes(storageRef, file);
+      
+      setUploadProgress("Processing file...");
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      // Here we will add file processing next
+      setUploadProgress("Analysis complete!");
+      
+      // Redirect to results page (we will create this next)
+      setTimeout(() => {
+        router.push("/dashboard/results");
+      }, 1000);
+      
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      alert("Upload failed: " + error.message);
+      setUploadProgress("");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -31,9 +76,7 @@ export default function Dashboard() {
     );
   }
 
-  if (!user) {
-    return null; // Will redirect in useEffect
-  }
+  if (!user) return null;
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
@@ -58,37 +101,43 @@ export default function Dashboard() {
           <p style={{ color: "#64748b", marginBottom: "2rem" }}>Upload your LinkedIn data export to analyze your network and activity.</p>
           
           <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
-            <div style={{ textAlign: "center", border: "2px dashed #d1d5db", borderRadius: "8px", padding: "3rem" }}>
-              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📁</div>
-              <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "0.5rem" }}>Upload LinkedIn Data</h3>
-              <p style={{ color: "#64748b", marginBottom: "1rem" }}>Select your LinkedIn data export ZIP file</p>
-              <input 
-                type="file" 
-                accept=".zip"
-                style={{ display: "none" }}
-                id="file-upload"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    alert(`Selected: ${file.name} - File upload coming next!`);
-                  }
-                }}
-              />
-              <label 
-                htmlFor="file-upload"
-                style={{ 
-                  display: "inline-block",
-                  padding: "0.75rem 1.5rem", 
-                  background: "#3b82f6", 
-                  color: "white", 
-                  borderRadius: "4px", 
-                  cursor: "pointer", 
-                  fontWeight: "bold" 
-                }}
-              >
-                Choose File
-              </label>
-            </div>
+            {uploading ? (
+              <div style={{ textAlign: "center", padding: "3rem" }}>
+                <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>⏳</div>
+                <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "0.5rem" }}>Processing Your Data</h3>
+                <p style={{ color: "#64748b" }}>{uploadProgress}</p>
+                <div style={{ background: "#e5e7eb", borderRadius: "4px", height: "8px", margin: "1rem auto", maxWidth: "300px" }}>
+                  <div style={{ background: "#3b82f6", height: "100%", borderRadius: "4px", width: "70%", animation: "pulse 2s infinite" }}></div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", border: "2px dashed #d1d5db", borderRadius: "8px", padding: "3rem" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📁</div>
+                <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "0.5rem" }}>Upload LinkedIn Data</h3>
+                <p style={{ color: "#64748b", marginBottom: "1rem" }}>Select your LinkedIn data export ZIP file</p>
+                <input 
+                  type="file" 
+                  accept=".zip"
+                  style={{ display: "none" }}
+                  id="file-upload"
+                  onChange={handleFileUpload}
+                />
+                <label 
+                  htmlFor="file-upload"
+                  style={{ 
+                    display: "inline-block",
+                    padding: "0.75rem 1.5rem", 
+                    background: "#3b82f6", 
+                    color: "white", 
+                    borderRadius: "4px", 
+                    cursor: "pointer", 
+                    fontWeight: "bold" 
+                  }}
+                >
+                  Choose File
+                </label>
+              </div>
+            )}
           </div>
           
           <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
