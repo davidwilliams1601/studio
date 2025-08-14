@@ -1,10 +1,54 @@
+"use client";
+
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 export default function Dashboard() {
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
       <div style={{ background: "white", borderBottom: "1px solid #e2e8f0", padding: "1rem 2rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "1200px", margin: "0 auto" }}>
           <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#1e293b" }}>LinkStream Dashboard</h1>
-          <a href="/" style={{ padding: "0.5rem 1rem", background: "#ef4444", color: "white", textDecoration: "none", borderRadius: "4px", fontWeight: "bold" }}>Sign Out</a>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <span style={{ color: "#64748b", fontSize: "0.875rem" }}>Welcome, {user.email}</span>
+            <button 
+              onClick={handleLogout}
+              style={{ padding: "0.5rem 1rem", background: "#ef4444", color: "white", border: "none", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </div>
       
@@ -18,7 +62,32 @@ export default function Dashboard() {
               <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📁</div>
               <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "0.5rem" }}>Upload LinkedIn Data</h3>
               <p style={{ color: "#64748b", marginBottom: "1rem" }}>Select your LinkedIn data export ZIP file</p>
-              <button style={{ padding: "0.75rem 1.5rem", background: "#3b82f6", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>Choose File</button>
+              <input 
+                type="file" 
+                accept=".zip"
+                style={{ display: "none" }}
+                id="file-upload"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    alert(`Selected: ${file.name} - File upload coming next!`);
+                  }
+                }}
+              />
+              <label 
+                htmlFor="file-upload"
+                style={{ 
+                  display: "inline-block",
+                  padding: "0.75rem 1.5rem", 
+                  background: "#3b82f6", 
+                  color: "white", 
+                  borderRadius: "4px", 
+                  cursor: "pointer", 
+                  fontWeight: "bold" 
+                }}
+              >
+                Choose File
+              </label>
             </div>
           </div>
           
@@ -35,5 +104,5 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }
