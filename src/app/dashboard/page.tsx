@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 
 export default function Dashboard() {
@@ -28,7 +28,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
@@ -48,18 +48,34 @@ export default function Dashboard() {
       setUploadProgress("Uploading to cloud storage...");
       await uploadBytes(storageRef, file);
       
-      setUploadProgress("Processing file...");
-      const downloadURL = await getDownloadURL(storageRef);
+      setUploadProgress("Analyzing your data...");
       
-      // Here we will add file processing next
-      setUploadProgress("Analysis complete!");
+      // Call our API to analyze the file
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          userId: user.uid,
+          storagePath: storagePath
+        }),
+      });
       
-      // Redirect to results page (we will create this next)
-      setTimeout(() => {
-        router.push("/dashboard/results");
-      }, 1000);
+      const result = await response.json();
       
-    } catch (error: any) {
+      if (result.success) {
+        setUploadProgress("Analysis complete!");
+        
+        // Store results in sessionStorage and redirect
+        sessionStorage.setItem("analysisResults", JSON.stringify(result.data));
+        setTimeout(() => {
+          router.push("/dashboard/results");
+        }, 1000);
+      } else {
+        throw new Error(result.error);
+      }
+      
+    } catch (error) {
       console.error("Upload error:", error);
       alert("Upload failed: " + error.message);
       setUploadProgress("");
@@ -68,14 +84,7 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div>Loading...</div>
-      </div>
-    );
-  }
-
+  if (loading) return <div>Loading...</div>;
   if (!user) return null;
 
   return (
