@@ -29,10 +29,13 @@ export default function Dashboard() {
   const processLinkedInZip = async (file) => {
     setUploadProgress("Reading ZIP file...");
     
-    // Import JSZip dynamically (we need to add this to dependencies)
     const JSZip = (await import('jszip')).default;
-    
     const zip = await JSZip.loadAsync(file);
+    
+    // Log all files in the ZIP to see what's available
+    const fileNames = Object.keys(zip.files);
+    console.log("All files in ZIP:", fileNames);
+    
     const results = {
       fileName: file.name,
       processedAt: new Date().toISOString(),
@@ -43,49 +46,63 @@ export default function Dashboard() {
         companies: 0
       },
       insights: [],
-      rawData: {}
+      rawData: { availableFiles: fileNames }
     };
 
     setUploadProgress("Analyzing connections...");
     
-    // Look for connections.csv
-    const connectionsFile = Object.keys(zip.files).find(name => 
-      name.toLowerCase().includes('connections') && name.endsWith('.csv')
+    // Look for connections.csv (case insensitive)
+    const connectionsFile = fileNames.find(name => 
+      name.toLowerCase().includes('connections') && name.toLowerCase().endsWith('.csv')
     );
+    
+    console.log("Looking for connections file:", connectionsFile);
     
     if (connectionsFile) {
       const connectionsContent = await zip.files[connectionsFile].async('text');
       const lines = connectionsContent.split('\n').filter(line => line.trim());
-      results.stats.connections = Math.max(0, lines.length - 1); // Subtract header
-      console.log(`Found ${results.stats.connections} connections`);
+      results.stats.connections = Math.max(0, lines.length - 1);
+      console.log(`Found ${results.stats.connections} connections in file: ${connectionsFile}`);
     }
 
     setUploadProgress("Analyzing messages...");
     
-    // Look for messages.csv
-    const messagesFile = Object.keys(zip.files).find(name => 
-      name.toLowerCase().includes('messages') && name.endsWith('.csv')
+    // Look for various message file patterns
+    const messagePatterns = ['messages', 'conversation', 'inbox'];
+    const messagesFile = fileNames.find(name => 
+      messagePatterns.some(pattern => name.toLowerCase().includes(pattern)) && 
+      name.toLowerCase().endsWith('.csv')
     );
+    
+    console.log("Looking for messages file:", messagesFile);
+    console.log("Files containing 'message':", fileNames.filter(name => name.toLowerCase().includes('message')));
     
     if (messagesFile) {
       const messagesContent = await zip.files[messagesFile].async('text');
       const lines = messagesContent.split('\n').filter(line => line.trim());
       results.stats.messages = Math.max(0, lines.length - 1);
-      console.log(`Found ${results.stats.messages} messages`);
+      console.log(`Found ${results.stats.messages} messages in file: ${messagesFile}`);
     }
 
     setUploadProgress("Analyzing posts...");
     
-    // Look for posts.csv or articles.csv
-    const postsFile = Object.keys(zip.files).find(name => 
-      (name.toLowerCase().includes('posts') || name.toLowerCase().includes('articles')) && name.endsWith('.csv')
+    // Look for various post/content file patterns
+    const postPatterns = ['posts', 'articles', 'shares', 'updates', 'activity'];
+    const postsFile = fileNames.find(name => 
+      postPatterns.some(pattern => name.toLowerCase().includes(pattern)) && 
+      name.toLowerCase().endsWith('.csv')
     );
+    
+    console.log("Looking for posts file:", postsFile);
+    console.log("Files containing 'post' or 'article':", fileNames.filter(name => 
+      name.toLowerCase().includes('post') || name.toLowerCase().includes('article')
+    ));
     
     if (postsFile) {
       const postsContent = await zip.files[postsFile].async('text');
       const lines = postsContent.split('\n').filter(line => line.trim());
       results.stats.posts = Math.max(0, lines.length - 1);
-      console.log(`Found ${results.stats.posts} posts/articles`);
+      console.log(`Found ${results.stats.posts} posts in file: ${postsFile}`);
     }
 
     // Generate insights based on real data
