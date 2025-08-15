@@ -9,6 +9,7 @@ export default function Dashboard() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -25,36 +26,107 @@ export default function Dashboard() {
     }
   };
 
+  const processLinkedInZip = async (file) => {
+    setUploadProgress("Reading ZIP file...");
+    
+    // Import JSZip dynamically (we need to add this to dependencies)
+    const JSZip = (await import('jszip')).default;
+    
+    const zip = await JSZip.loadAsync(file);
+    const results = {
+      fileName: file.name,
+      processedAt: new Date().toISOString(),
+      stats: {
+        connections: 0,
+        messages: 0,
+        posts: 0,
+        companies: 0
+      },
+      insights: [],
+      rawData: {}
+    };
+
+    setUploadProgress("Analyzing connections...");
+    
+    // Look for connections.csv
+    const connectionsFile = Object.keys(zip.files).find(name => 
+      name.toLowerCase().includes('connections') && name.endsWith('.csv')
+    );
+    
+    if (connectionsFile) {
+      const connectionsContent = await zip.files[connectionsFile].async('text');
+      const lines = connectionsContent.split('\n').filter(line => line.trim());
+      results.stats.connections = Math.max(0, lines.length - 1); // Subtract header
+      console.log(`Found ${results.stats.connections} connections`);
+    }
+
+    setUploadProgress("Analyzing messages...");
+    
+    // Look for messages.csv
+    const messagesFile = Object.keys(zip.files).find(name => 
+      name.toLowerCase().includes('messages') && name.endsWith('.csv')
+    );
+    
+    if (messagesFile) {
+      const messagesContent = await zip.files[messagesFile].async('text');
+      const lines = messagesContent.split('\n').filter(line => line.trim());
+      results.stats.messages = Math.max(0, lines.length - 1);
+      console.log(`Found ${results.stats.messages} messages`);
+    }
+
+    setUploadProgress("Analyzing posts...");
+    
+    // Look for posts.csv or articles.csv
+    const postsFile = Object.keys(zip.files).find(name => 
+      (name.toLowerCase().includes('posts') || name.toLowerCase().includes('articles')) && name.endsWith('.csv')
+    );
+    
+    if (postsFile) {
+      const postsContent = await zip.files[postsFile].async('text');
+      const lines = postsContent.split('\n').filter(line => line.trim());
+      results.stats.posts = Math.max(0, lines.length - 1);
+      console.log(`Found ${results.stats.posts} posts/articles`);
+    }
+
+    // Generate insights based on real data
+    results.insights = [
+      `You have ${results.stats.connections} professional connections`,
+      `Your messaging activity shows ${results.stats.messages} conversation threads`,
+      `You've created ${results.stats.posts} posts and articles`,
+      `Analysis based on your actual LinkedIn data export`
+    ];
+
+    console.log("Final analysis results:", results);
+    return results;
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    console.log("File selected:", file.name);
+    if (!file.name.endsWith('.zip')) {
+      alert('Please upload a ZIP file from LinkedIn data export');
+      return;
+    }
+
     setUploading(true);
     
-    // Simulate processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Create mock results and store them
-    const mockResults = {
-      fileName: file.name,
-      processedAt: new Date().toISOString(),
-      stats: {
-        connections: Math.floor(Math.random() * 2000) + 500,
-        messages: Math.floor(Math.random() * 200) + 50,
-        posts: Math.floor(Math.random() * 100) + 10,
-      }
-    };
-    
-    console.log("Storing results:", mockResults);
-    sessionStorage.setItem("analysisResults", JSON.stringify(mockResults));
-    
-    // Verify it was stored
-    const stored = sessionStorage.getItem("analysisResults");
-    console.log("Stored data:", stored);
-    
-    setUploading(false);
-    router.push("/dashboard/results");
+    try {
+      const results = await processLinkedInZip(file);
+      
+      setUploadProgress("Analysis complete!");
+      sessionStorage.setItem("analysisResults", JSON.stringify(results));
+      
+      setTimeout(() => {
+        router.push("/dashboard/results");
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Processing error:", error);
+      alert("Error processing file: " + error.message);
+      setUploading(false);
+      setUploadProgress("");
+    }
   };
 
   if (loading) return <div>Loading...</div>;
@@ -73,12 +145,15 @@ export default function Dashboard() {
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", marginBottom: "2rem" }}>
           <h2>Upload LinkedIn Data</h2>
           {uploading ? (
-            <p>Processing your file...</p>
+            <div>
+              <p>Processing your LinkedIn data...</p>
+              <p style={{ color: "#64748b", fontSize: "0.875rem" }}>{uploadProgress}</p>
+            </div>
           ) : (
             <>
               <input type="file" accept=".zip" onChange={handleFileUpload} />
               <p style={{ fontSize: "0.875rem", color: "#64748b", marginTop: "1rem" }}>
-                Upload your LinkedIn data export ZIP file for analysis
+                Upload your LinkedIn data export ZIP file for real analysis
               </p>
             </>
           )}
