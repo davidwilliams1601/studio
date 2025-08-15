@@ -1,34 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
 
 export default function Results() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("Results page loading...");
-    
-    // Get results from sessionStorage
     const storedResults = sessionStorage.getItem("analysisResults");
-    console.log("Raw stored data:", storedResults);
-    
     if (storedResults) {
-      try {
-        const parsed = JSON.parse(storedResults);
-        console.log("Parsed results:", parsed);
-        setResults(parsed);
-      } catch (error) {
-        console.error("Error parsing results:", error);
-      }
-    } else {
-      console.log("No stored results found");
+      setResults(JSON.parse(storedResults));
     }
     setLoading(false);
   }, []);
-
-  console.log("Current results state:", results);
-  console.log("Loading state:", loading);
 
   if (loading) {
     return (
@@ -50,54 +35,148 @@ export default function Results() {
     );
   }
 
+  // Prepare data for charts
+  const activityData = [
+    { name: 'Connections', value: results.stats.connections, color: '#3b82f6' },
+    { name: 'Posts/Shares', value: results.stats.posts, color: '#10b981' },
+    { name: 'Messages', value: results.stats.messages, color: '#f59e0b' },
+    { name: 'Comments', value: results.stats.comments || 0, color: '#ef4444' },
+    { name: 'Companies', value: results.stats.companies || 0, color: '#8b5cf6' }
+  ];
+
+  const engagementData = [
+    { category: 'Content Creation', posts: results.stats.posts, comments: results.stats.comments || 0 },
+    { category: 'Networking', connections: results.stats.connections, messages: results.stats.messages },
+  ];
+
+  // Mock growth data (in a real app, this would come from historical data)
+  const growthData = [
+    { month: 'Jan', connections: Math.floor(results.stats.connections * 0.7) },
+    { month: 'Feb', connections: Math.floor(results.stats.connections * 0.75) },
+    { month: 'Mar', connections: Math.floor(results.stats.connections * 0.8) },
+    { month: 'Apr', connections: Math.floor(results.stats.connections * 0.85) },
+    { month: 'May', connections: Math.floor(results.stats.connections * 0.9) },
+    { month: 'Jun', connections: Math.floor(results.stats.connections * 0.95) },
+    { month: 'Jul', connections: results.stats.connections },
+  ];
+
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", padding: "2rem" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+      <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
         <div style={{ marginBottom: "2rem" }}>
           <a href="/dashboard" style={{ color: "#3b82f6", textDecoration: "none" }}>← Back to Dashboard</a>
         </div>
         
-        <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#1e293b", marginBottom: "1rem" }}>Analysis Results</h1>
+        <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#1e293b", marginBottom: "1rem" }}>LinkedIn Analytics Dashboard</h1>
         <p style={{ color: "#64748b", marginBottom: "2rem" }}>
           File: {results.fileName} • Processed: {new Date(results.processedAt).toLocaleDateString()}
         </p>
         
-        <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", marginBottom: "2rem" }}>
-          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
-            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem" }}>📊 Network Overview</h3>
-            <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>
+        {/* Summary Cards */}
+        <div style={{ display: "grid", gap: "1.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", marginBottom: "3rem" }}>
+          <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
+            <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>
               {results.stats.connections.toLocaleString()}
             </div>
-            <p style={{ color: "#64748b" }}>Total Connections</p>
+            <p style={{ color: "#64748b", fontWeight: "500" }}>Connections</p>
           </div>
           
-          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
-            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem" }}>💬 Messages</h3>
-            <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#10b981", marginBottom: "0.5rem" }}>
-              {results.stats.messages.toLocaleString()}
-            </div>
-            <p style={{ color: "#64748b" }}>Conversations</p>
-          </div>
-          
-          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
-            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem" }}>📝 Content</h3>
-            <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#f59e0b", marginBottom: "0.5rem" }}>
+          <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
+            <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#10b981", marginBottom: "0.5rem" }}>
               {results.stats.posts.toLocaleString()}
             </div>
-            <p style={{ color: "#64748b" }}>Posts & Articles</p>
+            <p style={{ color: "#64748b", fontWeight: "500" }}>Posts & Shares</p>
+          </div>
+          
+          <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
+            <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#f59e0b", marginBottom: "0.5rem" }}>
+              {results.stats.messages.toLocaleString()}
+            </div>
+            <p style={{ color: "#64748b", fontWeight: "500" }}>Messages</p>
+          </div>
+          
+          <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
+            <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#ef4444", marginBottom: "0.5rem" }}>
+              {(results.stats.comments || 0).toLocaleString()}
+            </div>
+            <p style={{ color: "#64748b", fontWeight: "500" }}>Comments</p>
           </div>
         </div>
-        
+
+        {/* Charts Section */}
+        <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "1fr 1fr", marginBottom: "2rem" }}>
+          
+          {/* Activity Overview Bar Chart */}
+          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
+              📊 Activity Overview
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={activityData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Activity Distribution Pie Chart */}
+          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
+              🥧 Activity Distribution
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={activityData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {activityData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Network Growth Line Chart */}
+        <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
+          <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
+            📈 Network Growth Trend (Estimated)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={growthData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="connections" stroke="#3b82f6" strokeWidth={3} dot={{ fill: '#3b82f6', strokeWidth: 2, r: 6 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Key Insights */}
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
           <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem" }}>🎯 Key Insights</h3>
-          <ul style={{ lineHeight: "1.6", color: "#64748b" }}>
-            <li>Your network shows strong professional diversity</li>
-            <li>Most active connections work in Technology and Business sectors</li>
-            <li>Your engagement patterns suggest strategic networking</li>
-            <li>Content creation shows consistent professional presence</li>
+          <ul style={{ lineHeight: "1.8", color: "#64748b" }}>
+            {results.insights.map((insight, index) => (
+              <li key={index} style={{ marginBottom: "0.5rem" }}>{insight}</li>
+            ))}
           </ul>
         </div>
         
+        {/* Action Buttons */}
         <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
           <button 
             onClick={() => window.print()}
@@ -111,7 +190,7 @@ export default function Results() {
               cursor: "pointer" 
             }}
           >
-            Print Report
+            📄 Print Report
           </button>
           <button 
             onClick={() => {
@@ -133,7 +212,7 @@ export default function Results() {
               cursor: "pointer" 
             }}
           >
-            Download Data
+            📊 Download Data
           </button>
         </div>
       </div>
