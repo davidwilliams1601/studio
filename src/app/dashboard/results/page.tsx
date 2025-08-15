@@ -7,13 +7,28 @@ export default function Results() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("Results page loading...");
+    
     // Get results from sessionStorage
     const storedResults = sessionStorage.getItem("analysisResults");
+    console.log("Raw stored data:", storedResults);
+    
     if (storedResults) {
-      setResults(JSON.parse(storedResults));
+      try {
+        const parsed = JSON.parse(storedResults);
+        console.log("Parsed results:", parsed);
+        setResults(parsed);
+      } catch (error) {
+        console.error("Error parsing results:", error);
+      }
+    } else {
+      console.log("No stored results found");
     }
     setLoading(false);
   }, []);
+
+  console.log("Current results state:", results);
+  console.log("Loading state:", loading);
 
   if (loading) {
     return (
