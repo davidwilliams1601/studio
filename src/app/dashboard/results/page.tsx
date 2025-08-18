@@ -5,15 +5,51 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cel
 
 export default function Results() {
   const [results, setResults] = useState(null);
+  const [aiInsights, setAiInsights] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     const storedResults = sessionStorage.getItem("analysisResults");
     if (storedResults) {
-      setResults(JSON.parse(storedResults));
+      const data = JSON.parse(storedResults);
+      setResults(data);
+      
+      // Automatically generate AI insights
+      generateAiInsights(data);
     }
     setLoading(false);
   }, []);
+
+  const generateAiInsights = async (data) => {
+    setAiLoading(true);
+    try {
+      const response = await fetch('/api/ai-insights', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          stats: data.stats,
+          analytics: data.analytics,
+          fileName: data.fileName
+        }),
+      });
+
+      const aiData = await response.json();
+      
+      if (aiData.success) {
+        setAiInsights(aiData.insights);
+        console.log('AI insights generated successfully');
+      } else {
+        console.error('AI insights generation failed:', aiData.error);
+      }
+    } catch (error) {
+      console.error('Error generating AI insights:', error);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -44,7 +80,6 @@ export default function Results() {
     { name: 'Companies', value: results.stats.companies || 0, color: '#8b5cf6' }
   ];
 
-  // Industry breakdown data
   const industryData = results.analytics?.industries ? 
     Object.entries(results.analytics.industries).map(([industry, count]) => ({
       name: industry,
@@ -52,20 +87,17 @@ export default function Results() {
       percentage: ((count / results.stats.connections) * 100).toFixed(1)
     })) : [];
 
-  // Geographic data - sorted by value for better visualization
   const geographicData = results.analytics?.locations ? 
     Object.entries(results.analytics.locations)
-      .sort(([,a], [,b]) => b - a) // Sort by count (descending)
+      .sort(([,a], [,b]) => b - a)
       .map(([location, count]) => ({
         name: location,
         value: count,
         percentage: ((count / results.stats.connections) * 100).toFixed(1)
       })) : [];
 
-  // Top geographic regions (top 5)
   const topRegions = geographicData.slice(0, 5);
 
-  // Engagement ratios
   const engagementMetrics = [
     { 
       metric: 'Content Creation Rate', 
@@ -102,10 +134,95 @@ export default function Results() {
           <a href="/dashboard" style={{ color: "#3b82f6", textDecoration: "none" }}>← Back to Dashboard</a>
         </div>
         
-        <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#1e293b", marginBottom: "1rem" }}>Advanced LinkedIn Analytics</h1>
+        <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#1e293b", marginBottom: "1rem" }}>AI-Powered LinkedIn Analytics</h1>
         <p style={{ color: "#64748b", marginBottom: "2rem" }}>
           File: {results.fileName} • Processed: {new Date(results.processedAt).toLocaleDateString()}
         </p>
+
+        {/* AI Insights Section */}
+        {aiLoading && (
+          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem", textAlign: "center" }}>
+            <div style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>🤖</div>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "0.5rem" }}>Generating AI Insights...</h3>
+            <p style={{ color: "#64748b" }}>Analyzing your LinkedIn data with artificial intelligence</p>
+          </div>
+        )}
+
+        {aiInsights && (
+          <div style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", padding: "2rem", borderRadius: "12px", marginBottom: "3rem", color: "white" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "2rem" }}>
+              <div style={{ fontSize: "2rem", marginRight: "1rem" }}>🤖</div>
+              <div>
+                <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "0.5rem" }}>AI-Powered Professional Insights</h2>
+                <p style={{ opacity: 0.9 }}>Personalized recommendations based on your LinkedIn data analysis</p>
+              </div>
+            </div>
+
+            {/* Network Health Score */}
+            <div style={{ background: "rgba(255,255,255,0.1)", padding: "1.5rem", borderRadius: "8px", marginBottom: "2rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                <h3 style={{ fontSize: "1.25rem", fontWeight: "bold" }}>Network Health Score</h3>
+                <div style={{ fontSize: "2rem", fontWeight: "bold" }}>{aiInsights.networkHealth?.score}/100</div>
+              </div>
+              <p style={{ opacity: 0.9, marginBottom: "1rem" }}>{aiInsights.networkHealth?.assessment}</p>
+              <div style={{ display: "grid", gap: "0.5rem" }}>
+                {aiInsights.networkHealth?.recommendations?.map((rec, index) => (
+                  <div key={index} style={{ fontSize: "0.875rem", opacity: 0.8 }}>• {rec}</div>
+                ))}
+              </div>
+            </div>
+
+            {/* Key AI Insights */}
+            <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "1fr 1fr" }}>
+              <div style={{ background: "rgba(255,255,255,0.1)", padding: "1.5rem", borderRadius: "8px" }}>
+                <h4 style={{ fontSize: "1.125rem", fontWeight: "bold", marginBottom: "1rem" }}>🎯 Key Insights</h4>
+                <div style={{ display: "grid", gap: "0.5rem" }}>
+                  {aiInsights.keyInsights?.slice(0, 3).map((insight, index) => (
+                    <div key={index} style={{ fontSize: "0.875rem", opacity: 0.9 }}>• {insight}</div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,0.1)", padding: "1.5rem", borderRadius: "8px" }}>
+                <h4 style={{ fontSize: "1.125rem", fontWeight: "bold", marginBottom: "1rem" }}>📈 Content Strategy</h4>
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <strong>Rating:</strong> {aiInsights.contentStrategy?.rating || 'Good'}
+                </div>
+                <div style={{ fontSize: "0.875rem", opacity: 0.9" }}>
+                  {aiInsights.contentStrategy?.advice}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Items */}
+            <div style={{ marginTop: "2rem" }}>
+              <h4 style={{ fontSize: "1.125rem", fontWeight: "bold", marginBottom: "1rem" }}>⚡ Priority Action Items</h4>
+              <div style={{ display: "grid", gap: "1rem" }}>
+                {aiInsights.actionItems?.slice(0, 3).map((item, index) => (
+                  <div key={index} style={{ background: "rgba(255,255,255,0.1)", padding: "1rem", borderRadius: "6px", display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                        <span style={{ 
+                          background: item.priority === 'High' ? '#ef4444' : item.priority === 'Medium' ? '#f59e0b' : '#10b981',
+                          color: 'white',
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold'
+                        }}>
+                          {item.priority}
+                        </span>
+                        <span style={{ fontSize: "0.875rem", opacity: 0.8 }}>{item.timeline}</span>
+                      </div>
+                      <div style={{ fontWeight: "500", marginBottom: "0.25rem" }}>{item.action}</div>
+                      <div style={{ fontSize: "0.875rem", opacity: 0.8 }}>{item.expectedImpact}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Summary Cards */}
         <div style={{ display: "grid", gap: "1.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", marginBottom: "3rem" }}>
@@ -132,9 +249,9 @@ export default function Results() {
           
           <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
             <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#ef4444", marginBottom: "0.5rem" }}>
-              {results.analytics?.skillsCount || 0}
+              {aiInsights?.networkHealth?.score || '—'}
             </div>
-            <p style={{ color: "#64748b", fontWeight: "500" }}>Skills Listed</p>
+            <p style={{ color: "#64748b", fontWeight: "500" }}>AI Health Score</p>
           </div>
         </div>
 
@@ -184,13 +301,12 @@ export default function Results() {
           </div>
         </div>
 
-        {/* Geographic Distribution - Better Layout */}
+        {/* Geographic Distribution */}
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
           <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
             🌍 Geographic Distribution
           </h3>
           
-          {/* Top Regions Visual */}
           <div style={{ marginBottom: "2rem" }}>
             <h4 style={{ fontSize: "1rem", fontWeight: "600", marginBottom: "1rem", color: "#374151" }}>Top Regions by Connection Count</h4>
             <div style={{ display: "grid", gap: "1rem" }}>
@@ -234,7 +350,7 @@ export default function Results() {
           </div>
         </div>
 
-        {/* Advanced Metrics */}
+        {/* Professional Metrics */}
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
           <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
             📈 Professional Metrics
@@ -252,9 +368,9 @@ export default function Results() {
           </div>
         </div>
 
-        {/* Key Insights */}
+        {/* Traditional Insights */}
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
-          <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem" }}>🎯 Key Insights</h3>
+          <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem" }}>🎯 Data Insights</h3>
           <div style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "1fr 1fr" }}>
             {results.insights.map((insight, index) => (
               <div key={index} style={{ padding: "0.75rem", background: "#f8fafc", borderRadius: "4px", fontSize: "0.875rem", color: "#64748b" }}>
@@ -282,12 +398,13 @@ export default function Results() {
           </button>
           <button 
             onClick={() => {
-              const dataStr = JSON.stringify(results, null, 2);
+              const fullData = { ...results, aiInsights };
+              const dataStr = JSON.stringify(fullData, null, 2);
               const dataBlob = new Blob([dataStr], {type: 'application/json'});
               const url = URL.createObjectURL(dataBlob);
               const link = document.createElement('a');
               link.href = url;
-              link.download = 'linkedin-advanced-analytics.json';
+              link.download = 'linkedin-ai-analytics-report.json';
               link.click();
             }}
             style={{ 
@@ -300,8 +417,24 @@ export default function Results() {
               cursor: "pointer" 
             }}
           >
-            📊 Download Report
+            🤖 Download AI Report
           </button>
+          {!aiInsights && !aiLoading && (
+            <button 
+              onClick={() => generateAiInsights(results)}
+              style={{ 
+                padding: "1rem 2rem", 
+                background: "#8b5cf6", 
+                color: "white", 
+                border: "none", 
+                borderRadius: "8px", 
+                fontWeight: "bold", 
+                cursor: "pointer" 
+              }}
+            >
+              🧠 Generate AI Insights
+            </button>
+          )}
         </div>
       </div>
     </div>
