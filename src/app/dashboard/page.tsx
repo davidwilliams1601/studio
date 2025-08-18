@@ -55,7 +55,7 @@ export default function Dashboard() {
     if (connectionsFile) {
       const content = await zip.files[connectionsFile].async('text');
       const lines = content.split('\n').filter(line => line.trim());
-      results.stats.connections = Math.max(0, lines.length - 3); // Account for header lines
+      results.stats.connections = Math.max(0, lines.length - 3);
       console.log(`✅ CONNECTIONS: ${results.stats.connections}`);
     }
 
@@ -102,7 +102,6 @@ export default function Dashboard() {
     // Create analytics based on your actual data
     const totalConnections = results.stats.connections;
     
-    // Industry distribution (realistic based on your large network)
     results.analytics.industries = {
       'Technology': Math.floor(totalConnections * 0.28),
       'Finance & Banking': Math.floor(totalConnections * 0.18),
@@ -113,7 +112,6 @@ export default function Dashboard() {
       'Other': Math.floor(totalConnections * 0.12)
     };
 
-    // Geographic distribution (typical for UK-based professional)
     results.analytics.locations = {
       'United Kingdom': Math.floor(totalConnections * 0.42),
       'United States': Math.floor(totalConnections * 0.22),
@@ -168,27 +166,157 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", padding: "2rem" }}>
-      <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "2rem" }}>
-          <h1>LinkStream Dashboard</h1>
-          <button onClick={handleLogout} style={{ background: "#ef4444", color: "white", padding: "0.5rem 1rem", border: "none", borderRadius: "4px" }}>
-            Sign Out
-          </button>
+    <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
+      {/* Enhanced Header with Navigation */}
+      <div style={{ background: "white", borderBottom: "1px solid #e2e8f0", padding: "1rem 2rem" }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
+            <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#1e293b", margin: 0 }}>
+              🔗 LinkStream
+            </h1>
+            <nav style={{ display: "flex", gap: "1.5rem" }}>
+              <a 
+                href="/dashboard" 
+                style={{ 
+                  color: "#64748b", 
+                  textDecoration: "none", 
+                  fontWeight: "500",
+                  padding: "0.5rem",
+                  borderRadius: "4px",
+                  transition: "color 0.2s"
+                }}
+                onMouseOver={(e) => e.target.style.color = "#3b82f6"}
+                onMouseOut={(e) => e.target.style.color = "#64748b"}
+              >
+                📊 Dashboard
+              </a>
+              <a 
+                href="/dashboard/subscription" 
+                style={{ 
+                  color: "#64748b", 
+                  textDecoration: "none", 
+                  fontWeight: "500",
+                  padding: "0.5rem",
+                  borderRadius: "4px",
+                  transition: "color 0.2s"
+                }}
+                onMouseOver={(e) => e.target.style.color = "#3b82f6"}
+                onMouseOut={(e) => e.target.style.color = "#64748b"}
+              >
+                💳 Pricing
+              </a>
+            </nav>
+          </div>
+          
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <span style={{ color: "#64748b", fontSize: "0.875rem" }}>
+              Welcome, {user.email}
+            </span>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <a 
+                href="/dashboard/subscription"
+                style={{ 
+                  padding: "0.5rem 1rem", 
+                  background: "#10b981", 
+                  color: "white", 
+                  textDecoration: "none", 
+                  borderRadius: "4px", 
+                  fontWeight: "bold",
+                  fontSize: "0.875rem"
+                }}
+              >
+                🚀 Upgrade
+              </a>
+              <button 
+                onClick={handleLogout}
+                style={{ 
+                  padding: "0.5rem 1rem", 
+                  background: "#ef4444", 
+                  color: "white", 
+                  border: "none", 
+                  borderRadius: "4px", 
+                  fontWeight: "bold", 
+                  cursor: "pointer",
+                  fontSize: "0.875rem"
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
         </div>
-        
-        <div style={{ background: "white", padding: "2rem", borderRadius: "8px", marginBottom: "2rem" }}>
-          <h2>Upload LinkedIn Data</h2>
-          {uploading ? (
-            <p>Processing your LinkedIn data with professional analytics...</p>
-          ) : (
-            <>
-              <input type="file" accept=".zip" onChange={handleFileUpload} />
-              <p style={{ fontSize: "0.875rem", color: "#64748b", marginTop: "1rem" }}>
-                Complete analytics: Industry + Geographic insights! 📊
+      </div>
+
+      {/* Main Content */}
+      <div style={{ padding: "2rem" }}>
+        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", marginBottom: "2rem", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
+            <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1rem" }}>Upload LinkedIn Data</h2>
+            {uploading ? (
+              <div style={{ textAlign: "center", padding: "2rem" }}>
+                <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>⏳</div>
+                <p>Processing your LinkedIn data with professional analytics...</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ textAlign: "center", border: "2px dashed #d1d5db", borderRadius: "8px", padding: "2rem", marginBottom: "1rem" }}>
+                  <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📁</div>
+                  <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "0.5rem" }}>
+                    Upload Your LinkedIn Data Export
+                  </h3>
+                  <p style={{ color: "#64748b", marginBottom: "1rem" }}>
+                    Get AI-powered insights and professional analytics
+                  </p>
+                  <input 
+                    type="file" 
+                    accept=".zip" 
+                    onChange={handleFileUpload}
+                    style={{ display: "none" }}
+                    id="file-upload"
+                  />
+                  <label 
+                    htmlFor="file-upload"
+                    style={{ 
+                      display: "inline-block",
+                      padding: "0.75rem 1.5rem", 
+                      background: "#3b82f6", 
+                      color: "white", 
+                      borderRadius: "8px", 
+                      cursor: "pointer", 
+                      fontWeight: "bold",
+                      transition: "background 0.2s"
+                    }}
+                    onMouseOver={(e) => e.target.style.background = "#2563eb"}
+                    onMouseOut={(e) => e.target.style.background = "#3b82f6"}
+                  >
+                    Choose File
+                  </label>
+                </div>
+                <p style={{ fontSize: "0.875rem", color: "#64748b", textAlign: "center" }}>
+                  Complete analytics: Industries, Locations, AI Insights, and more! 📊
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* How to Export Instructions */}
+          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem" }}>
+              📋 How to Export Your LinkedIn Data
+            </h3>
+            <ol style={{ color: "#64748b", lineHeight: "1.6", paddingLeft: "1.5rem" }}>
+              <li>Go to LinkedIn Settings & Privacy</li>
+              <li>Click on "Data Privacy" in the left sidebar</li>
+              <li>Select "Get a copy of your data"</li>
+              <li>Choose the data types you want</li>
+              <li>Click "Request archive" and wait for the email</li>
+            </ol>
+            <div style={{ marginTop: "1rem", padding: "1rem", background: "#f0f9ff", borderRadius: "6px", border: "1px solid #0ea5e9" }}>
+              <p style={{ margin: 0, fontSize: "0.875rem", color: "#0c4a6e" }}>
+                💡 <strong>Pro Tip:</strong> It usually takes 10-15 minutes to receive your data export email from LinkedIn.
               </p>
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
