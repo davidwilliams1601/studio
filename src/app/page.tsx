@@ -9,7 +9,6 @@ export default function LandingPage() {
   const handleEmailSubmit = (e) => {
     e.preventDefault();
     setIsSubmitted(true);
-    // In production, you'd save the email to your database/mailing list
     console.log("Email submitted:", email);
     setTimeout(() => {
       window.location.href = "/signup";
@@ -153,6 +152,87 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Cost of Loss Section */}
+      <section style={{ padding: "4rem 2rem", background: "#f8fafc" }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "3rem" }}>
+            <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>💰</div>
+            <h2 style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#1e293b", marginBottom: "1rem" }}>
+              The True Cost of Losing Your LinkedIn
+            </h2>
+            <p style={{ fontSize: "1.2rem", color: "#64748b" }}>
+              What professionals lose when their LinkedIn account disappears
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+            <div style={{ background: "white", padding: "2rem", borderRadius: "8px", textAlign: "center", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📈</div>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem", color: "#dc2626" }}>
+                $50,000+ in Lost Opportunities
+              </h3>
+              <p style={{ color: "#64748b", marginBottom: "1rem" }}>
+                Average salary increase from networking connections over 5 years
+              </p>
+              <div style={{ background: "#fef2f2", padding: "1rem", borderRadius: "6px", fontSize: "0.875rem", color: "#7f1d1d" }}>
+                <strong>Real Impact:</strong> Lost job referrals, business partnerships, and career advancement opportunities
+              </div>
+            </div>
+
+            <div style={{ background: "white", padding: "2rem", borderRadius: "8px", textAlign: "center", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>⏱️</div>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem", color: "#dc2626" }}>
+                500+ Hours to Rebuild
+              </h3>
+              <p style={{ color: "#64748b", marginBottom: "1rem" }}>
+                Time needed to manually reconnect with your professional network
+              </p>
+              <div style={{ background: "#fef2f2", padding: "1rem", borderRadius: "6px", fontSize: "0.875rem", color: "#7f1d1d" }}>
+                <strong>Reality Check:</strong> Most people never fully recover their original network size
+              </div>
+            </div>
+
+            <div style={{ background: "white", padding: "2rem", borderRadius: "8px", textAlign: "center", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem", color: "#dc2626" }}>
+                Years of Relationship History
+              </h3>
+              <p style={{ color: "#64748b", marginBottom: "1rem" }}>
+                Professional conversations, project collaborations, and trust-building - gone forever
+              </p>
+              <div style={{ background: "#fef2f2", padding: "1rem", borderRadius: "6px", fontSize: "0.875rem", color: "#7f1d1d" }}>
+                <strong>Irreplaceable:</strong> Context of how you know each connection and your shared history
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Cost Breakdown */}
+          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", marginTop: "2rem", border: "2px solid #dc2626" }}>
+            <h3 style={{ fontSize: "1.5rem", fontWeight: "bold", textAlign: "center", marginBottom: "2rem", color: "#dc2626" }}>
+              📊 By the Numbers: What You Lose
+            </h3>
+            <div style={{ display: "grid", gap: "1.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+              <div style={{ textAlign: "center", padding: "1rem", border: "1px solid #fecaca", borderRadius: "6px" }}>
+                <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#dc2626", marginBottom: "0.5rem" }}>5-15 years</div>
+                <p style={{ color: "#64748b", fontSize: "0.875rem" }}>of networking effort lost instantly</p>
+              </div>
+              <div style={{ textAlign: "center", padding: "1rem", border: "1px solid #fecaca", borderRadius: "6px" }}>
+                <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#dc2626", marginBottom: "0.5rem" }}>1,000s</div>
+                <p style={{ color: "#64748b", fontSize: "0.875rem" }}>of professional contacts with no backup</p>
+              </div>
+              <div style={{ textAlign: "center", padding: "1rem", border: "1px solid #fecaca", borderRadius: "6px" }}>
+                <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#dc2626", marginBottom: "0.5rem" }}>$0</div>
+                <p style={{ color: "#64748b", fontSize: "0.875rem" }}>compensation from LinkedIn for your loss</p>
+              </div>
+              <div style={{ textAlign: "center", padding: "1rem", border: "1px solid #fecaca", borderRadius: "6px" }}>
+                <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#dc2626", marginBottom: "0.5rem" }}>3-6 months</div>
+                <p style={{ color: "#64748b", fontSize: "0.875rem" }}>to notice the career impact</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Solution Section */}
       <section style={{ padding: "4rem 2rem", background: "white" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
@@ -200,68 +280,33 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section style={{ padding: "4rem 2rem", background: "#f8fafc" }}>
+      {/* Value Proposition */}
+      <section style={{ padding: "4rem 2rem", background: "#f0f9ff" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "2rem" }}>
-            Join Thousands of Protected Professionals
+            🎯 Protection That Pays for Itself
           </h2>
           
-          <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", marginBottom: "3rem" }}>
-            <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
-              <div style={{ display: "flex", marginBottom: "1rem" }}>
-                {[1,2,3,4,5].map(i => (
-                  <span key={i} style={{ color: "#fbbf24", fontSize: "1.2rem" }}>⭐</span>
-                ))}
+          <div style={{ background: "white", padding: "2rem", borderRadius: "12px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", maxWidth: "600px", margin: "0 auto" }}>
+            <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>💡</div>
+            <h3 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1rem", color: "#1e293b" }}>
+              Smart Investment Calculator
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "1rem", alignItems: "center", marginBottom: "2rem" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#dc2626" }}>$50,000+</div>
+                <p style={{ fontSize: "0.875rem", color: "#64748b" }}>Potential career losses</p>
               </div>
-              <p style={{ fontStyle: "italic", marginBottom: "1rem" }}>
-                "LinkStream saved my career. I lost my LinkedIn account with 8,000+ connections, but had everything backed up. Priceless peace of mind."
-              </p>
-              <cite style={{ fontWeight: "bold" }}>— Sarah Chen, Marketing Director</cite>
-            </div>
-
-            <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
-              <div style={{ display: "flex", marginBottom: "1rem" }}>
-                {[1,2,3,4,5].map(i => (
-                  <span key={i} style={{ color: "#fbbf24", fontSize: "1.2rem" }}>⭐</span>
-                ))}
+              <div style={{ fontSize: "2rem" }}>vs</div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#10b981" }}>$19/month</div>
+                <p style={{ fontSize: "0.875rem", color: "#64748b" }}>Complete protection</p>
               </div>
-              <p style={{ fontStyle: "italic", marginBottom: "1rem" }}>
-                "The AI insights helped me optimize my network strategy. But knowing my data is safe is worth every penny."
+            </div>
+            <div style={{ background: "#f0f9ff", padding: "1rem", borderRadius: "6px", border: "1px solid #0ea5e9" }}>
+              <p style={{ margin: 0, fontSize: "0.875rem", color: "#0c4a6e" }}>
+                <strong>ROI:</strong> If LinkStream prevents just one networking opportunity loss, it pays for itself 100x over.
               </p>
-              <cite style={{ fontWeight: "bold" }}>— Michael Rodriguez, Sales Executive</cite>
-            </div>
-
-            <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
-              <div style={{ display: "flex", marginBottom: "1rem" }}>
-                {[1,2,3,4,5].map(i => (
-                  <span key={i} style={{ color: "#fbbf24", fontSize: "1.2rem" }}>⭐</span>
-                ))}
-              </div>
-              <p style={{ fontStyle: "italic", marginBottom: "1rem" }}>
-                "Essential for any professional. I sleep better knowing my 15-year networking history is protected."
-              </p>
-              <cite style={{ fontWeight: "bold" }}>— Jennifer Park, Technology Consultant</cite>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", marginTop: "2rem" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>10,000+</div>
-              <p style={{ color: "#64748b" }}>Professionals Protected</p>
-            </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>50M+</div>
-              <p style={{ color: "#64748b" }}>Connections Backed Up</p>
-            </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>99.9%</div>
-              <p style={{ color: "#64748b" }}>Uptime Guarantee</p>
-            </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>2 min</div>
-              <p style={{ color: "#64748b" }}>Setup Time</p>
             </div>
           </div>
         </div>
@@ -275,7 +320,7 @@ export default function LandingPage() {
             Don't Wait Until It's Too Late
           </h2>
           <p style={{ fontSize: "1.2rem", marginBottom: "2rem", opacity: "0.9" }}>
-            Every day you wait is another day your professional network is at risk. Join 10,000+ protected professionals today.
+            Every day you wait is another day your professional network is at risk. Start protecting your career today.
           </p>
           
           <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
