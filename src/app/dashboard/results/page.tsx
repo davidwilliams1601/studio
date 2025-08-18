@@ -9,6 +9,7 @@ export default function Results() {
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     const storedResults = sessionStorage.getItem("analysisResults");
@@ -26,12 +27,6 @@ export default function Results() {
     setAiError(null);
     
     try {
-      console.log("Calling AI insights API with data:", {
-        stats: data.stats,
-        analytics: data.analytics,
-        fileName: data.fileName
-      });
-
       const response = await fetch('/api/ai-insights', {
         method: 'POST',
         headers: {
@@ -44,13 +39,11 @@ export default function Results() {
         }),
       });
 
-      console.log("AI API response status:", response.status);
       const aiData = await response.json();
-      console.log("AI API response data:", aiData);
       
       if (aiData.success) {
         setAiInsights(aiData.insights);
-        console.log('✅ AI insights generated successfully:', aiData.insights);
+        console.log('✅ AI insights generated successfully');
       } else {
         console.error('❌ AI insights generation failed:', aiData.error);
         setAiError(aiData.error);
@@ -60,6 +53,48 @@ export default function Results() {
       setAiError(error.message);
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const generatePDF = async () => {
+    setPdfLoading(true);
+    try {
+      console.log("Generating PDF report...");
+      
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          analysisData: results,
+          aiInsights: aiInsights
+        }),
+      });
+
+      const pdfData = await response.json();
+      
+      if (pdfData.success) {
+        // Create a new window with the HTML content for PDF generation
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(pdfData.html);
+        printWindow.document.close();
+        
+        // Wait for content to load, then trigger print
+        setTimeout(() => {
+          printWindow.focus();
+          printWindow.print();
+        }, 1000);
+        
+        console.log('✅ PDF generated successfully');
+      } else {
+        throw new Error(pdfData.error);
+      }
+    } catch (error) {
+      console.error('❌ Error generating PDF:', error);
+      alert('Failed to generate PDF: ' + error.message);
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -243,7 +278,7 @@ export default function Results() {
         </div>
         
         {/* Summary Cards */}
-        <div style={{ display: "grid", gap: "1.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", marginBottom: "3rem" }}>
+        <div style={{ display: "grid", gap: "1.5rem", gridTemplateColumns: "repeat(auto-fit, minWidth(240px, 1fr))", marginBottom: "3rem" }}>
           <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
             <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>
               {results.stats.connections.toLocaleString()}
@@ -369,7 +404,7 @@ export default function Results() {
         </div>
         
         {/* Action Buttons */}
-        <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+        <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
           <button 
             onClick={() => window.print()}
             style={{ 
@@ -384,6 +419,23 @@ export default function Results() {
           >
             📄 Print Report
           </button>
+          
+          <button 
+            onClick={generatePDF}
+            disabled={pdfLoading}
+            style={{ 
+              padding: "1rem 2rem", 
+              background: pdfLoading ? "#9ca3af" : "#ef4444", 
+              color: "white", 
+              border: "none", 
+              borderRadius: "8px", 
+              fontWeight: "bold", 
+              cursor: pdfLoading ? "not-allowed" : "pointer" 
+            }}
+          >
+            {pdfLoading ? "🔄 Generating..." : "📑 Generate PDF Report"}
+          </button>
+          
           <button 
             onClick={() => {
               const fullData = { ...results, aiInsights };
@@ -405,7 +457,7 @@ export default function Results() {
               cursor: "pointer" 
             }}
           >
-            🤖 Download Report
+            🤖 Download Data
           </button>
         </div>
       </div>
