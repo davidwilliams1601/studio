@@ -44,26 +44,47 @@ export default function Results() {
     { name: 'Companies', value: results.stats.companies || 0, color: '#8b5cf6' }
   ];
 
-  // Engagement ratios - actual calculated metrics
+  // Industry breakdown data
+  const industryData = results.analytics?.industries ? 
+    Object.entries(results.analytics.industries).map(([industry, count]) => ({
+      name: industry,
+      value: count
+    })) : [];
+
+  // Location data  
+  const locationData = results.analytics?.locations ? 
+    Object.entries(results.analytics.locations)
+      .slice(0, 10) // Top 10 locations
+      .map(([location, count]) => ({
+        name: location.length > 20 ? location.substring(0, 20) + '...' : location,
+        value: count
+      })) : [];
+
+  // Engagement ratios
   const engagementMetrics = [
     { 
       metric: 'Posts per 100 Connections', 
       value: Math.round((results.stats.posts / results.stats.connections) * 100 * 10) / 10,
-      description: 'How actively you share content relative to your network size'
+      description: 'Content creation rate relative to network size'
     },
     { 
       metric: 'Comments per Post', 
       value: results.stats.posts > 0 ? Math.round((results.stats.comments || 0) / results.stats.posts * 10) / 10 : 0,
-      description: 'Average comments you make per post you share'
+      description: 'Average engagement on your content'
     },
     { 
-      metric: 'Messages per 100 Connections', 
-      value: Math.round((results.stats.messages / results.stats.connections) * 100 * 10) / 10,
-      description: 'How actively you message relative to your network size'
+      metric: 'Skills Listed', 
+      value: results.analytics?.skillsCount || 0,
+      description: 'Professional skills on your profile'
+    },
+    { 
+      metric: 'Geographic Reach', 
+      value: Object.keys(results.analytics?.locations || {}).length,
+      description: 'Different locations in your network'
     }
   ];
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16'];
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", padding: "2rem" }}>
@@ -72,7 +93,7 @@ export default function Results() {
           <a href="/dashboard" style={{ color: "#3b82f6", textDecoration: "none" }}>← Back to Dashboard</a>
         </div>
         
-        <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#1e293b", marginBottom: "1rem" }}>LinkedIn Analytics Dashboard</h1>
+        <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#1e293b", marginBottom: "1rem" }}>Advanced LinkedIn Analytics</h1>
         <p style={{ color: "#64748b", marginBottom: "2rem" }}>
           File: {results.fileName} • Processed: {new Date(results.processedAt).toLocaleDateString()}
         </p>
@@ -83,7 +104,7 @@ export default function Results() {
             <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>
               {results.stats.connections.toLocaleString()}
             </div>
-            <p style={{ color: "#64748b", fontWeight: "500" }}>Connections</p>
+            <p style={{ color: "#64748b", fontWeight: "500" }}>Total Connections</p>
           </div>
           
           <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
@@ -95,23 +116,23 @@ export default function Results() {
           
           <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
             <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#f59e0b", marginBottom: "0.5rem" }}>
-              {results.stats.messages.toLocaleString()}
+              {Object.keys(results.analytics?.locations || {}).length}
             </div>
-            <p style={{ color: "#64748b", fontWeight: "500" }}>Messages</p>
+            <p style={{ color: "#64748b", fontWeight: "500" }}>Geographic Locations</p>
           </div>
           
           <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
             <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#ef4444", marginBottom: "0.5rem" }}>
-              {(results.stats.comments || 0).toLocaleString()}
+              {results.analytics?.skillsCount || 0}
             </div>
-            <p style={{ color: "#64748b", fontWeight: "500" }}>Comments</p>
+            <p style={{ color: "#64748b", fontWeight: "500" }}>Skills Listed</p>
           </div>
         </div>
 
         {/* Charts Section */}
         <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "1fr 1fr", marginBottom: "2rem" }}>
           
-          {/* Activity Overview Bar Chart */}
+          {/* Activity Overview */}
           <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
             <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
               📊 Activity Overview
@@ -127,15 +148,15 @@ export default function Results() {
             </ResponsiveContainer>
           </div>
 
-          {/* Activity Distribution Pie Chart */}
+          {/* Industry Breakdown */}
           <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
             <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
-              🥧 Activity Distribution
+              🏢 Industry Breakdown (Estimated)
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={activityData}
+                  data={industryData}
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
@@ -143,7 +164,7 @@ export default function Results() {
                   dataKey="value"
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 >
-                  {activityData.map((entry, index) => (
+                  {industryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -153,12 +174,30 @@ export default function Results() {
           </div>
         </div>
 
-        {/* Engagement Metrics - Real calculated data */}
+        {/* Geographic Distribution */}
+        {locationData.length > 0 && (
+          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
+              🌍 Geographic Distribution (Top Locations)
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={locationData} layout="horizontal">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={120} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Advanced Metrics */}
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
           <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
-            📈 Engagement Metrics (Based on Your Data)
+            📈 Advanced Metrics
           </h3>
-          <div style={{ display: "grid", gap: "1.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+          <div style={{ display: "grid", gap: "1.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}>
             {engagementMetrics.map((metric, index) => (
               <div key={index} style={{ textAlign: "center", padding: "1rem", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
                 <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>
@@ -174,11 +213,13 @@ export default function Results() {
         {/* Key Insights */}
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
           <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem" }}>🎯 Key Insights</h3>
-          <ul style={{ lineHeight: "1.8", color: "#64748b" }}>
+          <div style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "1fr 1fr" }}>
             {results.insights.map((insight, index) => (
-              <li key={index} style={{ marginBottom: "0.5rem" }}>{insight}</li>
+              <div key={index} style={{ padding: "0.75rem", background: "#f8fafc", borderRadius: "4px", fontSize: "0.875rem", color: "#64748b" }}>
+                • {insight}
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
         
         {/* Action Buttons */}
@@ -204,7 +245,7 @@ export default function Results() {
               const url = URL.createObjectURL(dataBlob);
               const link = document.createElement('a');
               link.href = url;
-              link.download = 'linkedin-analysis.json';
+              link.download = 'linkedin-advanced-analytics.json';
               link.click();
             }}
             style={{ 
@@ -217,7 +258,7 @@ export default function Results() {
               cursor: "pointer" 
             }}
           >
-            📊 Download Data
+            📊 Download Report
           </button>
         </div>
       </div>
