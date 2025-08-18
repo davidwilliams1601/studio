@@ -48,39 +48,48 @@ export default function Results() {
   const industryData = results.analytics?.industries ? 
     Object.entries(results.analytics.industries).map(([industry, count]) => ({
       name: industry,
-      value: count
+      value: count,
+      percentage: ((count / results.stats.connections) * 100).toFixed(1)
     })) : [];
 
-  // Location data  
-  const locationData = results.analytics?.locations ? 
+  // Geographic data - sorted by value for better visualization
+  const geographicData = results.analytics?.locations ? 
     Object.entries(results.analytics.locations)
-      .slice(0, 10) // Top 10 locations
+      .sort(([,a], [,b]) => b - a) // Sort by count (descending)
       .map(([location, count]) => ({
-        name: location.length > 20 ? location.substring(0, 20) + '...' : location,
-        value: count
+        name: location,
+        value: count,
+        percentage: ((count / results.stats.connections) * 100).toFixed(1)
       })) : [];
+
+  // Top geographic regions (top 5)
+  const topRegions = geographicData.slice(0, 5);
 
   // Engagement ratios
   const engagementMetrics = [
     { 
-      metric: 'Posts per 100 Connections', 
-      value: Math.round((results.stats.posts / results.stats.connections) * 100 * 10) / 10,
-      description: 'Content creation rate relative to network size'
+      metric: 'Content Creation Rate', 
+      value: Math.round((results.stats.posts / results.stats.connections) * 1000) / 10,
+      description: 'Posts per 1000 connections',
+      unit: '/1k'
     },
     { 
-      metric: 'Comments per Post', 
+      metric: 'Engagement Rate', 
       value: results.stats.posts > 0 ? Math.round((results.stats.comments || 0) / results.stats.posts * 10) / 10 : 0,
-      description: 'Average engagement on your content'
+      description: 'Comments per post shared',
+      unit: '/post'
     },
     { 
-      metric: 'Skills Listed', 
-      value: results.analytics?.skillsCount || 0,
-      description: 'Professional skills on your profile'
-    },
-    { 
-      metric: 'Geographic Reach', 
+      metric: 'Network Diversity', 
       value: Object.keys(results.analytics?.locations || {}).length,
-      description: 'Different locations in your network'
+      description: 'Different countries/regions',
+      unit: ' regions'
+    },
+    { 
+      metric: 'Professional Skills', 
+      value: results.analytics?.skillsCount || 0,
+      description: 'Skills listed on profile',
+      unit: ' skills'
     }
   ];
 
@@ -109,16 +118,16 @@ export default function Results() {
           
           <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
             <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#10b981", marginBottom: "0.5rem" }}>
-              {results.stats.posts.toLocaleString()}
+              {Object.keys(results.analytics?.industries || {}).length}
             </div>
-            <p style={{ color: "#64748b", fontWeight: "500" }}>Posts & Shares</p>
+            <p style={{ color: "#64748b", fontWeight: "500" }}>Industry Sectors</p>
           </div>
           
           <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
             <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "#f59e0b", marginBottom: "0.5rem" }}>
               {Object.keys(results.analytics?.locations || {}).length}
             </div>
-            <p style={{ color: "#64748b", fontWeight: "500" }}>Geographic Locations</p>
+            <p style={{ color: "#64748b", fontWeight: "500" }}>Countries/Regions</p>
           </div>
           
           <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", textAlign: "center" }}>
@@ -151,7 +160,7 @@ export default function Results() {
           {/* Industry Breakdown */}
           <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
             <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
-              🏢 Industry Breakdown (Estimated)
+              🏢 Industry Distribution
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -162,46 +171,79 @@ export default function Results() {
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percentage }) => `${name} ${percentage}%`}
+                  labelLine={false}
                 >
                   {industryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value, name) => [`${value.toLocaleString()} connections`, name]} />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Geographic Distribution */}
-        {locationData.length > 0 && (
-          <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
-            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
-              🌍 Geographic Distribution (Top Locations)
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={locationData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={120} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#10b981" />
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Geographic Distribution - Better Layout */}
+        <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
+          <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
+            🌍 Geographic Distribution
+          </h3>
+          
+          {/* Top Regions Visual */}
+          <div style={{ marginBottom: "2rem" }}>
+            <h4 style={{ fontSize: "1rem", fontWeight: "600", marginBottom: "1rem", color: "#374151" }}>Top Regions by Connection Count</h4>
+            <div style={{ display: "grid", gap: "1rem" }}>
+              {topRegions.map((region, index) => (
+                <div key={region.name} style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                  <div style={{ 
+                    minWidth: "140px", 
+                    fontSize: "0.875rem", 
+                    fontWeight: "500",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
+                  }}>
+                    <span style={{ 
+                      display: "inline-block",
+                      width: "12px",
+                      height: "12px",
+                      borderRadius: "50%",
+                      backgroundColor: COLORS[index % COLORS.length]
+                    }}></span>
+                    {region.name}
+                  </div>
+                  <div style={{ flex: 1, background: "#f3f4f6", borderRadius: "4px", height: "24px", position: "relative" }}>
+                    <div style={{ 
+                      background: COLORS[index % COLORS.length],
+                      height: "100%",
+                      borderRadius: "4px",
+                      width: `${(region.value / topRegions[0].value) * 100}%`,
+                      transition: "width 0.3s ease"
+                    }}></div>
+                  </div>
+                  <div style={{ minWidth: "80px", textAlign: "right", fontSize: "0.875rem", fontWeight: "600" }}>
+                    {region.value.toLocaleString()}
+                  </div>
+                  <div style={{ minWidth: "50px", textAlign: "right", fontSize: "0.875rem", color: "#6b7280" }}>
+                    {region.percentage}%
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Advanced Metrics */}
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
           <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
-            📈 Advanced Metrics
+            📈 Professional Metrics
           </h3>
           <div style={{ display: "grid", gap: "1.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}>
             {engagementMetrics.map((metric, index) => (
-              <div key={index} style={{ textAlign: "center", padding: "1rem", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
+              <div key={index} style={{ textAlign: "center", padding: "1.5rem", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
                 <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>
-                  {metric.value}
+                  {metric.value}{metric.unit}
                 </div>
                 <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>{metric.metric}</div>
                 <div style={{ fontSize: "0.875rem", color: "#64748b" }}>{metric.description}</div>
