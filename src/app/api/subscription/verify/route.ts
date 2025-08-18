@@ -19,7 +19,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Retrieve the checkout session from Stripe
     const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
       headers: {
         'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}`,

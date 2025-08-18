@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
 
     console.log('Creating Stripe checkout for price:', priceId);
 
-    // Create checkout session with direct API call
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
       headers: {
@@ -34,8 +33,6 @@ export async function POST(request: NextRequest) {
         'line_items[0][quantity]': '1',
         'success_url': `${request.nextUrl.origin}/dashboard/success?session_id={CHECKOUT_SESSION_ID}`,
         'cancel_url': `${request.nextUrl.origin}/dashboard/subscription?canceled=true`,
-        'metadata[user_id]': 'user_placeholder',
-        'customer_email': 'user@example.com',
       }),
     });
 
