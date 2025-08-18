@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 export default function Results() {
   const [results, setResults] = useState(null);
@@ -44,20 +44,23 @@ export default function Results() {
     { name: 'Companies', value: results.stats.companies || 0, color: '#8b5cf6' }
   ];
 
-  const engagementData = [
-    { category: 'Content Creation', posts: results.stats.posts, comments: results.stats.comments || 0 },
-    { category: 'Networking', connections: results.stats.connections, messages: results.stats.messages },
-  ];
-
-  // Mock growth data (in a real app, this would come from historical data)
-  const growthData = [
-    { month: 'Jan', connections: Math.floor(results.stats.connections * 0.7) },
-    { month: 'Feb', connections: Math.floor(results.stats.connections * 0.75) },
-    { month: 'Mar', connections: Math.floor(results.stats.connections * 0.8) },
-    { month: 'Apr', connections: Math.floor(results.stats.connections * 0.85) },
-    { month: 'May', connections: Math.floor(results.stats.connections * 0.9) },
-    { month: 'Jun', connections: Math.floor(results.stats.connections * 0.95) },
-    { month: 'Jul', connections: results.stats.connections },
+  // Engagement ratios - actual calculated metrics
+  const engagementMetrics = [
+    { 
+      metric: 'Posts per 100 Connections', 
+      value: Math.round((results.stats.posts / results.stats.connections) * 100 * 10) / 10,
+      description: 'How actively you share content relative to your network size'
+    },
+    { 
+      metric: 'Comments per Post', 
+      value: results.stats.posts > 0 ? Math.round((results.stats.comments || 0) / results.stats.posts * 10) / 10 : 0,
+      description: 'Average comments you make per post you share'
+    },
+    { 
+      metric: 'Messages per 100 Connections', 
+      value: Math.round((results.stats.messages / results.stats.connections) * 100 * 10) / 10,
+      description: 'How actively you message relative to your network size'
+    }
   ];
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -150,20 +153,22 @@ export default function Results() {
           </div>
         </div>
 
-        {/* Network Growth Line Chart */}
+        {/* Engagement Metrics - Real calculated data */}
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
           <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
-            📈 Network Growth Trend (Estimated)
+            📈 Engagement Metrics (Based on Your Data)
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={growthData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="connections" stroke="#3b82f6" strokeWidth={3} dot={{ fill: '#3b82f6', strokeWidth: 2, r: 6 }} />
-            </LineChart>
-          </ResponsiveContainer>
+          <div style={{ display: "grid", gap: "1.5rem", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+            {engagementMetrics.map((metric, index) => (
+              <div key={index} style={{ textAlign: "center", padding: "1rem", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
+                <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "0.5rem" }}>
+                  {metric.value}
+                </div>
+                <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>{metric.metric}</div>
+                <div style={{ fontSize: "0.875rem", color: "#64748b" }}>{metric.description}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Key Insights */}
