@@ -40,7 +40,9 @@ export async function GET(request: NextRequest) {
         plan: 'pro',
         customer: session.customer_details,
         amount: session.amount_total,
-        currency: session.currency
+        currency: session.currency,
+        customerId: session.customer,
+        sessionId: sessionId
       });
     } else {
       return NextResponse.json({
@@ -55,7 +57,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Verification failed: ' + error.message 
+        error: 'Verification failed: ' + (error instanceof Error ? error.message : 'Unknown error')
       },
       { status: 500 }
     );

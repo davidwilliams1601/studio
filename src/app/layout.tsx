@@ -1,20 +1,23 @@
-import type { Metadata } from 'next'
+import type { Metadata } from "next";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
-  title: 'LinkStream - Protect Your LinkedIn Data',
-  description: 'Secure backup and AI insights for your professional network',
-}
+  title: "LinkStream - Protect Your LinkedIn Profile",
+  description: "Secure backup and AI analysis for your LinkedIn professional network",
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif' }}>
-        {children}
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
-  )
+  );
 }

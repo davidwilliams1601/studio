@@ -21,7 +21,7 @@ export default function TestStripe() {
       }
     } catch (error) {
       console.error('Test error:', error);
-      alert('❌ Request failed: ' + error.message);
+      alert('❌ Request failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -41,6 +41,7 @@ export default function TestStripe() {
       >
         🧪 Test Stripe API
       </button>
+      <p>Click the button and check the console (F12) for results.</p>
     </div>
   );
 }
