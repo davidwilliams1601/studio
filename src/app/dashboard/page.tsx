@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,6 +28,13 @@ interface AnalysisData {
   savedAt?: string;
 }
 
+interface AIInsights {
+  postSuggestions: string[];
+  networkInsights: string[];
+  growthRecommendations: string[];
+
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const { user, subscription, loading: authLoading, firebaseReady, logout } = useAuth();
@@ -34,7 +42,8 @@ export default function Dashboard() {
   const [savedAnalyses, setSavedAnalyses] = useState<AnalysisData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-
+const [aiInsights, setAiInsights] = useState<AIInsights | null>(null);
+const [generatingAI, setGeneratingAI] = useState(false);
   const fallbackUser = { email: 'demo@linkstream.app', uid: 'demo123' };
   const currentUser = firebaseReady ? user : fallbackUser;
   
@@ -53,7 +62,39 @@ export default function Dashboard() {
     }
   }, [currentUser]);
 
-  const loadSavedAnalyses = () => {
+const generateAIInsights = async (stats: any) => {
+  const isPro = currentPlan === 'pro' || currentPlan === 'enterprise';
+  if (!isPro) return;
+  
+  setGeneratingAI(true);
+  try {
+    const response = await fetch('/api/ai-insights', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        analysisData: {
+          connectionCount: stats.connections,
+          messageCount: stats.messages,
+          articleCount: stats.posts
+        }, 
+        userPlan: currentPlan 
+      }),
+    });
+
+    const result = await response.json();
+    
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    setAiInsights(result.data);
+  } catch (error) {
+    console.error('AI generation error:', error);
+  } finally {
+    setGeneratingAI(false);
+  }
+}; 
+ const loadSavedAnalyses = () => {
     try {
       setLoading(true);
       const saved = localStorage.getItem(`analyses_${currentUser?.uid}`);
@@ -279,7 +320,7 @@ export default function Dashboard() {
     if (results.stats.messages > 100) {
       insights.push(`💡 **Communication Leader**: ${results.stats.messages.toLocaleString()} messages demonstrate active networking`);
     }
-
+await generateAIInsights(results.stats);
     results.insights = insights;
 
     console.log('\n📈 FINAL REAL ANALYSIS RESULTS:');
@@ -307,7 +348,10 @@ export default function Dashboard() {
       // Save to both localStorage and sessionStorage
       await saveAnalysisToStorage(results);
       sessionStorage.setItem("analysisResults", JSON.stringify(results));
-      
+  const isPro = currentPlan === 'pro' || currentPlan === 'enterprise';
+if (isPro) {
+  await generateAIInsights(results.stats);
+}    
       console.log('✅ Real analysis complete, redirecting to results...');
       router.push("/dashboard/results");
     } catch (error) {
@@ -499,6 +543,100 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+{/* AI Insights Section - Only for Pro Users */}
+          {(currentPlan === 'pro' || currentPlan === 'enterprise') && aiInsights && (
+            <div className="mt-8 grid gap-6 md:grid-cols-2">
+              {/* AI-Generated Post Suggestions */}
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-2xl">✨</span>
+                  <h3 className="text-xl font-bold text-white">AI-Generated Post Ideas</h3>
+                </div>
+                <p className="text-blue-200 text-sm mb-4">
+                  Personalized LinkedIn post suggestions based on your data.
+                </p>
+                {generatingAI ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    <span className="text-white">Generating AI insights...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {aiInsights.postSuggestions.map((suggestion, index) => (
+                      <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
+                        <p className="text-white text-sm mb-2">{suggestion}</p>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(suggestion);
+                            alert('Copied to clipboard!');
+                          }}
+                          className="text-xs text-blue-300 hover:text-blue-200 transition-colors"
+                        >
+                          📋 Copy
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Network Insights */}
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-2xl">🧠</span>
+                  <h3 className="text-xl font-bold text-white">Network Insights</h3>
+                </div>
+                <p className="text-blue-200 text-sm mb-4">
+                  AI-powered analysis of your professional network.
+                </p>
+                <div className="space-y-3">
+                  {aiInsights.networkInsights.map((insight, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <span className="text-blue-400 mt-1">📈</span>
+                      <p className="text-white text-sm">{insight}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Growth Recommendations */}
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 md:col-span-2">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-2xl">🚀</span>
+                  <h3 className="text-xl font-bold text-white">Growth Recommendations</h3>
+                </div>
+                <p className="text-blue-200 text-sm mb-4">
+                  Personalized suggestions to grow your LinkedIn presence.
+                </p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {aiInsights.growthRecommendations.map((recommendation, index) => (
+                    <div key={index} className="p-3 bg-white/5 rounded-lg border border-white/10">
+                      <p className="text-white text-sm">{recommendation}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Upgrade Prompt for Free Users */}
+          {currentPlan === 'free' && savedAnalyses.length > 0 && (
+            <div className="mt-8 bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-md rounded-2xl p-6 border border-purple-500/30">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">✨</span>
+                <h3 className="text-xl font-bold text-white">Unlock AI-Powered Insights</h3>
+              </div>
+              <p className="text-purple-200 text-sm mb-4">
+                Upgrade to Pro to get personalized LinkedIn post suggestions, network insights, and growth recommendations.
+              </p>
+              <button 
+                onClick={() => router.push('/dashboard/subscription')}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all"
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          )}
 
           <div className="mt-8 flex justify-center space-x-4">
             <button 
