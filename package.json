@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.873.0",
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
     "@genkit-ai/googleai": "^1.14.1",
     "@genkit-ai/next": "^1.14.1",
@@ -50,6 +51,7 @@
     "jszip": "^3.10.1",
     "lucide-react": "^0.475.0",
     "next": "15.3.3",
+    "papaparse": "^5.5.3",
     "patch-package": "^8.0.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
@@ -60,11 +62,13 @@
     "stripe": "^16.12.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
+    "unzipper": "^0.12.3",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/jszip": "^3.4.1",
     "@types/node": "^20",
+    "@types/papaparse": "^5.3.16",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.21",

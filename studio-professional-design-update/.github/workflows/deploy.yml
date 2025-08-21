@@ -1,0 +1,32 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - professional-design-update
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # If you use environments (recommended for prod):
+    # environment: production
+
+    env:
+      # Make the secret available to all steps in this job
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show it exists (but don’t print it)
+        run: |
+          if [ -z "${STRIPE_SECRET_KEY:-}" ]; then
+            echo "Missing STRIPE_SECRET_KEY" && exit 1
+          fi
+          echo "Key is present and will be used securely."
+
+      - name: Run your deploy script
+        run: ./deploy.sh
