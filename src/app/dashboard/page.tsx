@@ -88,6 +88,7 @@ const generateAIInsights = async (stats: any) => {
     }
 
     setAiInsights(result.data);
+sessionStorage.setItem("aiInsights", JSON.stringify(result.data));
   } catch (error) {
     console.error('AI generation error:', error);
   } finally {

@@ -1,4 +1,4 @@
-"use client";
+
 
 "use client";
 
@@ -52,6 +52,7 @@ const [generatingAI, setGeneratingAI] = useState(false);
     // Load analysis data from sessionStorage or localStorage
     try {
       const sessionData = sessionStorage.getItem("analysisResults");
+ const savedAiInsights = sessionStorage.getItem("aiInsights");
       if (sessionData) {
         setAnalysisData(JSON.parse(sessionData));
 generateAIInsights(JSON.parse(sessionData));
@@ -111,6 +112,9 @@ generateAIInsights(JSON.parse(sessionData));
         };
         setAnalysisData(demoData);
 generateAIInsights(demoData);
+ if (savedAiInsights) {
+      setAiInsights(JSON.parse(savedAiInsights));
+    }
       }
     } catch (error) {
       console.error('Error loading analysis data:', error);
@@ -147,6 +151,7 @@ const generateAIInsights = async (data: AnalysisData) => {
       }
 
       setAiInsights(result.data);
+sessionStorage.setItem("aiInsights", JSON.stringify(result.data));
     } catch (error) {
       console.error('AI generation error:', error);
     } finally {
