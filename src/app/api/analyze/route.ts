@@ -1,39 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getStorage } from "@/lib/firebase-admin";
+import Papa from "papaparse";
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
+  const { bucketPath } = await req.json();
+  if (!bucketPath) return NextResponse.json({ error: "bucketPath required" }, { status: 400 });
+
   try {
-    const { fileName, userId } = await request.json();
-    
-    // Here we would normally:
-    // 1. Download the file from Firebase Storage
-    // 2. Extract and parse the ZIP file
-    // 3. Analyze connections.csv, messages.csv, etc.
-    // 4. Return real statistics
-    
-    // For now, return mock data based on file name
-    const mockResults = {
-      fileName: fileName,
-      processedAt: new Date().toISOString(),
-      stats: {
-        connections: Math.floor(Math.random() * 2000) + 500,
-        messages: Math.floor(Math.random() * 200) + 50,
-        posts: Math.floor(Math.random() * 100) + 10,
-        companies: Math.floor(Math.random() * 50) + 20,
-      },
-      insights: [
-        "Your network has grown significantly in the past year",
-        "Most connections work in Technology and Finance sectors",
-        "Peak activity occurs during weekday business hours",
-        "Professional content generates highest engagement"
-      ]
-    };
-    
-    return NextResponse.json({ success: true, data: mockResults });
-  } catch (error) {
-    console.error("Analysis error:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to analyze file" },
-      { status: 500 }
-    );
+    const storage = getStorage();
+    const file = storage.bucket().file(bucketPath);
+    const [exists] = await file.exists();
+    if (!exists) return NextResponse.json({ error: "File not found" }, { status: 404 });
+
+    const [buf] = await file.download();
+    const text = buf.toString("utf-8");
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+    if (parsed.errors?.length) {
+      return NextResponse.json({ error: "CSV parse error", details: parsed.errors }, { status: 422 });
+    }
+    const rows = parsed.data as Record<string, string>[];
+    return NextResponse.json({ ok: true, connectionCount: rows.length });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message ?? "Unknown error" }, { status: 500 });
   }
 }
