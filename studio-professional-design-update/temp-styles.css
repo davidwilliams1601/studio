@@ -1,0 +1,11 @@
+<style jsx global>{`
+  body { 
+    background: linear-gradient(to bottom right, #0f172a, #1e3a8a, #312e81);
+    color: white;
+    min-height: 100vh;
+  }
+  .bg-gradient-to-br { background: linear-gradient(to bottom right, #0f172a, #1e3a8a, #312e81); }
+  .text-white { color: white; }
+  .rounded-xl { border-radius: 0.75rem; }
+  .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+`}</style>
