@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
+  console.log('🔍 Verifying Stripe session...');
+  
   try {
-    const { searchParams } = new URL(request.url);
-    const sessionId = searchParams.get('session_id');
+    const body = await request.json();
+    const { sessionId, userId } = body;
 
-    if (!sessionId) {
+    if (!sessionId || !userId) {
       return NextResponse.json(
-        { success: false, error: 'Session ID required' },
+        { success: false, error: 'Missing sessionId or userId' },
         { status: 400 }
       );
     }
@@ -19,45 +21,76 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
-      headers: {
-        'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}`,
-      },
+    const Stripe = (await import('stripe')).default;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2024-06-20',
     });
 
-    if (!response.ok) {
-      throw new Error(`Stripe API error: ${response.status}`);
+    // Retrieve the session from Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    console.log('📋 Session status:', session.payment_status);
+
+    if (session.payment_status !== 'paid') {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Payment not completed',
+          paymentStatus: session.payment_status 
+        },
+        { status: 400 }
+      );
     }
 
-    const session = await response.json();
-    console.log('Stripe session details:', session);
+    // Extract subscription details from session metadata
+    const plan = session.metadata?.plan || 'pro';
+    const billingCycle = session.metadata?.billingCycle || 'monthly';
 
-    if (session.payment_status === 'paid') {
-      console.log('Payment successful for session:', sessionId);
+    // Update user subscription in Firestore
+    try {
+      const { SubscriptionService } = await import('@/services/subscriptionService');
       
+      const subscriptionData = {
+        plan: plan as 'pro',
+        status: 'active' as const,
+        stripeCustomerId: session.customer as string,
+        sessionId: sessionId,
+        upgradeDate: new Date().toISOString(),
+        monthlyUsage: 0
+      };
+
+      await SubscriptionService.updateUserSubscription(userId, subscriptionData);
+      console.log('✅ Subscription updated successfully');
+
       return NextResponse.json({
         success: true,
-        plan: 'pro',
-        customer: session.customer_details,
-        amount: session.amount_total,
-        currency: session.currency,
-        customerId: session.customer,
-        sessionId: sessionId
+        subscription: subscriptionData,
+        session: {
+          id: session.id,
+          paymentStatus: session.payment_status,
+          amountTotal: session.amount_total,
+          currency: session.currency
+        }
       });
-    } else {
-      return NextResponse.json({
-        success: false,
-        error: 'Payment not completed',
-        status: session.payment_status
-      });
+
+    } catch (dbError) {
+      console.error('❌ Database update error:', dbError);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Failed to update subscription in database',
+          details: dbError instanceof Error ? dbError.message : 'Unknown error'
+        },
+        { status: 500 }
+      );
     }
 
   } catch (error) {
-    console.error('Error verifying payment:', error);
+    console.error('❌ Session verification error:', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Verification failed: ' + (error instanceof Error ? error.message : 'Unknown error')
+        error: 'Failed to verify session',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     );
