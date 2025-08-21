@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for professional design */
+@layer base {
+  body {
+    @apply bg-slate-900 text-white;
+  }
+}
+
+@layer utilities {
+  .backdrop-blur-lg {
+    backdrop-filter: blur(16px);
+  }
+  
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .5;
+    }
+  }
+}

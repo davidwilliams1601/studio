@@ -65,31 +65,14 @@ export async function POST(request: NextRequest) {
 
     console.log('🏪 Creating Stripe session with price:', priceId);
     
-    // Get the current domain dynamically to handle different environments
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    const host = request.headers.get('host') || 'www.lstream.app';
-    const baseUrl = `${protocol}://${host}`;
-    
-    // Properly encode URL parameters to prevent invalid characters
-    const encodedPlan = encodeURIComponent(plan);
-    const encodedUserId = encodeURIComponent(userId);
-    
-    // Construct URLs with proper encoding
-    const successUrl = `${baseUrl}/dashboard/success?session_id={CHECKOUT_SESSION_ID}&plan=${encodedPlan}&user_id=${encodedUserId}`;
-    const cancelUrl = `${baseUrl}/dashboard/subscription?canceled=true`;
-    
-    console.log('🔗 URLs being used:');
-    console.log('Success URL:', successUrl);
-    console.log('Cancel URL:', cancelUrl);
-    
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: userEmail,
       metadata: { userId, plan, billingCycle },
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+      success_url: `https://www.lstream.app/dashboard/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}&user_id=${userId}`,
+      cancel_url: `https://www.lstream.app/dashboard/subscription?canceled=true`,
       allow_promotion_codes: true,
       billing_address_collection: 'required',
     });
@@ -108,11 +91,6 @@ export async function POST(request: NextRequest) {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : 'No stack trace'
     });
-    
-    // If it's a Stripe error, log more details
-    if (error && typeof error === 'object' && 'type' in error) {
-      console.error('🔴 Stripe checkout error:', error);
-    }
     
     return NextResponse.json(
       { 

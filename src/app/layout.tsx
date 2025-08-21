@@ -1,3 +1,4 @@
+import './globals.css'  // ← This line was missing!
 import type { Metadata } from "next";
 import { AuthProvider } from "@/contexts/AuthContext";
 
