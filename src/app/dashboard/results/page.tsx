@@ -37,7 +37,7 @@ interface AIInsights {
 
 export default function ResultsPage() {
   const router = useRouter();
-  const { user, loading: authLoading, firebaseReady } = useAuth();
+  const { user, subscription, loading: authLoading, firebaseReady } = useAuth();
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
 const [aiInsights, setAiInsights] = useState<AIInsights | null>(null);
@@ -120,7 +120,6 @@ generateAIInsights(demoData);
   }, [user, authLoading, firebaseReady, router]);
 
 const generateAIInsights = async (data: AnalysisData) => {
-    const { subscription } = useAuth();
     const currentPlan = subscription?.plan || 'free';
     const isPro = currentPlan === 'pro' || currentPlan === 'enterprise';
     
@@ -131,13 +130,13 @@ const generateAIInsights = async (data: AnalysisData) => {
       const response = await fetch('/api/ai-insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           analysisData: {
             connectionCount: data.stats.connections,
             messageCount: data.stats.messages,
             articleCount: data.stats.posts
-          }, 
-          userPlan: currentPlan 
+          },  
+          userPlan: currentPlan
         }),
       });
 
