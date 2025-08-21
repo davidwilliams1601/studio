@@ -1,8 +1,11 @@
 "use client";
 
+"use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+
 
 interface AnalysisData {
   id?: string;
@@ -26,12 +29,19 @@ interface AnalysisData {
   insights: string[];
   savedAt?: string;
 }
+interface AIInsights {
+  postSuggestions: string[];
+  networkInsights: string[];
+  growthRecommendations: string[];
+}
 
 export default function ResultsPage() {
   const router = useRouter();
   const { user, loading: authLoading, firebaseReady } = useAuth();
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
+const [aiInsights, setAiInsights] = useState<AIInsights | null>(null);
+const [generatingAI, setGeneratingAI] = useState(false);
 
   useEffect(() => {
     if (firebaseReady && !authLoading && !user) {
@@ -44,6 +54,7 @@ export default function ResultsPage() {
       const sessionData = sessionStorage.getItem("analysisResults");
       if (sessionData) {
         setAnalysisData(JSON.parse(sessionData));
+generateAIInsights(JSON.parse(sessionData));
       } else {
         // Fallback to demo data if no session data
         const demoData: AnalysisData = {
@@ -99,6 +110,7 @@ export default function ResultsPage() {
           savedAt: new Date().toISOString()
         };
         setAnalysisData(demoData);
+generateAIInsights(demoData);
       }
     } catch (error) {
       console.error('Error loading analysis data:', error);
@@ -106,6 +118,43 @@ export default function ResultsPage() {
       setLoading(false);
     }
   }, [user, authLoading, firebaseReady, router]);
+
+const generateAIInsights = async (data: AnalysisData) => {
+    const { subscription } = useAuth();
+    const currentPlan = subscription?.plan || 'free';
+    const isPro = currentPlan === 'pro' || currentPlan === 'enterprise';
+    
+    if (!isPro) return;
+    
+    setGeneratingAI(true);
+    try {
+      const response = await fetch('/api/ai-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          analysisData: {
+            connectionCount: data.stats.connections,
+            messageCount: data.stats.messages,
+            articleCount: data.stats.posts
+          }, 
+          userPlan: currentPlan 
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      setAiInsights(result.data);
+    } catch (error) {
+      console.error('AI generation error:', error);
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
 
   if (loading) {
     return (
