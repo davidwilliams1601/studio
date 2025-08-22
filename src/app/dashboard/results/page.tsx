@@ -1,7 +1,8 @@
 
-
 "use client";
 
+import { AnalysisStorageService } from "@/lib/analysis-storage";
+import { auth } from "@/lib/firebase";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +43,7 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
 const [aiInsights, setAiInsights] = useState<AIInsights | null>(null);
 const [generatingAI, setGeneratingAI] = useState(false);
+const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
     if (firebaseReady && !authLoading && !user) {
@@ -55,7 +57,7 @@ const [generatingAI, setGeneratingAI] = useState(false);
  const savedAiInsights = sessionStorage.getItem("aiInsights");
       if (sessionData) {
         setAnalysisData(JSON.parse(sessionData));
-generateAIInsights(JSON.parse(sessionData));
+generateAiInsights(JSON.parse(sessionData));
       } else {
         // Fallback to demo data if no session data
         const demoData: AnalysisData = {
@@ -111,7 +113,7 @@ generateAIInsights(JSON.parse(sessionData));
           savedAt: new Date().toISOString()
         };
         setAnalysisData(demoData);
-generateAIInsights(demoData);
+generateAiInsights(demoData);
  if (savedAiInsights) {
       setAiInsights(JSON.parse(savedAiInsights));
     }
@@ -123,41 +125,60 @@ generateAIInsights(demoData);
     }
   }, [user, authLoading, firebaseReady, router]);
 
-const generateAIInsights = async (data: AnalysisData) => {
-    const currentPlan = subscription?.plan || 'free';
-    const isPro = currentPlan === 'pro' || currentPlan === 'enterprise';
-    
-    if (!isPro) return;
-    
-    setGeneratingAI(true);
-    try {
-      const response = await fetch('/api/ai-insights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          analysisData: {
-            connectionCount: data.stats.connections,
-            messageCount: data.stats.messages,
-            articleCount: data.stats.posts
-          },  
-          userPlan: currentPlan
-        }),
-      });
-
-      const result = await response.json();
-      
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      setAiInsights(result.data);
-sessionStorage.setItem("aiInsights", JSON.stringify(result.data));
-    } catch (error) {
-      console.error('AI generation error:', error);
-    } finally {
-      setGeneratingAI(false);
+const generateAiInsights = async (data: any) => {
+  console.log("Starting AI insights generation...");
+  setGeneratingAI(true);
+  setAiError(null);
+  
+  try {
+    // Get user auth token
+    const user = auth?.currentUser;
+    if (!auth || !user) {
+      throw new Error('Authentication required');
     }
-  };
+    
+    const token = await user.getIdToken();
+    
+    const response = await fetch('/api/ai-insights', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        stats: data.stats,
+        analytics: data.analytics,
+        fileName: data.fileName,
+        userPlan: data.userPlan || 'pro' // Pass the user's plan
+      }),
+    });
+
+    const aiData = await response.json();
+    
+    if (aiData.success) {
+      setAiInsights(aiData.insights);
+      console.log('✅ AI insights generated successfully');
+      
+      // Save insights to database if we have analysisId
+      if (data.analysisId) {
+        try {
+          await AnalysisStorageService.updateWithInsights(data.analysisId, aiData.insights);
+          console.log('✅ Insights saved to database');
+        } catch (error) {
+          console.error('❌ Failed to save insights:', error);
+        }
+      }
+    } else {
+      console.error('❌ AI insights generation failed:', aiData.error);
+      setAiError(aiData.error);
+    }
+  } catch (error) {
+    console.error('❌ Error generating AI insights:', error);
+    setAiError(error instanceof Error ? error.message : "Unknown error occurred");
+  } finally {
+    setGeneratingAI(false);
+  }
+};
 
 
   if (loading) {

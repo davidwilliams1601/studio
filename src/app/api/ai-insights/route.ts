@@ -57,14 +57,16 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("AI Insights error:", error);
+    // Fix TypeScript error - properly handle unknown error type
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json(
-      { success: false, error: "Failed to generate insights: " + error.message },
+      { success: false, error: "Failed to generate insights: " + errorMessage },
       { status: 500 }
     );
   }
 }
 
-function generateInsightsByTier(stats, analytics, userPlan) {
+function generateInsightsByTier(stats: any, analytics: any, userPlan: string) {
   const totalConnections = stats.connections;
   const contentEngagement = stats.posts > 0 ? (stats.comments / stats.posts) : 0;
   
@@ -79,11 +81,11 @@ function generateInsightsByTier(stats, analytics, userPlan) {
   networkScore = Math.min(networkScore, 100);
 
   const topIndustries = Object.entries(analytics.industries || {})
-    .sort(([,a], [,b]) => b - a)
+    .sort(([,a], [,b]) => (b as number) - (a as number))
     .slice(0, 3)
     .map(([name]) => name);
 
-  const baseInsights = {
+  const baseInsights: any = {
     networkHealth: {
       score: networkScore,
       assessment: `Professional network with ${totalConnections.toLocaleString()} connections`,

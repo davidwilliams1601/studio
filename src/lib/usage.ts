@@ -1,33 +1,66 @@
-import { getDb } from "@/lib/firebase-admin";
-import type { SubscriptionTier } from "@/lib/subscription-tiers";
-import { canCreateBackupForTier } from "./subscriptions";
+// Simple usage tracking (client-side only)
+export class UsageTracker {
+  static getMonthlyUsage(userId: string): number {
+    if (typeof window === 'undefined') return 0; // Server-side safety
+    const key = `usage_${userId}_${new Date().getMonth()}_${new Date().getFullYear()}`;
+    const stored = localStorage.getItem(key);
+    return stored ? parseInt(stored) : 0;
+  }
 
-export async function getMonthlyUsage(uid: string): Promise<number> {
-  const db = getDb();
-  const now = new Date();
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth() + 1;
-  const key = `${y}-${String(m).padStart(2, "0")}`;
-  const ref = db.collection("usage").doc(uid).collection("months").doc(key);
-  const snap = await ref.get();
-  return (snap.exists ? (snap.data()?.count as number) : 0) || 0;
-}
+  static incrementUsage(userId: string): number {
+    if (typeof window === 'undefined') return 0; // Server-side safety
+    const key = `usage_${userId}_${new Date().getMonth()}_${new Date().getFullYear()}`;
+    const current = this.getMonthlyUsage(userId);
+    const newCount = current + 1;
+    localStorage.setItem(key, newCount.toString());
+    return newCount;
+  }
 
-export async function recordBackupUsage(uid: string) {
-  const db = getDb();
-  const now = new Date();
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth() + 1;
-  const key = `${y}-${String(m).padStart(2, "0")}`;
-  const ref = db.collection("usage").doc(uid).collection("months").doc(key);
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const count = (snap.exists ? (snap.data()?.count as number) : 0) || 0;
-    tx.set(ref, { count: count + 1, updatedAt: Date.now() }, { merge: true });
-  });
-}
+  static canUseFeature(userId: string, plan: string, feature: string): boolean {
+    if (typeof window === 'undefined') return false; // Server-side safety
+    const usage = this.getMonthlyUsage(userId);
+    
+    switch (plan) {
+      case 'free':
+        if (feature === 'analysis') return usage < 1;
+        if (feature === 'ai_insights') return false;
+        if (feature === 'pdf_generation') return false;
+        return false;
+      
+      case 'pro':
+        return true; // Unlimited for pro users
+      
+      case 'enterprise':
+        return true; // Unlimited for enterprise users
+      
+      default:
+        return false;
+    }
+  }
 
-export async function canUserCreateBackup(uid: string, tier: SubscriptionTier) {
-  const used = await getMonthlyUsage(uid);
-  return canCreateBackupForTier(tier, used);
+  static getUsageLimits(plan: string) {
+    switch (plan) {
+      case 'free':
+        return {
+          analyses: 1,
+          ai_insights: 0,
+          pdf_reports: 0
+        };
+      case 'pro':
+        return {
+          analyses: 'unlimited',
+          ai_insights: 'unlimited',
+          pdf_reports: 'unlimited'
+        };
+      case 'enterprise':
+        return {
+          analyses: 'unlimited',
+          ai_insights: 'unlimited', 
+          pdf_reports: 'unlimited',
+          team_features: true
+        };
+      default:
+        return { analyses: 0, ai_insights: 0, pdf_reports: 0 };
+    }
+  }
 }
