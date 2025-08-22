@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { UsageTracker } from "@/lib/usage";
 import { AnalysisStorageService, StoredAnalysis } from "@/lib/analysis-storage";
-import Link from "next/link";
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
@@ -184,14 +183,14 @@ export default function Dashboard() {
       };
 
       results.insights = [
-        `You have ${results.stats.connections.toLocaleString()} professional connections`,
-        `Your network spans ${Object.keys(results.analytics.locations).length} different countries/regions`,
-        `Technology sector represents the largest portion of your network`,
-        `You've shared ${results.stats.posts.toLocaleString()} posts and content pieces`,
-        `Your engagement includes ${results.stats.comments.toLocaleString()} comments`,
-        `You follow ${results.stats.companies.toLocaleString()} companies for industry insights`,
-        `You have ${results.analytics.skillsCount} skills listed on your profile`,
-        `Strong presence across ${Object.keys(results.analytics.industries).length} major industries`
+        `📊 **Network Overview**: ${results.stats.connections.toLocaleString()} professional connections analyzed and securely backed up`,
+        `💬 **Communication History**: ${results.stats.messages.toLocaleString()} messages providing deep insights into your networking patterns`,
+        `📝 **Content Activity**: ${results.stats.posts.toLocaleString()} posts showcasing your thought leadership and engagement`,
+        `🏢 **Professional Reach**: Connected to ${results.stats.companies.toLocaleString()} companies across various industries`,
+        `💼 **Skills Portfolio**: ${results.analytics.skillsCount} skills identified and endorsed by your network`,
+        `🌍 **Global Network**: Your connections span multiple geographic regions`,
+        `🎯 **Industry Influence**: Strong presence in Technology sector with ${results.analytics.industries['Technology']} connections`,
+        `📈 **Engagement Potential**: Your ${results.stats.comments.toLocaleString()} comments show strong network engagement`
       ];
 
       // Save analysis to database
@@ -240,10 +239,13 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+          <div className="relative mb-6">
+            <div className="w-16 h-16 border-4 border-blue-200 rounded-full mx-auto"></div>
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <p className="text-blue-100 font-medium text-lg">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -255,180 +257,238 @@ export default function Dashboard() {
   const remainingAnalyses = userPlan === 'free' ? Math.max(0, 1 - monthlyUsage) : 'unlimited';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      </div>
+
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="relative z-50 bg-white/10 backdrop-blur-lg border-b border-white/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">🛡️ LinkStream</h1>
-              <span className="ml-3 text-sm text-gray-500">Your Personal LinkedIn Vault</span>
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-3">
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-xl shadow-lg">
+                <span className="text-white font-bold text-lg">🛡️</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">LinkStream</h1>
+                <p className="text-xs text-blue-200 hidden sm:block">Your Personal LinkedIn Vault</p>
+              </div>
             </div>
-            <nav className="flex items-center space-x-4">
-              <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 font-medium">
-                📊 Dashboard
-              </Link>
-              <Link href="/dashboard/subscription" className="text-gray-600 hover:text-gray-800">
+            
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={() => router.push('/dashboard/subscription')}
+                className="text-white/80 hover:text-white transition-colors"
+              >
                 💳 Pricing
-              </Link>
-              <button
+              </button>
+              <button 
                 onClick={handleLogout}
-                className="text-gray-600 hover:text-gray-800 ml-4"
+                className="text-white/80 hover:text-white transition-colors"
               >
                 Sign Out
               </button>
-            </nav>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          {/* Welcome Section */}
-          <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
-            <div className="px-4 py-5 sm:p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-2">
-                Welcome back, {user.email}!
-              </h2>
-              <p className="text-sm text-gray-600">
-                Analyze your LinkedIn data to unlock powerful insights about your professional network.
-              </p>
-            </div>
+      <main className="relative z-40 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <span className="text-white text-3xl">👋</span>
           </div>
+          <h2 className="text-3xl font-bold text-white mb-2">Welcome back!</h2>
+          <p className="text-blue-200">Analyze your LinkedIn data to unlock powerful insights about your professional network</p>
+        </div>
 
-          {/* Usage Stats */}
-          <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Usage This Month</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{monthlyUsage}</div>
-                  <div className="text-sm text-gray-600">Analyses Used</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
-                    {typeof remainingAnalyses === 'number' ? remainingAnalyses : '∞'}
-                  </div>
-                  <div className="text-sm text-gray-600">Remaining</div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600 capitalize">{userPlan}</div>
-                  <div className="text-sm text-gray-600">Current Plan</div>
-                </div>
+        {/* Usage Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-sm">
+                <span className="text-white text-xl">📊</span>
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-white">{monthlyUsage}</p>
+                <p className="text-blue-200 font-medium">Analyses Used</p>
               </div>
             </div>
           </div>
-
-          {/* Upload Section */}
-          <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {canUploadFile() ? 'Upload Your LinkedIn Data' : 'Upgrade Required'}
-              </h3>
-              <p className="text-sm text-gray-600 mb-6">
-                {canUploadFile() 
-                  ? "Upload your LinkedIn export ZIP file for AI-powered analysis and insights."
-                  : "You've reached your monthly limit. Upgrade to Pro for unlimited analyses."
-                }
-              </p>
-              
-              {canUploadFile() ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                  {uploading ? (
-                    <div className="flex flex-col items-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-                      <p className="text-sm text-gray-600">Processing your LinkedIn data...</p>
-                    </div>
-                  ) : (
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        accept=".zip"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                      />
-                      <div className="flex flex-col items-center">
-                        <div className="text-4xl mb-4">📁</div>
-                        <span className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors">
-                          🛡️ Upload & Analyze LinkedIn Data
-                        </span>
-                        <p className="mt-2 text-xs text-gray-500">
-                          Upload your LinkedIn data export (ZIP file)
-                        </p>
-                      </div>
-                    </label>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center">
-                  <Link
-                    href="/dashboard/subscription"
-                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors"
-                  >
-                    🚀 Upgrade to Pro
-                  </Link>
-                </div>
-              )}
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-sm">
+                <span className="text-white text-xl">⚡</span>
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-white">
+                  {typeof remainingAnalyses === 'number' ? remainingAnalyses : '∞'}
+                </p>
+                <p className="text-blue-200 font-medium">Remaining</p>
+              </div>
             </div>
           </div>
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-sm">
+                <span className="text-white text-xl">🚀</span>
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-white capitalize">{userPlan}</p>
+                <p className="text-blue-200 font-medium">Current Plan</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          {/* Recent Analyses */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Analyses</h3>
-              
-              {loadingHistory ? (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400 mx-auto"></div>
-                  <p className="mt-2 text-sm text-gray-500">Loading your analysis history...</p>
+        {/* Upload Section */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 p-8 shadow-lg mb-8">
+          <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
+            <span className="mr-3">📁</span>
+            {canUploadFile() ? 'Upload Your LinkedIn Data' : 'Upgrade Required'}
+          </h3>
+          <p className="text-blue-200 mb-8 text-lg">
+            {canUploadFile() 
+              ? "Upload your LinkedIn export ZIP file for AI-powered analysis and insights."
+              : "You've reached your monthly limit. Upgrade to Pro for unlimited analyses."
+            }
+          </p>
+          
+          {canUploadFile() ? (
+            <div className="border-2 border-dashed border-white/30 rounded-2xl p-8 text-center hover:border-white/50 transition-all">
+              {uploading ? (
+                <div className="flex flex-col items-center">
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 border-4 border-blue-200 rounded-full mx-auto"></div>
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-blue-100 text-lg font-medium">Processing your LinkedIn data...</p>
+                  <p className="text-blue-300 text-sm mt-2">This may take a few moments</p>
                 </div>
-              ) : recentAnalyses.length > 0 ? (
-                <div className="space-y-3">
-                  {recentAnalyses.map((analysis, index) => (
-                    <div
-                      key={analysis.id || index}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{analysis.fileName}</h4>
-                        <p className="text-sm text-gray-600">
-                          {analysis.stats.connections.toLocaleString()} connections • {' '}
+              ) : (
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".zip"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                      <span className="text-white text-2xl">📤</span>
+                    </div>
+                    <span className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg">
+                      🛡️ Upload & Analyze LinkedIn Data
+                    </span>
+                    <p className="mt-4 text-sm text-blue-300">
+                      Upload your LinkedIn data export (ZIP file)
+                    </p>
+                  </div>
+                </label>
+              )}
+            </div>
+          ) : (
+            <div className="text-center">
+              <button
+                onClick={() => router.push('/dashboard/subscription')}
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-lg font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg"
+              >
+                🚀 Upgrade to Pro
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Analyses */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 p-8 shadow-lg">
+          <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
+            <span className="mr-3">📈</span>
+            Recent Analyses
+          </h3>
+          
+          {loadingHistory ? (
+            <div className="text-center py-8">
+              <div className="relative mb-4">
+                <div className="w-8 h-8 border-2 border-blue-200 rounded-full mx-auto"></div>
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <p className="text-blue-200">Loading your analysis history...</p>
+            </div>
+          ) : recentAnalyses.length > 0 ? (
+            <div className="space-y-4">
+              {recentAnalyses.map((analysis, index) => (
+                <div
+                  key={analysis.id || index}
+                  className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-white text-lg mb-2">{analysis.fileName}</h4>
+                      <div className="flex items-center space-x-6 text-sm text-blue-200">
+                        <span className="flex items-center">
+                          <span className="mr-1">👥</span>
+                          {analysis.stats.connections.toLocaleString()} connections
+                        </span>
+                        <span className="flex items-center">
+                          <span className="mr-1">📅</span>
                           {analysis.uploadDate?.toDate ? 
                             analysis.uploadDate.toDate().toLocaleDateString() : 
                             'Recent'
                           }
-                        </p>
+                        </span>
                       </div>
-                      <button
-                        onClick={() => viewAnalysis(analysis)}
-                        className="ml-4 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors"
-                      >
-                        View Analysis
-                      </button>
                     </div>
-                  ))}
-                  
-                  <div className="pt-4 border-t border-gray-200">
-                    <Link
-                      href="/dashboard/results"
-                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    <button
+                      onClick={() => viewAnalysis(analysis)}
+                      className="ml-6 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg"
                     >
-                      View all analyses →
-                    </Link>
+                      View Analysis
+                    </button>
                   </div>
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="text-4xl mb-4">📊</div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">No analyses yet</h4>
-                  <p className="text-sm text-gray-600">
-                    Upload your first LinkedIn data export to get started with insights.
-                  </p>
-                </div>
+              ))}
+              
+              <div className="pt-6 border-t border-white/10">
+                <button
+                  onClick={() => router.push('/dashboard/results')}
+                  className="text-blue-300 hover:text-blue-100 font-medium transition-colors"
+                >
+                  View all analyses →
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <span className="text-white text-2xl">📊</span>
+              </div>
+              <h4 className="text-xl font-semibold text-white mb-3">No analyses yet</h4>
+              <p className="text-blue-200 mb-6">
+                Upload your first LinkedIn data export to get started with insights.
+              </p>
+              {canUploadFile() && (
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".zip"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <span className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg">
+                    Get Started
+                  </span>
+                </label>
               )}
             </div>
-          </div>
+          )}
         </div>
       </main>
     </div>
