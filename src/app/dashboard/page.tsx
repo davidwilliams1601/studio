@@ -9,22 +9,30 @@ import { AnalysisStorageService, StoredAnalysis } from "@/lib/analysis-storage";
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  
+  // State management
   const [uploading, setUploading] = useState(false);
   const [userPlan, setUserPlan] = useState('pro');
   const [monthlyUsage, setMonthlyUsage] = useState(0);
   const [recentAnalyses, setRecentAnalyses] = useState<StoredAnalysis[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Fix hydration by ensuring client-side only rendering
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
       return;
     }
-    if (user) {
+    if (user && mounted) {
       setMonthlyUsage(UsageTracker.getMonthlyUsage(user.uid));
       loadAnalysisHistory();
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, mounted]);
 
   const loadAnalysisHistory = async () => {
     if (!user) return;
@@ -74,26 +82,7 @@ export default function Dashboard() {
       
       const fileNames = Object.keys(zip.files);
       
-      const results: {
-        fileName: string;
-        processedAt: string;
-        userPlan: string;
-        stats: {
-          connections: number;
-          messages: number;
-          posts: number;
-          comments: number;
-          companies: number;
-        };
-        analytics: {
-          industries: Record<string, number>;
-          locations: Record<string, number>;
-          topCompanies: Record<string, number>;
-          skillsCount: number;
-        };
-        insights: string[];
-        analysisId?: string;
-      } = {
+      const results = {
         fileName: file.name,
         processedAt: new Date().toISOString(),
         userPlan: userPlan,
@@ -110,7 +99,8 @@ export default function Dashboard() {
           topCompanies: {},
           skillsCount: 0
         },
-        insights: []
+        insights: [],
+        analysisId: undefined
       };
 
       // Process LinkedIn data files
@@ -189,7 +179,7 @@ export default function Dashboard() {
         `🏢 **Professional Reach**: Connected to ${results.stats.companies.toLocaleString()} companies across various industries`,
         `💼 **Skills Portfolio**: ${results.analytics.skillsCount} skills identified and endorsed by your network`,
         `🌍 **Global Network**: Your connections span multiple geographic regions`,
-        `🎯 **Industry Influence**: Strong presence in Technology sector with ${results.analytics.industries['Technology']} connections`,
+        `🎯 **Industry Influence**: Strong presence in Technology sector`,
         `📈 **Engagement Potential**: Your ${results.stats.comments.toLocaleString()} comments show strong network engagement`
       ];
 
@@ -237,7 +227,8 @@ export default function Dashboard() {
     router.push("/dashboard/results");
   };
 
-  if (loading) {
+  // Show loading until mounted to prevent hydration mismatch
+  if (loading || !mounted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center">
@@ -253,7 +244,6 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  const usageLimits = UsageTracker.getUsageLimits(userPlan);
   const remainingAnalyses = userPlan === 'free' ? Math.max(0, 1 - monthlyUsage) : 'unlimited';
 
   return (
