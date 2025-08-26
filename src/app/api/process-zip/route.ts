@@ -11,70 +11,32 @@ function parseCsvString(text: string) {
 }
 
 function generateInsightsFromData(stats: any, analytics: any) {
-  console.log("🔍 Generating insights with stats:", stats, "analytics:", analytics);
+  console.log("🔍 FUNCTION CALLED - Starting insights generation");
+  console.log("🔍 Stats type:", typeof stats, stats);
+  console.log("🔍 Analytics type:", typeof analytics, analytics);
   
   const insights = [];
   
   try {
-    // Network Overview - always include this first
-    if (stats?.connections) {
-      insights.push(`📊 **Network Overview**: ${stats.connections.toLocaleString()} professional connections analyzed and securely backed up`);
+    console.log("🔍 Inside try block");
+    
+    if (stats && typeof stats.connections !== 'undefined') {
+      console.log("🔍 Stats.connections found:", stats.connections);
+      insights.push(`📊 Network Overview: ${stats.connections.toLocaleString()} professional connections analyzed`);
+    } else {
+      console.log("❌ Stats.connections missing or undefined");
+      insights.push("📊 Network Overview: Analysis completed");
     }
     
-    // Communication Insights
-    if (stats?.messages && stats.messages > 0) {
-      insights.push(`💬 **Communication History**: ${stats.messages.toLocaleString()} messages providing deep insights into your networking patterns`);
-    }
-    
-    // Content Activity
-    if (stats?.posts && stats.posts > 0) {
-      insights.push(`📝 **Content Activity**: ${stats.posts.toLocaleString()} posts showcasing your thought leadership and engagement`);
-    }
-    
-    // Professional Reach
-    if (stats?.companies && stats.companies > 0) {
-      insights.push(`🏢 **Professional Reach**: Connected to ${stats.companies.toLocaleString()} companies across various industries`);
-    }
-    
-    // Skills Portfolio
-    if (analytics?.skillsCount && analytics.skillsCount > 0) {
-      insights.push(`💼 **Skills Portfolio**: ${analytics.skillsCount} skills identified and endorsed by your network`);
-    }
-    
-    // Geographic Reach (safe check for undefined)
-    if (analytics?.locations && Object.keys(analytics.locations).length > 1) {
-      insights.push(`🌍 **Global Network**: Your connections span ${Object.keys(analytics.locations).length} different countries/regions`);
-    }
-    
-    // Industry Analysis (safe check)
-    if (analytics?.industries && Object.keys(analytics.industries).length > 0) {
-      const topIndustries = Object.entries(analytics.industries)
-        .sort(([,a], [,b]) => (b as number) - (a as number))
-        .slice(0, 3);
-      
-      if (topIndustries.length > 0) {
-        const [topIndustry, count] = topIndustries[0];
-        insights.push(`🎯 **Industry Influence**: Strong presence in ${topIndustry} sector with ${count} connections`);
-      }
-    }
-    
-    // Engagement Potential
-    if (stats?.comments && stats.comments > 0) {
-      insights.push(`📈 **Engagement Potential**: Your ${stats.comments.toLocaleString()} comments show strong network engagement`);
-    }
-    
-    // Network Quality
-    if (stats?.connections && stats.connections > 1000) {
-      insights.push(`⭐ **Network Quality**: Your network size places you in the top 15% of LinkedIn professionals`);
-    }
-    
-    console.log("✅ Generated", insights.length, "insights:", insights);
+    console.log("🔍 Final insights array:", insights);
     return insights;
     
   } catch (error) {
-    console.error("❌ Insights generation error:", error);
-    return [`📊 **Network Overview**: ${stats?.connections || 0} professional connections analyzed`];
+    console.error("❌ Error in insights generation:", error);
+    return ["📊 Network Overview: Basic analysis completed"];
   }
+}    
+ 
 
 function generateAnalytics(connections: any[], posts: any[], companies: any[], skills: any[]) {
   const totalConnections = connections.length;
