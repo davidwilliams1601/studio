@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { AnalysisStorageService } from '@/lib/analysis-storage';
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
@@ -29,7 +30,6 @@ export default function Dashboard() {
   const processLinkedInZip = async (file) => {
     setUploadProgress("Reading ZIP file...");
     
-    // Import JSZip dynamically (we need to add this to dependencies)
     const JSZip = (await import('jszip')).default;
     
     const zip = await JSZip.loadAsync(file);
@@ -48,7 +48,6 @@ export default function Dashboard() {
 
     setUploadProgress("Analyzing connections...");
     
-    // Look for connections.csv
     const connectionsFile = Object.keys(zip.files).find(name => 
       name.toLowerCase().includes('connections') && name.endsWith('.csv')
     );
@@ -56,13 +55,12 @@ export default function Dashboard() {
     if (connectionsFile) {
       const connectionsContent = await zip.files[connectionsFile].async('text');
       const lines = connectionsContent.split('\n').filter(line => line.trim());
-      results.stats.connections = Math.max(0, lines.length - 1); // Subtract header
+      results.stats.connections = Math.max(0, lines.length - 1);
       console.log(`Found ${results.stats.connections} connections`);
     }
 
     setUploadProgress("Analyzing messages...");
     
-    // Look for messages.csv
     const messagesFile = Object.keys(zip.files).find(name => 
       name.toLowerCase().includes('messages') && name.endsWith('.csv')
     );
@@ -76,7 +74,6 @@ export default function Dashboard() {
 
     setUploadProgress("Analyzing posts...");
     
-    // Look for posts.csv or articles.csv
     const postsFile = Object.keys(zip.files).find(name => 
       (name.toLowerCase().includes('posts') || name.toLowerCase().includes('articles')) && name.endsWith('.csv')
     );
@@ -88,7 +85,6 @@ export default function Dashboard() {
       console.log(`Found ${results.stats.posts} posts/articles`);
     }
 
-    // Generate insights based on real data
     results.insights = [
       `You have ${results.stats.connections} professional connections`,
       `Your messaging activity shows ${results.stats.messages} conversation threads`,
@@ -115,7 +111,21 @@ export default function Dashboard() {
       const results = await processLinkedInZip(file);
       
       setUploadProgress("Analysis complete!");
-      sessionStorage.setItem("analysisResults", JSON.stringify(results));
+      
+      console.log('About to save analysis for user:', user?.uid);
+      console.log('User object:', user);
+      
+      const analysisData = {
+        userId: user.uid,
+        fileName: file.name,
+        processedAt: new Date().toISOString(),
+        stats: results.stats,
+        insights: results.insights
+      };
+
+      console.log('Calling AnalysisStorageService.saveAnalysis...');
+      const analysisId = await AnalysisStorageService.saveAnalysis(analysisData);
+      console.log('Analysis saved with ID:', analysisId);
       
       setTimeout(() => {
         router.push("/dashboard/results");

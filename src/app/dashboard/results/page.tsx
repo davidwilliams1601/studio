@@ -1,36 +1,48 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { AnalysisStorageService, AnalysisData } from '@/lib/analysis-storage';
 
 export default function Results() {
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    console.log("Results page loading...");
+    if (authLoading) return;
     
-    // Get results from sessionStorage
-    const storedResults = sessionStorage.getItem("analysisResults");
-    console.log("Raw stored data:", storedResults);
-    
-    if (storedResults) {
-      try {
-        const parsed = JSON.parse(storedResults);
-        console.log("Parsed results:", parsed);
-        setResults(parsed);
-      } catch (error) {
-        console.error("Error parsing results:", error);
-      }
-    } else {
-      console.log("No stored results found");
+    if (!user) {
+      router.push('/login');
+      return;
     }
-    setLoading(false);
-  }, []);
 
-  console.log("Current results state:", results);
-  console.log("Loading state:", loading);
+    const loadResults = async () => {
+      try {
+        console.log("Loading analysis from database for user:", user.uid);
+        const latestAnalysis = await AnalysisStorageService.getLatestAnalysis(user.uid);
+        
+        if (latestAnalysis) {
+          console.log("Loaded analysis:", latestAnalysis);
+          setResults(latestAnalysis);
+        } else {
+          console.log("No analysis found for user");
+          setResults(null);
+        }
+      } catch (error) {
+        console.error("Error loading analysis:", error);
+        setResults(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (loading) {
+    loadResults();
+  }, [user, authLoading, router]);
+
+  if (authLoading || loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div>Loading results...</div>
@@ -91,10 +103,9 @@ export default function Results() {
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
           <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem" }}>🎯 Key Insights</h3>
           <ul style={{ lineHeight: "1.6", color: "#64748b" }}>
-            <li>Your network shows strong professional diversity</li>
-            <li>Most active connections work in Technology and Business sectors</li>
-            <li>Your engagement patterns suggest strategic networking</li>
-            <li>Content creation shows consistent professional presence</li>
+            {results.insights.map((insight, index) => (
+              <li key={index}>{insight}</li>
+            ))}
           </ul>
         </div>
         

@@ -1,0 +1,16 @@
+export class AnalysisStorageService {
+  static async saveAnalysis(data: AnalysisData): Promise<string> {
+    try {
+      console.log('Attempting to save analysis for user:', data.userId);
+      console.log('Database instance:', db);
+      const docRef = await addDoc(collection(db, 'analyses'), data);
+      console.log('Analysis saved successfully with ID:', docRef.id);
+      return docRef.id;
+    } catch (error) {
+      console.error('Database save error details:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      throw error;
+    }
+  }
+}
