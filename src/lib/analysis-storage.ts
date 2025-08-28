@@ -29,15 +29,26 @@ export class AnalysisStorageService {
   static async saveAnalysis(data: AnalysisData): Promise<string> {
     try {
       console.log('Attempting to save analysis for user:', data.userId);
-      console.log('Database instance:', db);
-      console.log('Data to save:', data);
       const docRef = await addDoc(collection(db, 'analyses'), data);
       console.log('Analysis saved successfully with ID:', docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('Database save error details:', error);
-      console.error('Error code:', error?.code);
-      console.error('Error message:', error?.message);
+      throw error;
+    }
+  }
+
+  static async getUserAnalyses(userId: string): Promise<AnalysisData[]> {
+    try {
+      const q = query(
+        collection(db, 'analyses'),
+        where('userId', '==', userId),
+        orderBy('processedAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AnalysisData));
+    } catch (error) {
+      console.error('Error loading user analyses:', error);
       throw error;
     }
   }

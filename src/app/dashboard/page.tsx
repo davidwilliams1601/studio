@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { AnalysisStorageService } from '@/lib/analysis-storage';
 
 export default function Dashboard() {
@@ -11,12 +10,33 @@ export default function Dashboard() {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
+  const [analyses, setAnalyses] = useState([]);
+  const [loadingAnalyses, setLoadingAnalyses] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    const loadAnalyses = async () => {
+      if (!user) return;
+      
+      try {
+        const userAnalyses = await AnalysisStorageService.getUserAnalyses(user.uid);
+        setAnalyses(userAnalyses);
+      } catch (error) {
+        console.error('Error loading analyses:', error);
+      } finally {
+        setLoadingAnalyses(false);
+      }
+    };
+
+    if (user && !loading) {
+      loadAnalyses();
+    }
+  }, [user, loading]);
 
   const handleLogout = async () => {
     try {
@@ -72,8 +92,7 @@ export default function Dashboard() {
           topSeniorityLevels: {}
         }
       },
-      insights: [],
-      rawData: {}
+      insights: []
     };
 
     setUploadProgress("Analyzing connections...");
@@ -86,80 +105,59 @@ export default function Dashboard() {
     if (connectionsFile) {
       const connectionsContent = await zip.files[connectionsFile].async('text');
       const lines = connectionsContent.split('\n').filter(line => line.trim());
-      results.stats.connections = Math.max(0, lines.length - 3); // Subtract metadata lines
+      results.stats.connections = Math.max(0, lines.length - 3);
       
-      // Find the actual header row (skip metadata lines)
       let headerRowIndex = -1;
       for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (line.includes('First Name') || line.includes('Company') || line.includes('Position')) {
+        if (lines[i].includes('First Name') || lines[i].includes('Company')) {
           headerRowIndex = i;
           break;
         }
       }
       
-      if (headerRowIndex !== -1 && lines.length > headerRowIndex + 1) {
-        console.log('Found header row at index:', headerRowIndex);
+      if (headerRowIndex !== -1) {
         const headers = parseCSVLine(lines[headerRowIndex]).map(h => h.toLowerCase().replace(/"/g, '').trim());
-        console.log('Parsed CSV Headers:', headers);
-        
-        const firstNameIndex = headers.findIndex(h => h.includes('first'));
-        const lastNameIndex = headers.findIndex(h => h.includes('last'));
         const companyIndex = headers.findIndex(h => h.includes('company'));
         const positionIndex = headers.findIndex(h => h.includes('position'));
         
-        console.log('Column mapping:', {
-          firstNameIndex, lastNameIndex, companyIndex, positionIndex
-        });
-        
         const companies = {};
         const industries = {};
-        const locations = {};
         const seniorityLevels = {};
         
-        // Parse data starting from the line after headers
-        lines.slice(headerRowIndex + 1).forEach((line, index) => {
+        lines.slice(headerRowIndex + 1).forEach((line) => {
           const columns = parseCSVLine(line);
           
-          // Company analysis
           if (companyIndex >= 0 && columns[companyIndex]) {
             const company = columns[companyIndex].replace(/"/g, '').trim();
-            if (company && company !== '--' && company !== '' && company !== 'null') {
+            if (company && company !== '--' && company !== '') {
               companies[company] = (companies[company] || 0) + 1;
             }
           }
           
-          // Position/Industry analysis
           if (positionIndex >= 0 && columns[positionIndex]) {
             const position = columns[positionIndex].replace(/"/g, '').trim().toLowerCase();
             
-            if (position && position !== '--' && position !== '' && position !== 'null') {
-              // Industry inference
-              if (position.includes('engineer') || position.includes('developer') || position.includes('tech') || position.includes('software')) {
+            if (position && position !== '--' && position !== '') {
+              if (position.includes('engineer') || position.includes('developer') || position.includes('tech')) {
                 industries['Technology'] = (industries['Technology'] || 0) + 1;
-              } else if (position.includes('finance') || position.includes('banking') || position.includes('investment') || position.includes('analyst')) {
+              } else if (position.includes('finance') || position.includes('banking')) {
                 industries['Finance'] = (industries['Finance'] || 0) + 1;
-              } else if (position.includes('marketing') || position.includes('sales') || position.includes('business development')) {
+              } else if (position.includes('marketing') || position.includes('sales')) {
                 industries['Marketing & Sales'] = (industries['Marketing & Sales'] || 0) + 1;
-              } else if (position.includes('consult') || position.includes('advisor')) {
+              } else if (position.includes('consult')) {
                 industries['Consulting'] = (industries['Consulting'] || 0) + 1;
-              } else if (position.includes('health') || position.includes('medical') || position.includes('doctor') || position.includes('nurse')) {
+              } else if (position.includes('health') || position.includes('medical')) {
                 industries['Healthcare'] = (industries['Healthcare'] || 0) + 1;
-              } else if (position.includes('teacher') || position.includes('professor') || position.includes('education')) {
-                industries['Education'] = (industries['Education'] || 0) + 1;
               } else {
                 industries['Other'] = (industries['Other'] || 0) + 1;
               }
               
-              // Seniority analysis
-              if (position.includes('ceo') || position.includes('founder') || position.includes('president') || position.includes('owner')) {
+              if (position.includes('ceo') || position.includes('founder')) {
                 seniorityLevels['C-Level/Founder'] = (seniorityLevels['C-Level/Founder'] || 0) + 1;
-              } else if (position.includes('vp') || position.includes('vice president') || position.includes('director') || position.includes('head of')) {
+              } else if (position.includes('director') || position.includes('vp')) {
                 seniorityLevels['Senior Leadership'] = (seniorityLevels['Senior Leadership'] || 0) + 1;
-              } else if (position.includes('manager') || position.includes('lead') || position.includes('supervisor')) {
+              } else if (position.includes('manager') || position.includes('lead')) {
                 seniorityLevels['Management'] = (seniorityLevels['Management'] || 0) + 1;
-              } else if (position.includes('senior') || position.includes('principal') || position.includes('staff')) {
-                seniorityLevels['Senior Individual Contributor'] = (seniorityLevels['Senior Individual Contributor'] || 0) + 1;
               } else {
                 seniorityLevels['Individual Contributor'] = (seniorityLevels['Individual Contributor'] || 0) + 1;
               }
@@ -167,46 +165,18 @@ export default function Dashboard() {
           }
         });
         
-        // Store results
         results.analytics.topCompanies = Object.fromEntries(
           Object.entries(companies).sort(([,a], [,b]) => b - a).slice(0, 10)
         );
         results.analytics.industries = industries;
         results.analytics.networkQuality.topSeniorityLevels = seniorityLevels;
-        
-        // Calculate diversity score
-        const numIndustries = Object.keys(industries).length;
-        results.analytics.networkQuality.diversityScore = Math.min(100, Math.max(0, numIndustries * 15));
-        
+        results.analytics.networkQuality.diversityScore = Math.min(100, Object.keys(industries).length * 15);
         results.stats.companies = Object.keys(companies).length;
-        
-        console.log('Analytics results:', {
-          companiesFound: Object.keys(companies).length,
-          industriesFound: Object.keys(industries).length,
-          topCompanies: Object.entries(companies).slice(0, 3),
-          topIndustries: Object.entries(industries).slice(0, 3)
-        });
       }
-      
-      console.log(`Found ${results.stats.connections} connections`);
     }
 
-    // Skills analysis
-    setUploadProgress("Analyzing skills...");
-    const skillsFiles = Object.keys(zip.files).filter(name => 
-      name.toLowerCase().includes('skill') && name.endsWith('.csv')
-    );
-    
-    let totalSkills = 0;
-    for (const skillFile of skillsFiles) {
-      const skillContent = await zip.files[skillFile].async('text');
-      const lines = skillContent.split('\n').filter(line => line.trim());
-      totalSkills += Math.max(0, lines.length - 1);
-    }
-    results.analytics.skillsCount = totalSkills;
-
+    // Process other files (messages, posts, skills)
     setUploadProgress("Analyzing messages...");
-    
     const messageFiles = Object.keys(zip.files).filter(name => 
       name.toLowerCase().includes('message') && name.endsWith('.csv')
     );
@@ -219,14 +189,9 @@ export default function Dashboard() {
     }
     results.stats.messages = totalMessages;
 
-    setUploadProgress("Analyzing posts and articles...");
-    
+    setUploadProgress("Analyzing posts...");
     const contentFiles = Object.keys(zip.files).filter(name => 
-      (name.toLowerCase().includes('post') || 
-       name.toLowerCase().includes('article') || 
-       name.toLowerCase().includes('share') ||
-       name.toLowerCase().includes('activity')) 
-      && name.endsWith('.csv')
+      (name.toLowerCase().includes('post') || name.toLowerCase().includes('article')) && name.endsWith('.csv')
     );
     
     let totalPosts = 0;
@@ -237,12 +202,23 @@ export default function Dashboard() {
     }
     results.stats.posts = totalPosts;
 
-    // Generate enhanced insights
+    const skillsFiles = Object.keys(zip.files).filter(name => 
+      name.toLowerCase().includes('skill') && name.endsWith('.csv')
+    );
+    
+    let totalSkills = 0;
+    for (const skillFile of skillsFiles) {
+      const skillContent = await zip.files[skillFile].async('text');
+      const lines = skillContent.split('\n').filter(line => line.trim());
+      totalSkills += Math.max(0, lines.length - 1);
+    }
+    results.analytics.skillsCount = totalSkills;
+
     const topIndustry = Object.entries(results.analytics.industries).sort(([,a], [,b]) => b - a)[0];
     const industryCount = Object.keys(results.analytics.industries).length;
     
     results.insights = [
-      `You have ${results.stats.connections} professional connections across multiple regions`,
+      `You have ${results.stats.connections} professional connections`,
       `Your network spans ${industryCount} industries${topIndustry ? `, with strongest presence in ${topIndustry[0]} (${topIndustry[1]} connections)` : ''}`,
       `Connected to ${results.stats.companies} different companies`,
       `Network diversity score: ${results.analytics.networkQuality.diversityScore}/100`,
@@ -250,7 +226,6 @@ export default function Dashboard() {
       `Content activity: ${results.stats.posts} posts with ${results.stats.messages} message conversations`
     ];
 
-    console.log("Final analysis results:", results);
     return results;
   };
 
@@ -267,7 +242,6 @@ export default function Dashboard() {
     
     try {
       const results = await processLinkedInZip(file);
-      
       setUploadProgress("Analysis complete!");
       
       const analysisData = {
@@ -280,7 +254,10 @@ export default function Dashboard() {
       };
 
       const analysisId = await AnalysisStorageService.saveAnalysis(analysisData);
-      console.log('Analysis saved with ID:', analysisId);
+      
+      // Refresh analyses list
+      const userAnalyses = await AnalysisStorageService.getUserAnalyses(user.uid);
+      setAnalyses(userAnalyses);
       
       setTimeout(() => {
         router.push("/dashboard/results");
@@ -299,7 +276,7 @@ export default function Dashboard() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", padding: "2rem" }}>
-      <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "2rem" }}>
           <h1>LinkStream Dashboard</h1>
           <button onClick={handleLogout} style={{ background: "#ef4444", color: "white", padding: "0.5rem 1rem", border: "none", borderRadius: "4px" }}>
@@ -307,8 +284,63 @@ export default function Dashboard() {
           </button>
         </div>
         
-        <div style={{ background: "white", padding: "2rem", borderRadius: "8px", marginBottom: "2rem" }}>
-          <h2>Upload LinkedIn Data</h2>
+        {/* Previous Analyses */}
+        {!loadingAnalyses && analyses.length > 0 && (
+          <div style={{ marginBottom: "2rem" }}>
+            <h2 style={{ marginBottom: "1rem" }}>Your LinkedIn Analyses</h2>
+            <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+              {analyses.map((analysis) => (
+                <div key={analysis.id} style={{ background: "white", padding: "1.5rem", borderRadius: "8px", border: "1px solid #e5e7eb" }}>
+                  <h3 style={{ fontSize: "1.125rem", fontWeight: "bold", marginBottom: "0.5rem" }}>
+                    {analysis.fileName}
+                  </h3>
+                  <p style={{ color: "#6b7280", fontSize: "0.875rem", marginBottom: "1rem" }}>
+                    {new Date(analysis.processedAt).toLocaleDateString()}
+                  </p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1rem" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>{analysis.stats.connections}</span>
+                      <span style={{ color: "#6b7280", fontSize: "0.875rem" }}> connections</span>
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>{analysis.stats.companies}</span>
+                      <span style={{ color: "#6b7280", fontSize: "0.875rem" }}> companies</span>
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>{analysis.stats.posts}</span>
+                      <span style={{ color: "#6b7280", fontSize: "0.875rem" }}> posts</span>
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "bold" }}>{analysis.analytics.skillsCount}</span>
+                      <span style={{ color: "#6b7280", fontSize: "0.875rem" }}> skills</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      sessionStorage.setItem("selectedAnalysisId", analysis.id);
+                      router.push("/dashboard/results");
+                    }}
+                    style={{ 
+                      width: "100%", 
+                      padding: "0.5rem", 
+                      background: "#3b82f6", 
+                      color: "white", 
+                      border: "none", 
+                      borderRadius: "4px", 
+                      fontWeight: "bold" 
+                    }}
+                  >
+                    View Full Report
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Upload New Analysis */}
+        <div style={{ background: "white", padding: "2rem", borderRadius: "8px", border: "1px solid #e5e7eb" }}>
+          <h2>Upload New LinkedIn Data</h2>
           {uploading ? (
             <div>
               <p>Processing your LinkedIn data...</p>
@@ -318,7 +350,7 @@ export default function Dashboard() {
             <>
               <input type="file" accept=".zip" onChange={handleFileUpload} />
               <p style={{ fontSize: "0.875rem", color: "#64748b", marginTop: "1rem" }}>
-                Upload your LinkedIn data export ZIP file for real analysis
+                Upload your LinkedIn data export ZIP file for analysis
               </p>
             </>
           )}
