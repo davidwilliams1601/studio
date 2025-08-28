@@ -12,6 +12,16 @@ export interface AnalysisData {
     posts: number;
     companies: number;
   };
+  analytics: {
+    industries: Record<string, number>;
+    locations: Record<string, number>;
+    topCompanies: Record<string, number>;
+    skillsCount: number;
+    networkQuality: {
+      diversityScore: number;
+      topSeniorityLevels: Record<string, number>;
+    };
+  };
   insights: string[];
 }
 
@@ -33,14 +43,25 @@ export class AnalysisStorageService {
   }
 
   static async getLatestAnalysis(userId: string): Promise<AnalysisData | null> {
-    const q = query(
-      collection(db, 'analyses'),
-      where('userId', '==', userId),
-      orderBy('processedAt', 'desc'),
-      limit(1)
-    );
-    const querySnapshot = await getDocs(q);
-    const docs = querySnapshot.docs;
-    return docs.length > 0 ? { id: docs[0].id, ...docs[0].data() } as AnalysisData : null;
+    try {
+      const q = query(
+        collection(db, 'analyses'),
+        where('userId', '==', userId)
+      );
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.docs.length === 0) {
+        return null;
+      }
+      
+      const docs = querySnapshot.docs.sort((a, b) => 
+        b.data().processedAt.localeCompare(a.data().processedAt)
+      );
+      
+      return { id: docs[0].id, ...docs[0].data() } as AnalysisData;
+    } catch (error) {
+      console.error('Error loading analysis:', error);
+      throw error;
+    }
   }
 }

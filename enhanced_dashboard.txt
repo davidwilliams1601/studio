@@ -1,0 +1,193 @@
+const processLinkedInZip = async (file) => {
+  setUploadProgress("Reading ZIP file...");
+  
+  const JSZip = (await import('jszip')).default;
+  
+  const zip = await JSZip.loadAsync(file);
+  const results = {
+    fileName: file.name,
+    processedAt: new Date().toISOString(),
+    stats: {
+      connections: 0,
+      messages: 0,
+      posts: 0,
+      companies: 0
+    },
+    analytics: {
+      industries: {},
+      locations: {},
+      topCompanies: {},
+      skillsCount: 0,
+      networkQuality: {
+        diversityScore: 0,
+        topSeniorityLevels: {}
+      }
+    },
+    insights: [],
+    rawData: {}
+  };
+
+  setUploadProgress("Analyzing connections...");
+  
+  const connectionsFile = Object.keys(zip.files).find(name => 
+    (name.toLowerCase().includes('connections') || name.toLowerCase().includes('contact')) 
+    && name.endsWith('.csv')
+  );
+  
+  if (connectionsFile) {
+    const connectionsContent = await zip.files[connectionsFile].async('text');
+    const lines = connectionsContent.split('\n').filter(line => line.trim());
+    results.stats.connections = Math.max(0, lines.length - 1);
+    
+    // Parse detailed connection data
+    if (lines.length > 1) {
+      const headers = lines[0].toLowerCase().split(',').map(h => h.replace(/"/g, '').trim());
+      const companyIndex = headers.findIndex(h => h.includes('company'));
+      const positionIndex = headers.findIndex(h => h.includes('position') || h.includes('title'));
+      const locationIndex = headers.findIndex(h => h.includes('location'));
+      
+      const companies = {};
+      const industries = {};
+      const locations = {};
+      const seniorityLevels = {};
+      
+      lines.slice(1).forEach(line => {
+        const columns = line.split(',').map(col => col.replace(/"/g, '').trim());
+        
+        // Company analysis
+        if (companyIndex >= 0 && columns[companyIndex]) {
+          const company = columns[companyIndex];
+          if (company && company !== '--' && company !== '') {
+            companies[company] = (companies[company] || 0) + 1;
+          }
+        }
+        
+        // Location analysis
+        if (locationIndex >= 0 && columns[locationIndex]) {
+          let location = columns[locationIndex];
+          // Extract country/city from location string
+          if (location.includes(',')) {
+            location = location.split(',').pop().trim();
+          }
+          if (location && location !== '--' && location !== '') {
+            locations[location] = (locations[location] || 0) + 1;
+          }
+        }
+        
+        // Position/Seniority analysis
+        if (positionIndex >= 0 && columns[positionIndex]) {
+          const position = columns[positionIndex].toLowerCase();
+          
+          // Industry inference from job titles (basic mapping)
+          if (position.includes('engineer') || position.includes('developer') || position.includes('tech')) {
+            industries['Technology'] = (industries['Technology'] || 0) + 1;
+          } else if (position.includes('finance') || position.includes('banking') || position.includes('investment')) {
+            industries['Finance'] = (industries['Finance'] || 0) + 1;
+          } else if (position.includes('marketing') || position.includes('sales')) {
+            industries['Marketing & Sales'] = (industries['Marketing & Sales'] || 0) + 1;
+          } else if (position.includes('consult')) {
+            industries['Consulting'] = (industries['Consulting'] || 0) + 1;
+          } else if (position.includes('health') || position.includes('medical') || position.includes('doctor')) {
+            industries['Healthcare'] = (industries['Healthcare'] || 0) + 1;
+          } else {
+            industries['Other'] = (industries['Other'] || 0) + 1;
+          }
+          
+          // Seniority analysis
+          if (position.includes('ceo') || position.includes('founder') || position.includes('president')) {
+            seniorityLevels['C-Level/Founder'] = (seniorityLevels['C-Level/Founder'] || 0) + 1;
+          } else if (position.includes('vp') || position.includes('vice president') || position.includes('director')) {
+            seniorityLevels['Senior Leadership'] = (seniorityLevels['Senior Leadership'] || 0) + 1;
+          } else if (position.includes('manager') || position.includes('head of') || position.includes('lead')) {
+            seniorityLevels['Management'] = (seniorityLevels['Management'] || 0) + 1;
+          } else if (position.includes('senior') || position.includes('principal')) {
+            seniorityLevels['Senior Individual Contributor'] = (seniorityLevels['Senior Individual Contributor'] || 0) + 1;
+          } else {
+            seniorityLevels['Individual Contributor'] = (seniorityLevels['Individual Contributor'] || 0) + 1;
+          }
+        }
+      });
+      
+      // Sort and store top results
+      results.analytics.topCompanies = Object.fromEntries(
+        Object.entries(companies).sort(([,a], [,b]) => b - a).slice(0, 10)
+      );
+      results.analytics.industries = industries;
+      results.analytics.locations = Object.fromEntries(
+        Object.entries(locations).sort(([,a], [,b]) => b - a).slice(0, 15)
+      );
+      results.analytics.networkQuality.topSeniorityLevels = seniorityLevels;
+      
+      // Calculate diversity score
+      const numCountries = Object.keys(locations).length;
+      const numIndustries = Object.keys(industries).length;
+      results.analytics.networkQuality.diversityScore = Math.min(100, (numCountries * 10) + (numIndustries * 8));
+      
+      results.stats.companies = Object.keys(companies).length;
+    }
+    
+    console.log(`Found ${results.stats.connections} connections`);
+  }
+
+  // Skills analysis
+  setUploadProgress("Analyzing skills...");
+  const skillsFiles = Object.keys(zip.files).filter(name => 
+    name.toLowerCase().includes('skill') && name.endsWith('.csv')
+  );
+  
+  let totalSkills = 0;
+  for (const skillFile of skillsFiles) {
+    const skillContent = await zip.files[skillFile].async('text');
+    const lines = skillContent.split('\n').filter(line => line.trim());
+    totalSkills += Math.max(0, lines.length - 1);
+  }
+  results.analytics.skillsCount = totalSkills;
+
+  setUploadProgress("Analyzing messages...");
+  
+  const messageFiles = Object.keys(zip.files).filter(name => 
+    name.toLowerCase().includes('message') && name.endsWith('.csv')
+  );
+  
+  let totalMessages = 0;
+  for (const messageFile of messageFiles) {
+    const messageContent = await zip.files[messageFile].async('text');
+    const lines = messageContent.split('\n').filter(line => line.trim());
+    totalMessages += Math.max(0, lines.length - 1);
+  }
+  results.stats.messages = totalMessages;
+
+  setUploadProgress("Analyzing posts and articles...");
+  
+  const contentFiles = Object.keys(zip.files).filter(name => 
+    (name.toLowerCase().includes('post') || 
+     name.toLowerCase().includes('article') || 
+     name.toLowerCase().includes('share') ||
+     name.toLowerCase().includes('activity')) 
+    && name.endsWith('.csv')
+  );
+  
+  let totalPosts = 0;
+  for (const contentFile of contentFiles) {
+    const contentData = await zip.files[contentFile].async('text');
+    const lines = contentData.split('\n').filter(line => line.trim());
+    totalPosts += Math.max(0, lines.length - 1);
+  }
+  results.stats.posts = totalPosts;
+
+  // Generate enhanced insights
+  const topIndustry = Object.entries(results.analytics.industries).sort(([,a], [,b]) => b - a)[0];
+  const topLocation = Object.entries(results.analytics.locations).sort(([,a], [,b]) => b - a)[0];
+  
+  results.insights = [
+    `You have ${results.stats.connections} professional connections across ${Object.keys(results.analytics.locations).length} locations`,
+    `Your network spans ${Object.keys(results.analytics.industries).length} industries, with strongest presence in ${topIndustry ? topIndustry[0] : 'Technology'}`,
+    `Geographic reach includes professionals from ${topLocation ? topLocation[0] : 'multiple regions'}`,
+    `Network diversity score: ${results.analytics.networkQuality.diversityScore}/100`,
+    `Connected to ${results.stats.companies} companies with ${results.analytics.skillsCount} skills endorsed`,
+    `Content activity: ${results.stats.posts} posts with ${results.stats.messages} message conversations`
+  ];
+
+  console.log("Final analysis results:", results);
+  return results;
+};

@@ -1,0 +1,105 @@
+const processLinkedInZip = async (file) => {
+  setUploadProgress("Reading ZIP file...");
+  
+  const JSZip = (await import('jszip')).default;
+  
+  const zip = await JSZip.loadAsync(file);
+  const results = {
+    fileName: file.name,
+    processedAt: new Date().toISOString(),
+    stats: {
+      connections: 0,
+      messages: 0,
+      posts: 0,
+      companies: 0
+    },
+    insights: [],
+    rawData: {}
+  };
+
+  setUploadProgress("Analyzing connections...");
+  
+  // Look for connections file with multiple naming patterns
+  const connectionsFile = Object.keys(zip.files).find(name => 
+    (name.toLowerCase().includes('connections') || name.toLowerCase().includes('contact')) 
+    && name.endsWith('.csv')
+  );
+  
+  if (connectionsFile) {
+    const connectionsContent = await zip.files[connectionsFile].async('text');
+    const lines = connectionsContent.split('\n').filter(line => line.trim());
+    results.stats.connections = Math.max(0, lines.length - 1);
+    console.log(`Found ${results.stats.connections} connections`);
+  }
+
+  setUploadProgress("Analyzing messages...");
+  
+  // Look for message files - LinkedIn uses different structures
+  const messageFiles = Object.keys(zip.files).filter(name => 
+    name.toLowerCase().includes('message') && name.endsWith('.csv')
+  );
+  
+  let totalMessages = 0;
+  for (const messageFile of messageFiles) {
+    const messageContent = await zip.files[messageFile].async('text');
+    const lines = messageContent.split('\n').filter(line => line.trim());
+    totalMessages += Math.max(0, lines.length - 1);
+  }
+  results.stats.messages = totalMessages;
+  console.log(`Found ${results.stats.messages} messages`);
+
+  setUploadProgress("Analyzing posts and articles...");
+  
+  // Look for posts, articles, and shares
+  const contentFiles = Object.keys(zip.files).filter(name => 
+    (name.toLowerCase().includes('post') || 
+     name.toLowerCase().includes('article') || 
+     name.toLowerCase().includes('share') ||
+     name.toLowerCase().includes('activity')) 
+    && name.endsWith('.csv')
+  );
+  
+  let totalPosts = 0;
+  for (const contentFile of contentFiles) {
+    const contentData = await zip.files[contentFile].async('text');
+    const lines = contentData.split('\n').filter(line => line.trim());
+    totalPosts += Math.max(0, lines.length - 1);
+  }
+  results.stats.posts = totalPosts;
+  console.log(`Found ${results.stats.posts} posts/articles`);
+
+  // Estimate companies from connections if available
+  if (connectionsFile && results.stats.connections > 0) {
+    try {
+      const connectionsContent = await zip.files[connectionsFile].async('text');
+      const lines = connectionsContent.split('\n');
+      const companies = new Set();
+      lines.slice(1).forEach(line => {
+        const columns = line.split(',');
+        if (columns.length > 2) {
+          const company = columns[2]?.replace(/"/g, '').trim();
+          if (company && company !== '' && company !== '--') {
+            companies.add(company);
+          }
+        }
+      });
+      results.stats.companies = companies.size;
+    } catch (error) {
+      console.log('Error parsing companies:', error);
+    }
+  }
+
+  console.log(`Found ${results.stats.companies} companies`);
+
+  // Generate insights based on real data
+  results.insights = [
+    `You have ${results.stats.connections} professional connections`,
+    `Your messaging activity shows ${results.stats.messages} conversation threads`,
+    `You've created ${results.stats.posts} posts and articles`,
+    `Connected to professionals from ${results.stats.companies} different companies`,
+    `Analysis based on your actual LinkedIn data export`
+  ];
+
+  console.log("Final analysis results:", results);
+  return results;
+};
