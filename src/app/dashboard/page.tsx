@@ -275,19 +275,32 @@ export default function Dashboard() {
    }
    results.stats.messages = totalMessages;
 
-   setUploadProgress("Analyzing posts...");
-   const contentFiles = Object.keys(zip.files).filter(name => 
-     (name.toLowerCase().includes('post') || name.toLowerCase().includes('article')) && name.endsWith('.csv')
-   );
-   
-   let totalPosts = 0;
-   for (const contentFile of contentFiles) {
-     const contentData = await zip.files[contentFile].async('text');
-     const lines = contentData.split('\n').filter(line => line.trim());
-     totalPosts += Math.max(0, lines.length - 1);
-   }
-   results.stats.posts = totalPosts;
+setUploadProgress("Analyzing posts...");
+console.log('All files in ZIP:', Object.keys(zip.files));
 
+const contentFiles = Object.keys(zip.files).filter(name => {
+  const lowerName = name.toLowerCase();
+  return (lowerName.includes('post') || 
+          lowerName.includes('article') || 
+          lowerName.includes('share') ||
+          lowerName.includes('update') ||
+          lowerName.includes('activity') ||
+          lowerName.includes('content')) && 
+         name.endsWith('.csv');
+});
+
+console.log('Content files found:', contentFiles);
+
+let totalPosts = 0;
+for (const contentFile of contentFiles) {
+  console.log(`Processing content file: ${contentFile}`);
+  const contentData = await zip.files[contentFile].async('text');
+  const lines = contentData.split('\n').filter(line => line.trim());
+  console.log(`Lines in ${contentFile}:`, lines.length);
+  totalPosts += Math.max(0, lines.length - 1);
+}
+results.stats.posts = totalPosts;
+console.log('Total posts found:', totalPosts);
    const skillsFiles = Object.keys(zip.files).filter(name => 
      name.toLowerCase().includes('skill') && name.endsWith('.csv')
    );
