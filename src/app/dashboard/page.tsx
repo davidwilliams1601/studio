@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { AnalysisStorageService } from '@/lib/analysis-storage';
 import { SubscriptionService } from '@/lib/subscription-storage';
+import { AIAnalysisService } from '@/lib/ai-analysis';
 import SubscriptionCard from '@/components/SubscriptionCard';
 
 export default function Dashboard() {
@@ -178,7 +179,8 @@ export default function Dashboard() {
           topSeniorityLevels: {}
         }
       },
-      insights: []
+      insights: [],
+      aiInsights: []
     };
 
     setUploadProgress("Analyzing connections...");
@@ -306,7 +308,9 @@ export default function Dashboard() {
     }
     results.analytics.skillsCount = totalSkills;
 
+    // Generate basic insights
     results.insights = generateEnhancedInsights(results);
+
     return results;
   };
 
@@ -319,7 +323,6 @@ export default function Dashboard() {
       return;
     }
 
-    // Check subscription limits
     if (subscription && subscription.analysesUsed >= subscription.analysesLimit && subscription.analysesLimit !== -1) {
       alert('You have reached your monthly analysis limit. Please upgrade to continue.');
       return;
@@ -328,7 +331,6 @@ export default function Dashboard() {
     setUploading(true);
     
     try {
-      // Update usage count
       const canAnalyze = await SubscriptionService.updateUsage(user.uid);
       if (!canAnalyze) {
         alert('Analysis limit exceeded. Please upgrade your plan.');
@@ -337,6 +339,22 @@ export default function Dashboard() {
       }
 
       const results = await processLinkedInZip(file);
+      
+      // Generate AI insights for paid tiers
+      if (subscription.plan !== 'free') {
+        setUploadProgress("Generating AI insights...");
+        try {
+          const aiInsights = await AIAnalysisService.generateAIInsights({
+            analysisData: results,
+            userTier: subscription.plan
+          });
+          results.aiInsights = aiInsights;
+        } catch (error) {
+          console.error('AI insights generation failed:', error);
+          results.aiInsights = [];
+        }
+      }
+      
       setUploadProgress("Analysis complete!");
       
       const analysisData = {
@@ -345,12 +363,12 @@ export default function Dashboard() {
         processedAt: new Date().toISOString(),
         stats: results.stats,
         analytics: results.analytics,
-        insights: results.insights
+        insights: results.insights,
+        aiInsights: results.aiInsights
       };
 
       await AnalysisStorageService.saveAnalysis(analysisData);
       
-      // Refresh data
       const [userAnalyses, userSubscription] = await Promise.all([
         AnalysisStorageService.getUserAnalyses(user.uid),
         SubscriptionService.getUserSubscription(user.uid)
@@ -384,10 +402,8 @@ export default function Dashboard() {
           </button>
         </div>
         
-        {/* Subscription Card */}
         {subscription && <SubscriptionCard />}
         
-        {/* Previous Analyses */}
         {analyses.length > 0 && (
           <div style={{ marginBottom: "2rem" }}>
             <h2 style={{ marginBottom: "1rem" }}>Your LinkedIn Analyses</h2>
@@ -418,6 +434,18 @@ export default function Dashboard() {
                       <span style={{ color: "#6b7280", fontSize: "0.875rem" }}> skills</span>
                     </div>
                   </div>
+                  {analysis.aiInsights && analysis.aiInsights.length > 0 && (
+                    <div style={{ 
+                      background: "#f0f9ff", 
+                      padding: "0.5rem", 
+                      borderRadius: "4px", 
+                      marginBottom: "1rem",
+                      fontSize: "0.75rem",
+                      color: "#0369a1"
+                    }}>
+                      AI-powered insights included
+                    </div>
+                  )}
                   <button 
                     onClick={() => {
                       sessionStorage.setItem("selectedAnalysisId", analysis.id);
@@ -441,7 +469,6 @@ export default function Dashboard() {
           </div>
         )}
         
-        {/* Upload New Analysis */}
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", border: "1px solid #e5e7eb" }}>
           <h2>Upload New LinkedIn Data</h2>
           {uploading ? (
@@ -454,6 +481,9 @@ export default function Dashboard() {
               <input type="file" accept=".zip" onChange={handleFileUpload} />
               <p style={{ fontSize: "0.875rem", color: "#64748b", marginTop: "1rem" }}>
                 Upload your LinkedIn data export ZIP file for analysis
+                {subscription?.plan !== 'free' && (
+                  <span style={{ color: "#3b82f6", fontWeight: "bold" }}> • AI insights included</span>
+                )}
               </p>
               {subscription && subscription.analysesUsed >= subscription.analysesLimit && subscription.analysesLimit !== -1 && (
                 <div style={{ 
@@ -464,7 +494,7 @@ export default function Dashboard() {
                   color: "#dc2626",
                   marginTop: "1rem"
                 }}>
-                  You have reached your monthly limit. Upgrade to Pro for unlimited analyses.
+                  You have reached your monthly limit. Upgrade to Pro for unlimited analyses with AI insights.
                 </div>
               )}
             </>

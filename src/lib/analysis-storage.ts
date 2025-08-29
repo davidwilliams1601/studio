@@ -23,6 +23,12 @@ export interface AnalysisData {
     };
   };
   insights: string[];
+  aiInsights?: {
+    type: string;
+    title: string;
+    content: string;
+    confidence: number;
+  }[];
 }
 
 export class AnalysisStorageService {
