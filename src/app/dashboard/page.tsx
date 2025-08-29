@@ -323,7 +323,7 @@ export default function Dashboard() {
       return;
     }
 
-    if (subscription && subscription.analysesUsed >= subscription.analysesLimit && subscription.analysesLimit > 0) {
+if (subscription && subscription.plan === 'free' && subscription.analysesUsed >= subscription.analysesLimit) {
       alert('You have reached your monthly analysis limit. Please upgrade to continue.');
       return;
     }
