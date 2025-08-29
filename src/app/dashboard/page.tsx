@@ -323,7 +323,7 @@ export default function Dashboard() {
       return;
     }
 
-    if (subscription && subscription.analysesUsed >= subscription.analysesLimit && subscription.analysesLimit !== -1) {
+    if (subscription && subscription.analysesUsed >= subscription.analysesLimit && subscription.analysesLimit > 0) {
       alert('You have reached your monthly analysis limit. Please upgrade to continue.');
       return;
     }
@@ -485,7 +485,7 @@ export default function Dashboard() {
                   <span style={{ color: "#3b82f6", fontWeight: "bold" }}> • AI insights included</span>
                 )}
               </p>
-              {subscription && subscription.analysesUsed >= subscription.analysesLimit && subscription.analysesLimit !== -1 && (
+              {subscription && subscription.analysesUsed >= subscription.analysesLimit && subscription.analysesLimit > 0 && (
                 <div style={{ 
                   background: "#fef2f2", 
                   border: "1px solid #fecaca", 

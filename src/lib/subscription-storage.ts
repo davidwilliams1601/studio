@@ -23,7 +23,6 @@ export class SubscriptionService {
         return docSnap.data() as UserSubscription;
       }
       
-      // Create default free subscription for new users
       const defaultSub: UserSubscription = {
         userId,
         plan: 'free',
@@ -47,8 +46,19 @@ export class SubscriptionService {
       const subscription = await this.getUserSubscription(userId);
       if (!subscription) return false;
       
+      // Allow unlimited usage for Pro and Enterprise plans
+      if (subscription.analysesLimit === -1) {
+        // Still increment counter for tracking, but don't enforce limit
+        const docRef = doc(db, 'subscriptions', userId);
+        await updateDoc(docRef, {
+          analysesUsed: subscription.analysesUsed + 1
+        });
+        return true;
+      }
+      
+      // For free plan, enforce the limit
       if (subscription.analysesUsed >= subscription.analysesLimit) {
-        return false; // Limit exceeded
+        return false;
       }
       
       const docRef = doc(db, 'subscriptions', userId);
@@ -67,7 +77,7 @@ export class SubscriptionService {
     const docRef = doc(db, 'subscriptions', userId);
     await updateDoc(docRef, {
       plan: 'pro',
-      analysesLimit: -1, // Unlimited
+      analysesLimit: -1,
       stripeCustomerId,
       stripeSubscriptionId
     });
