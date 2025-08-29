@@ -339,6 +339,10 @@ if (subscription && subscription.plan === 'free' && subscription.analysesUsed >=
       }
 
       const results = await processLinkedInZip(file);
+
+console.log('Subscription during upload:', subscription);
+console.log('User plan:', subscription?.plan);
+console.log('Is free plan?', subscription?.plan === 'free');
       
       // Generate AI insights for paid tiers
       if (subscription.plan !== 'free') {
