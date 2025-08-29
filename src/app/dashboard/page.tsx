@@ -345,19 +345,24 @@ console.log('User plan:', subscription?.plan);
 console.log('Is free plan?', subscription?.plan === 'free');
       
       // Generate AI insights for paid tiers
-      if (subscription.plan !== 'free') {
-        setUploadProgress("Generating AI insights...");
-        try {
-          const aiInsights = await AIAnalysisService.generateAIInsights({
-            analysisData: results,
-            userTier: subscription.plan
-          });
-          results.aiInsights = aiInsights;
-        } catch (error) {
-          console.error('AI insights generation failed:', error);
-          results.aiInsights = [];
-        }
-      }
+if (subscription.plan !== 'free') {
+  console.log('About to generate AI insights...');
+  setUploadProgress("Generating AI insights...");
+  try {
+    console.log('Calling AIAnalysisService.generateAIInsights...');
+    const aiInsights = await AIAnalysisService.generateAIInsights({
+      analysisData: results,
+      userTier: subscription.plan
+    });
+    console.log('AI insights received:', aiInsights);
+    results.aiInsights = aiInsights;
+  } catch (error) {
+    console.error('AI insights generation failed:', error);
+    results.aiInsights = [];
+  }    
+}
+console.log('AI generation block completed');
+
       
       setUploadProgress("Analysis complete!");
       
