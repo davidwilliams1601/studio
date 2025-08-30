@@ -5,7 +5,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { SubscriptionService } from '@/lib/subscription-storage';
 import { UpgradeService } from '@/lib/upgrade-service';
 
-export default function SubscriptionCard() {
+interface SubscriptionCardProps {
+  onSubscriptionChange?: () => void;
+}
+
+export default function SubscriptionCard({ onSubscriptionChange }: SubscriptionCardProps) {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,9 +46,11 @@ export default function SubscriptionCard() {
         await UpgradeService.upgradeToEnterprise(user.uid);
       }
       
-      // Reload subscription data
       const updatedSub = await SubscriptionService.getUserSubscription(user.uid);
       setSubscription(updatedSub);
+      
+      // Notify parent component of subscription change
+      onSubscriptionChange?.();
       
       alert(`Successfully upgraded to ${targetPlan.toUpperCase()}! You now have unlimited analyses with AI insights.`);
     } catch (error) {
@@ -67,6 +73,9 @@ export default function SubscriptionCard() {
       
       const updatedSub = await SubscriptionService.getUserSubscription(user.uid);
       setSubscription(updatedSub);
+      
+      // Notify parent component of subscription change
+      onSubscriptionChange?.();
       
       alert('Downgraded to Free plan. You now have 2 analyses per month.');
     } catch (error) {

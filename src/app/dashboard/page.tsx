@@ -17,11 +17,18 @@ export default function Dashboard() {
   const [loadingAnalyses, setLoadingAnalyses] = useState(true);
   const [subscription, setSubscription] = useState(null);
 
+
+
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
     }
   }, [user, loading, router]);
+
+const handleSubscriptionChange = async () => {
+  const updatedSub = await SubscriptionService.getUserSubscription(user.uid);
+  setSubscription(updatedSub);
+};
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -411,7 +418,7 @@ console.log('AI generation block completed');
           </button>
         </div>
         
-        {subscription && <SubscriptionCard />}
+{subscription && <SubscriptionCard onSubscriptionChange={handleSubscriptionChange} />}
         
         {analyses.length > 0 && (
           <div style={{ marginBottom: "2rem" }}>
