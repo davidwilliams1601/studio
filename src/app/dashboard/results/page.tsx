@@ -41,6 +41,12 @@ export default function Results() {
         
         setAnalysis(analysisData);
         setSubscription(subscriptionData);
+
+console.log('Analysis data loaded:', analysisData);
+console.log('Has aiInsights?', !!analysisData?.aiInsights);
+console.log('aiInsights array:', analysisData?.aiInsights);
+console.log('Subscription plan:', subscriptionData?.plan);
+
       } catch (error) {
         console.error('Error loading analysis:', error);
       } finally {
