@@ -145,26 +145,35 @@ console.log('Subscription plan:', subscriptionData?.plan);
         </div>
 
         <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
-          <button style={{ 
-            background: "#3b82f6", 
-            color: "white", 
-            padding: "0.75rem 2rem", 
-            border: "none", 
-            borderRadius: "4px", 
-            fontWeight: "bold" 
-          }}>
-            Print Report
-          </button>
-          <button style={{ 
-            background: "#10b981", 
-            color: "white", 
-            padding: "0.75rem 2rem", 
-            border: "none", 
-            borderRadius: "4px", 
-            fontWeight: "bold" 
-          }}>
-            Download Data
-          </button>
+<button 
+  onClick={() => window.print()}
+  style={{ 
+    background: "#3b82f6", 
+    color: "white", 
+    padding: "0.75rem 2rem", 
+    border: "none", 
+    borderRadius: "4px", 
+    fontWeight: "bold" 
+  }}
+>
+  Print Report
+</button>
+<button 
+  onClick={() => {
+    const downloadUrl = `/api/download?id=${analysis.id}&userId=${user.uid}&format=json`;
+    window.open(downloadUrl, '_blank');
+  }}
+  style={{ 
+    background: "#10b981", 
+    color: "white", 
+    padding: "0.75rem 2rem", 
+    border: "none", 
+    borderRadius: "4px", 
+    fontWeight: "bold" 
+  }}
+>
+  Download Data
+</button>
         </div>
 
       </div>
