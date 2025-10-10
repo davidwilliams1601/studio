@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -43,3 +44,11 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# deployment scripts with secrets
+deploy.sh
+
+# backup files
+*.bak
+*.backup
+*.bak.*

@@ -1,7 +1,8 @@
+export const dynamic = "force-dynamic";
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function Signup() {

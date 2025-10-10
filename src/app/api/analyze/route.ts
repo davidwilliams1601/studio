@@ -1,38 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
+import { processLinkedInZip } from "@/lib/linkedin-processor";
 
 export async function POST(request: NextRequest) {
   try {
-    const { fileName, userId } = await request.json();
-    
-    // Here we would normally:
-    // 1. Download the file from Firebase Storage
-    // 2. Extract and parse the ZIP file
-    // 3. Analyze connections.csv, messages.csv, etc.
-    // 4. Return real statistics
-    
-    // For now, return mock data based on file name
-    const mockResults = {
-      fileName: fileName,
-      processedAt: new Date().toISOString(),
-      stats: {
-        connections: Math.floor(Math.random() * 2000) + 500,
-        messages: Math.floor(Math.random() * 200) + 50,
-        posts: Math.floor(Math.random() * 100) + 10,
-        companies: Math.floor(Math.random() * 50) + 20,
-      },
-      insights: [
-        "Your network has grown significantly in the past year",
-        "Most connections work in Technology and Finance sectors",
-        "Peak activity occurs during weekday business hours",
-        "Professional content generates highest engagement"
-      ]
-    };
-    
-    return NextResponse.json({ success: true, data: mockResults });
-  } catch (error) {
+    // Get the file data from the request
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const userId = formData.get('userId') as string;
+
+    if (!file) {
+      return NextResponse.json(
+        { success: false, error: "No file provided" },
+        { status: 400 }
+      );
+    }
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: "User ID required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate file type
+    if (!file.name.toLowerCase().endsWith('.zip')) {
+      return NextResponse.json(
+        { success: false, error: "Please upload a ZIP file" },
+        { status: 400 }
+      );
+    }
+
+    // Convert file to ArrayBuffer for processing
+    const arrayBuffer = await file.arrayBuffer();
+
+    // Process the LinkedIn ZIP file
+    console.log(`Processing LinkedIn data for user ${userId}: ${file.name}`);
+    const results = await processLinkedInZip(arrayBuffer, {
+      includeConnectionsList: false, // Don't include full list for privacy
+    });
+
+    console.log(`Analysis complete: ${results.stats.connections} connections found`);
+
+    return NextResponse.json({
+      success: true,
+      data: results
+    });
+
+  } catch (error: any) {
     console.error("Analysis error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to analyze file" },
+      {
+        success: false,
+        error: error.message || "Failed to analyze file. Please ensure you uploaded a valid LinkedIn data export."
+      },
       { status: 500 }
     );
   }

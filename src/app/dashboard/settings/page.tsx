@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 
 'use client';
 
@@ -35,7 +36,7 @@ import Link from 'next/link';
 import { createStripePortalSessionAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { SubscriptionManager } from '@/components/subscription-manager';
 import type { SubscriptionTier } from '@/lib/subscription-tiers';
 

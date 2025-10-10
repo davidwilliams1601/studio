@@ -1,6 +1,10 @@
-"use client";
+import { AuthProvider } from '@/contexts/AuthContext';
+import './globals.css';
 
-import { AuthProvider } from "@/hooks/useAuth";
+export const metadata = {
+  title: 'LinkStream - Protect Your LinkedIn',
+  description: 'Backup and protect your LinkedIn data',
+};
 
 export default function RootLayout({
   children,
@@ -9,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, padding: 0, fontFamily: "system-ui, sans-serif" }}>
+      <body>
         <AuthProvider>
           {children}
         </AuthProvider>
