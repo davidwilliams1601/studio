@@ -14,7 +14,7 @@ import {
   Shield,
   Clock
 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { SubscriptionTier, getUserTierLimits, canUserCreateBackup } from '@/lib/subscription-tiers';
 
