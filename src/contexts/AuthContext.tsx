@@ -124,27 +124,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Send welcome email
+
+      // Create user document in Firestore and send welcome email
       if (userCredential.user) {
         try {
-          const response = await fetch('/api/email/welcome', {
+          // Create user document in Firestore with initial settings
+          const response = await fetch('/api/users/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
+              userId: userCredential.user.uid,
+              email: userCredential.user.email,
+              displayName: userCredential.user.email?.split('@')[0] || 'User',
+              tier: 'free',
+            })
+          });
+
+          if (!response.ok) {
+            console.log('⚠️ Failed to create user document in Firestore');
+          }
+
+          // Send welcome email
+          const emailResponse = await fetch('/api/email/welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
               email: userCredential.user.email,
               name: userCredential.user.email?.split('@')[0] || 'User'
             })
           });
-          
-          if (response.ok) {
+
+          if (emailResponse.ok) {
             console.log('✅ Welcome email sent successfully');
           } else {
             console.log('⚠️ Welcome email failed, but signup successful');
           }
-        } catch (emailError) {
-          console.error('Welcome email error:', emailError);
-          // Don't throw - signup was successful even if email failed
+        } catch (error) {
+          console.error('Post-signup setup error:', error);
+          // Don't throw - signup was successful even if setup failed
         }
       }
     } catch (error: any) {
@@ -159,24 +176,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
-      
-      // Send welcome email for new Google users
+
+      // Create user document and send welcome email for new Google users
       if (userCredential.user) {
         try {
-          const response = await fetch('/api/email/welcome', {
+          // Check if this is a new user and create document if needed
+          const createResponse = await fetch('/api/users/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
+              userId: userCredential.user.uid,
               email: userCredential.user.email,
-              name: userCredential.user.displayName || userCredential.user.email?.split('@')[0] || 'User'
+              displayName: userCredential.user.displayName || userCredential.user.email?.split('@')[0] || 'User',
+              tier: 'free',
             })
           });
-          
-          if (response.ok) {
-            console.log('✅ Welcome email sent successfully');
+
+          // Only send welcome email for new users
+          if (createResponse.ok) {
+            const data = await createResponse.json();
+            if (data.created) {
+              const emailResponse = await fetch('/api/email/welcome', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  email: userCredential.user.email,
+                  name: userCredential.user.displayName || userCredential.user.email?.split('@')[0] || 'User'
+                })
+              });
+
+              if (emailResponse.ok) {
+                console.log('✅ Welcome email sent successfully');
+              }
+            }
           }
-        } catch (emailError) {
-          console.error('Welcome email error:', emailError);
+        } catch (error) {
+          console.error('Post-login setup error:', error);
           // Don't throw - login was successful
         }
       }

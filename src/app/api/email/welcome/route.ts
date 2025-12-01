@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { EmailService } from '@/lib/email-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,33 +12,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For now, just log the welcome email
-    // In production, you would integrate with an email service like SendGrid, Resend, etc.
-    console.log(`📧 Welcome email would be sent to: ${email} (Name: ${name})`);
+    // Send welcome email using Resend
+    const result = await EmailService.sendWelcomeEmail(email, name);
 
-    // Simulate email sending
-    const emailData = {
-      to: email,
-      subject: '🛡️ Welcome to LinkStream - Your LinkedIn is Now Protected!',
-      template: 'welcome',
-      data: {
-        name: name || 'User',
-        loginUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login`,
-        dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`
-      }
-    };
-
-    // TODO: Integrate with actual email service
-    // Example with Resend:
-    // const resend = new Resend(process.env.EMAIL_SERVICE_API_KEY);
-    // await resend.emails.send(emailData);
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: result.error || 'Failed to send welcome email',
+          // In development, still return success if email service not configured
+          ...(process.env.NODE_ENV === 'development' && !process.env.RESEND_API_KEY && {
+            success: true,
+            warning: 'Email service not configured in development mode'
+          })
+        },
+        { status: process.env.NODE_ENV === 'development' && !process.env.RESEND_API_KEY ? 200 : 500 }
+      );
+    }
 
     return NextResponse.json(
       {
         success: true,
         message: 'Welcome email sent successfully',
-        // In development, return the email data for debugging
-        ...(process.env.NODE_ENV === 'development' && { emailData })
+        ...(result.id && { emailId: result.id }),
       },
       { status: 200 }
     );
