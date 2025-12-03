@@ -23,6 +23,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
+  loginWithLinkedIn: () => void;
   logout: () => Promise<void>;
 }
 
@@ -220,6 +221,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithLinkedIn = () => {
+    // Redirect to LinkedIn OAuth start endpoint
+    window.location.href = '/api/auth/linkedin/start';
+  };
+
   const logout = async () => {
     if (!auth || !firebaseReady) {
       // Just clear local state if Firebase not available
@@ -242,6 +248,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     signup,
     loginWithGoogle,
+    loginWithLinkedIn,
     logout
   };
 

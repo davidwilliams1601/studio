@@ -1,0 +1,137 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ============================================
+    // Helper Functions
+    // ============================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the resource
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Check if file size is within limit
+    function isValidSize(maxSizeMB) {
+      return request.resource.size <= maxSizeMB * 1024 * 1024;
+    }
+
+    // Check if file is a ZIP
+    function isZipFile() {
+      return request.resource.contentType in [
+        'application/zip',
+        'application/x-zip-compressed',
+        'application/octet-stream'
+      ];
+    }
+
+    // Check if user is member of an organization
+    function isOrgMember(orgId) {
+      return isAuthenticated() &&
+        firestore.exists(/databases/(default)/documents/orgMembers/$(orgId)_$(request.auth.uid));
+    }
+
+    // ============================================
+    // User LinkedIn Exports
+    // ============================================
+
+    // Path: users/{uid}/linkedin-exports/{backupId}/raw.zip
+    match /users/{uid}/linkedin-exports/{backupId}/raw.zip {
+      // Users can only write their own files
+      allow write: if isOwner(uid) &&
+        isZipFile() &&
+        isValidSize(100); // 100MB max
+
+      // Users can only read their own files
+      allow read: if isOwner(uid);
+
+      // Users can delete their own files
+      allow delete: if isOwner(uid);
+    }
+
+    // Path: users/{uid}/linkedin-exports/{backupId}/processed/{allFiles=**}
+    match /users/{uid}/linkedin-exports/{backupId}/processed/{allFiles=**} {
+      // System-only writes (via Firebase Admin SDK)
+      allow write: if false;
+
+      // Users can read their processed files
+      allow read: if isOwner(uid);
+
+      // Users can delete their processed files
+      allow delete: if isOwner(uid);
+    }
+
+    // Path: users/{uid}/linkedin-exports/{backupId}/recovery-pack.zip
+    match /users/{uid}/linkedin-exports/{backupId}/recovery-pack.zip {
+      // System-only writes
+      allow write: if false;
+
+      // Users can read their recovery packs
+      allow read: if isOwner(uid);
+
+      // Users can delete their recovery packs
+      allow delete: if isOwner(uid);
+    }
+
+    // ============================================
+    // Organization LinkedIn Exports
+    // ============================================
+
+    // Path: orgs/{orgId}/linkedin-exports/{uid}/{backupId}/raw.zip
+    match /orgs/{orgId}/linkedin-exports/{uid}/{backupId}/raw.zip {
+      // Org members can write
+      allow write: if isOrgMember(orgId) &&
+        isOwner(uid) &&
+        isZipFile() &&
+        isValidSize(100);
+
+      // Org members can read
+      allow read: if isOrgMember(orgId);
+
+      // Owner or org admins can delete
+      allow delete: if isOwner(uid) || isOrgMember(orgId);
+    }
+
+    // Path: orgs/{orgId}/linkedin-exports/{uid}/{backupId}/processed/{allFiles=**}
+    match /orgs/{orgId}/linkedin-exports/{uid}/{backupId}/processed/{allFiles=**} {
+      // System-only writes
+      allow write: if false;
+
+      // Org members can read
+      allow read: if isOrgMember(orgId);
+
+      // Owner or org members can delete
+      allow delete: if isOwner(uid) || isOrgMember(orgId);
+    }
+
+    // ============================================
+    // User Profile Photos (if needed)
+    // ============================================
+
+    match /users/{uid}/profile/{fileName} {
+      // Users can upload their profile images
+      allow write: if isOwner(uid) &&
+        request.resource.contentType.matches('image/.*') &&
+        isValidSize(5); // 5MB max for images
+
+      // Anyone authenticated can read profile photos
+      allow read: if isAuthenticated();
+
+      // Users can delete their own profile photos
+      allow delete: if isOwner(uid);
+    }
+
+    // ============================================
+    // Deny all other access
+    // ============================================
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

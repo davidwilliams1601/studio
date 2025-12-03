@@ -1,0 +1,163 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // Helper Functions
+    // ============================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the resource
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Check if user is member of a team
+    function isTeamMember(teamId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/teamMembers/$(teamId)_$(request.auth.uid));
+    }
+
+    // Check if user has admin or owner role in team
+    function isTeamAdmin(teamId) {
+      let member = get(/databases/$(database)/documents/teamMembers/$(teamId)_$(request.auth.uid)).data;
+      return member.role in ['admin', 'owner'];
+    }
+
+    // ============================================
+    // Users Collection
+    // ============================================
+
+    match /users/{uid} {
+      // Users can only read/write their own document
+      allow read: if isOwner(uid);
+
+      allow create: if isOwner(uid) &&
+        request.resource.data.email != null &&
+        request.resource.data.createdAt == request.time;
+
+      allow update: if isOwner(uid) &&
+        // Prevent changing uid
+        request.resource.data.keys().hasAll(['email']) &&
+        request.resource.data.updatedAt == request.time;
+
+      allow delete: if isOwner(uid);
+    }
+
+    // ============================================
+    // Teams Collection (for Business/Enterprise)
+    // ============================================
+
+    match /teams/{teamId} {
+      // Members can read team info
+      allow read: if isTeamMember(teamId);
+
+      // Only authenticated users can create teams
+      allow create: if isAuthenticated() &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.ownerId == request.auth.uid;
+
+      // Only admins and owners can update
+      allow update: if isTeamAdmin(teamId) &&
+        request.resource.data.teamId == resource.data.teamId &&
+        request.resource.data.createdAt == resource.data.createdAt;
+
+      // Only owners can delete
+      allow delete: if isAuthenticated() &&
+        resource.data.ownerId == request.auth.uid;
+    }
+
+    // ============================================
+    // Team Members Collection
+    // ============================================
+
+    match /teamMembers/{membershipId} {
+      // Users can read their own membership or if they're in the team
+      allow read: if isAuthenticated() && (
+        resource.data.uid == request.auth.uid ||
+        isTeamMember(resource.data.teamId)
+      );
+
+      // Only team admins can add members
+      allow create: if isAuthenticated() &&
+        isTeamAdmin(request.resource.data.teamId) &&
+        request.resource.data.createdAt == request.time &&
+        // Composite key format: {teamId}_{uid}
+        membershipId == request.resource.data.teamId + '_' + request.resource.data.uid;
+
+      // Only team admins can update roles
+      allow update: if isTeamAdmin(resource.data.teamId) &&
+        // Prevent changing teamId and uid
+        request.resource.data.teamId == resource.data.teamId &&
+        request.resource.data.uid == resource.data.uid;
+
+      // Team owners can remove anyone, admins can remove members, users can remove themselves
+      allow delete: if isAuthenticated() && (
+        isTeamAdmin(resource.data.teamId) ||
+        resource.data.uid == request.auth.uid
+      );
+    }
+
+    // ============================================
+    // Backups Collection (LinkedIn Data Backups)
+    // ============================================
+
+    match /backups/{backupId} {
+      // Users can read their own backups or team backups they're member of
+      allow read: if isAuthenticated() && (
+        resource.data.uid == request.auth.uid ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId))
+      );
+
+      // Users can create backups for themselves
+      allow create: if isAuthenticated() &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.backupId == backupId &&
+        request.resource.data.status in ['uploaded', 'processing'] &&
+        request.resource.data.createdAt == request.time &&
+        // If teamId is provided, user must be member
+        (request.resource.data.teamId == null || isTeamMember(request.resource.data.teamId));
+
+      // Users can update their own backups (status changes during processing)
+      allow update: if isAuthenticated() &&
+        resource.data.uid == request.auth.uid &&
+        // Prevent changing immutable fields
+        request.resource.data.backupId == resource.data.backupId &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.createdAt == resource.data.createdAt;
+
+      // Users can delete their own backups
+      allow delete: if isOwner(resource.data.uid);
+    }
+
+    // ============================================
+    // Backup Snapshots Collection (Analytics)
+    // ============================================
+
+    match /backupSnapshots/{uid}/snapshots/{snapshotId} {
+      // Users can only read their own snapshots
+      allow read: if isOwner(uid);
+
+      // System creates snapshots (server-side via Admin SDK)
+      allow create: if false;
+
+      // Snapshots are immutable
+      allow update: if false;
+
+      // Users can delete their own snapshots
+      allow delete: if isOwner(uid);
+    }
+
+    // ============================================
+    // Deny all other access
+    // ============================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

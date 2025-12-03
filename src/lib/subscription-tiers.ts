@@ -1,5 +1,5 @@
 
-export type SubscriptionTier = 'free' | 'pro' | 'business';
+export type SubscriptionTier = 'free' | 'pro' | 'business' | 'enterprise';
 
 export interface TierLimits {
   tier: SubscriptionTier;
@@ -9,10 +9,16 @@ export interface TierLimits {
   reminderDays: number[];
   features: string[];
   price: number;
+  priceLabel?: string;
+  maxTeamMembers: number;
   calendarIntegration: boolean;
   aiInsights: 'basic' | 'advanced' | 'premium';
   networkAnalysis: boolean;
   strategicRecommendations: boolean;
+  teamFeatures: boolean;
+  auditLogs: boolean;
+  ssoIntegration: boolean;
+  apiAccess: boolean;
   exportFormats: string[];
 }
 
@@ -22,18 +28,24 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierLimits> = {
     name: 'Free',
     backupsPerMonth: 1,
     backupFrequency: 'monthly',
-    reminderDays: [30, 7, 1], // 30 days, 7 days, 1 day before
+    reminderDays: [30, 7, 1],
     features: [
       '1 backup per month',
       'Basic AI insights',
+      'Profile completeness score',
       'Standard dashboard',
       'CSV export'
     ],
     price: 0,
+    maxTeamMembers: 1,
     calendarIntegration: false,
     aiInsights: 'basic',
     networkAnalysis: false,
     strategicRecommendations: false,
+    teamFeatures: false,
+    auditLogs: false,
+    ssoIntegration: false,
+    apiAccess: false,
     exportFormats: ['csv']
   },
   pro: {
@@ -41,45 +53,87 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierLimits> = {
     name: 'Pro',
     backupsPerMonth: 4,
     backupFrequency: 'weekly',
-    reminderDays: [7, 3, 1], // 7 days, 3 days, 1 day before
+    reminderDays: [7, 3, 1],
     features: [
       'Weekly backups',
       'Advanced AI insights',
-      'Network intelligence',
+      'Network analysis',
+      'Connection trends',
       'Strategic recommendations',
       'Calendar integration',
       'Multiple export formats',
       'Priority support'
     ],
-    price: 8,
+    price: 10,
+    maxTeamMembers: 1,
     calendarIntegration: true,
     aiInsights: 'advanced',
     networkAnalysis: true,
     strategicRecommendations: true,
+    teamFeatures: false,
+    auditLogs: false,
+    ssoIntegration: false,
+    apiAccess: false,
     exportFormats: ['csv', 'json', 'pdf']
   },
   business: {
     tier: 'business',
     name: 'Business',
-    backupsPerMonth: -1, // unlimited
+    backupsPerMonth: -1, // unlimited per user
     backupFrequency: 'unlimited',
-    reminderDays: [7, 3], // More frequent, less nagging
+    reminderDays: [7, 3],
     features: [
-      'Unlimited backups',
+      'Everything in Pro',
+      'Unlimited backups per user',
+      'Team management (up to 10 members)',
+      'Shared team analytics',
+      'Centralized backup management',
+      'Team admin controls',
       'Premium AI insights',
-      'Advanced network analysis',
-      'Strategic action plans',
-      'Calendar integration',
-      'Team features',
-      'API access (coming soon)',
-      'Custom reports',
       'Priority support'
     ],
-    price: 15,
+    price: 29,
+    priceLabel: '/month',
+    maxTeamMembers: 10,
     calendarIntegration: true,
     aiInsights: 'premium',
     networkAnalysis: true,
     strategicRecommendations: true,
+    teamFeatures: true,
+    auditLogs: true,
+    ssoIntegration: false,
+    apiAccess: false,
+    exportFormats: ['csv', 'json', 'pdf', 'excel']
+  },
+  enterprise: {
+    tier: 'enterprise',
+    name: 'Enterprise',
+    backupsPerMonth: -1,
+    backupFrequency: 'unlimited',
+    reminderDays: [7, 3],
+    features: [
+      'Everything in Business',
+      'Unlimited team members',
+      'SSO integration',
+      'Custom retention policies',
+      'Audit logs & compliance',
+      'API access',
+      'Dedicated support',
+      'Custom integrations',
+      'SLA guarantees',
+      'White-label options'
+    ],
+    price: 0, // Custom pricing
+    priceLabel: 'Custom',
+    maxTeamMembers: -1, // unlimited
+    calendarIntegration: true,
+    aiInsights: 'premium',
+    networkAnalysis: true,
+    strategicRecommendations: true,
+    teamFeatures: true,
+    auditLogs: true,
+    ssoIntegration: true,
+    apiAccess: true,
     exportFormats: ['csv', 'json', 'pdf', 'excel']
   }
 };
