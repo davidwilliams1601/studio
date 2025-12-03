@@ -79,7 +79,14 @@ export async function getAuth() {
 
 export async function getDb() {
   const firebaseApp = initializeFirebase();
-  return admin.firestore(firebaseApp);
+  const firestore = admin.firestore(firebaseApp);
+
+  // Use the 'linkstream' database (not default)
+  firestore.settings({
+    databaseId: 'linkstream'
+  });
+
+  return firestore;
 }
 
 export async function getStorage() {
