@@ -5,23 +5,34 @@ import * as admin from 'firebase-admin';
 let app: admin.app.App | null = null;
 
 function initializeFirebase() {
-  if (app) return app;
+  if (app) {
+    console.log('🔄 Firebase Admin SDK already initialized, reusing instance');
+    return app;
+  }
 
   if (!admin.apps.length) {
     try {
+      console.log('🔧 Initializing Firebase Admin SDK...');
+
       // Try to get service account from JSON first (Vercel production)
       if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+        console.log('📋 Using FIREBASE_SERVICE_ACCOUNT_JSON');
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+
+        const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || (serviceAccount.project_id + '.appspot.com');
+        console.log(`🪣 Storage bucket: ${storageBucket}`);
+        console.log(`📦 Project ID: ${serviceAccount.project_id}`);
 
         app = admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
-          storageBucket: process.env.FIREBASE_STORAGE_BUCKET || (serviceAccount.project_id + '.appspot.com'),
+          storageBucket,
         });
 
         console.log('✅ Firebase Admin SDK initialized with service account JSON');
       }
       // Fall back to individual environment variables (local development)
       else {
+        console.log('📋 Using individual environment variables');
         const projectId = process.env.FIREBASE_PROJECT_ID;
         const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
         const privateKey = process.env.FIREBASE_PRIVATE_KEY;
@@ -31,6 +42,9 @@ function initializeFirebase() {
             'Missing Firebase Admin credentials. Please set FIREBASE_SERVICE_ACCOUNT_JSON or individual credentials.'
           );
         }
+
+        console.log(`📦 Project ID: ${projectId}`);
+        console.log(`🪣 Storage bucket: ${projectId}.appspot.com`);
 
         app = admin.initializeApp({
           credential: admin.credential.cert({
@@ -45,9 +59,12 @@ function initializeFirebase() {
       }
     } catch (error: any) {
       console.error('❌ Firebase Admin initialization error:', error.message);
+      console.error('❌ Error stack:', error.stack);
+      console.error('❌ Error code:', error.code);
       throw error;
     }
   } else {
+    console.log('🔄 Firebase Admin SDK already exists in apps list, getting instance');
     app = admin.app();
   }
 
