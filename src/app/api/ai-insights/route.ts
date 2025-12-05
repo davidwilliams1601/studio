@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     networkScore = Math.min(networkScore, 100);
 
     const topIndustries = Object.entries(analytics.industries || {})
-      .sort(([,a], [,b]) => b - a)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
       .slice(0, 3)
       .map(([name]) => name);
 
@@ -89,10 +89,10 @@ export async function POST(request: NextRequest) {
       generatedAt: new Date().toISOString()
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Insights error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to generate insights: " + error.message },
+      { success: false, error: "Failed to generate insights: " + (error?.message || 'Unknown error') },
       { status: 500 }
     );
   }

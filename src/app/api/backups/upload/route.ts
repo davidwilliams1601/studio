@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyIdToken, getDb, getStorage } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { MAX_UPLOAD_SIZE } from '@/types/linkedin';
+import { checkRateLimit, getRequestIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
+import { getCsrfTokens, verifyCsrfToken } from '@/lib/csrf';
 import crypto from 'crypto';
 
 /**
@@ -12,6 +14,15 @@ import crypto from 'crypto';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Verify CSRF token
+    const { headerToken, cookieToken } = getCsrfTokens(request);
+    if (!verifyCsrfToken(headerToken, cookieToken)) {
+      return NextResponse.json(
+        { error: 'Invalid CSRF token' },
+        { status: 403 }
+      );
+    }
+
     // Verify authentication
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -24,6 +35,27 @@ export async function POST(request: NextRequest) {
     const idToken = authHeader.split('Bearer ')[1];
     const decodedToken = await verifyIdToken(idToken);
     const uid = decodedToken.uid;
+
+    // Apply rate limiting
+    const identifier = getRequestIdentifier(request, uid);
+    const rateLimit = checkRateLimit(identifier, RATE_LIMITS.FILE_UPLOAD);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many upload requests. Please try again later.',
+          retryAfter: Math.ceil((rateLimit.resetAt - Date.now()) / 1000),
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimit.limit.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': rateLimit.resetAt.toString(),
+          },
+        }
+      );
+    }
 
     // Parse request body
     const body = await request.json();

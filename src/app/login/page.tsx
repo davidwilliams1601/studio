@@ -49,7 +49,21 @@ export default function Login() {
 
           // Sign in to Firebase with custom token
           const { auth: firebaseAuth } = await import('@/firebase/config');
+          if (!firebaseAuth) {
+            throw new Error('Firebase authentication not available');
+          }
           await signInWithCustomToken(firebaseAuth, customToken);
+
+          // Create session cookie for middleware authentication
+          const user = firebaseAuth.currentUser;
+          if (user) {
+            const idToken = await user.getIdToken();
+            await fetch('/api/auth/create-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken }),
+            });
+          }
 
           // Redirect to dashboard
           router.push('/dashboard');
@@ -83,7 +97,11 @@ export default function Login() {
       } else {
         await signup(email, password);
       }
-      router.push('/dashboard');
+
+      // Use redirect parameter or default to dashboard
+      const redirectTo = searchParams.get('redirect') || '/dashboard';
+      console.log('Redirecting to:', redirectTo);
+      router.push(redirectTo);
     } catch (error: any) {
       console.error('Authentication error:', error);
       setError(error.message || 'Authentication failed');
@@ -97,8 +115,14 @@ export default function Login() {
     setError('');
 
     try {
+      console.log('Starting Google auth...');
       await loginWithGoogle();
-      router.push('/dashboard');
+      console.log('Google auth successful');
+
+      // Use redirect parameter or default to dashboard
+      const redirectTo = searchParams.get('redirect') || '/dashboard';
+      console.log('Redirecting to:', redirectTo);
+      router.push(redirectTo);
     } catch (error: any) {
       console.error('Google auth error:', error);
       setError(error.message || 'Google authentication failed');

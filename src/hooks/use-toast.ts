@@ -3,10 +3,13 @@
 // Inspired by react-hot-toast library
 import * as React from "react"
 
-import type {
-  ToastActionElement,
-  ToastProps,
-} from "@/components/ui/toast"
+// Define types locally since toast component is a stub
+export type ToastActionElement = React.ReactElement<any>;
+export type ToastProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  variant?: 'default' | 'destructive';
+}
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -158,7 +161,7 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
-      onOpenChange: (open) => {
+      onOpenChange: (open: boolean) => {
         if (!open) dismiss()
       },
     },

@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const redirectUrl = searchParams.get('redirect') || '/dashboard';
 
-    // Store state temporarily (in production, use Redis or a database)
-    storeOAuthState({
+    // Store state in Firestore (secure for serverless)
+    await storeOAuthState({
       state,
       codeVerifier,
       redirectUrl,

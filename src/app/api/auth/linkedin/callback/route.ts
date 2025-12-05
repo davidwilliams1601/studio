@@ -7,6 +7,7 @@ import {
 } from '@/lib/linkedin-oauth';
 import { getAuth, getDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
+import crypto from 'crypto';
 
 /**
  * GET /api/auth/linkedin/callback
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate state (CSRF protection)
-    const storedState = getOAuthState(state);
+    const storedState = await getOAuthState(state);
     if (!storedState) {
       console.error('Invalid or expired OAuth state');
       const redirectUrl = new URL('/login', request.url);
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Clean up state
-    deleteOAuthState(state);
+    await deleteOAuthState(state);
 
     // Exchange authorization code for access token
     const tokenResponse = await exchangeCodeForToken(
@@ -164,23 +165,35 @@ export async function GET(request: NextRequest) {
       email: userInfo.email,
     });
 
-    // Create a one-time code to exchange for the token (prevents token leakage in URL)
-    const oneTimeCode = Buffer.from(
-      JSON.stringify({
-        token: customToken,
-        provider: 'linkedin',
-        exp: Date.now() + 60000, // 1 minute expiration
-      })
-    ).toString('base64url');
+    // Create a secure session cookie instead of URL parameter
+    // Store the token temporarily in Firestore with a short TTL
+    const sessionId = crypto.randomBytes(32).toString('hex');
+    await db.collection('authSessions').doc(sessionId).set({
+      customToken,
+      uid: firebaseUser.uid,
+      provider: 'linkedin',
+      createdAt: Timestamp.now(),
+      expiresAt: Timestamp.fromMillis(Date.now() + 60000), // 1 minute expiration
+    });
 
-    // Redirect to app with one-time code
+    // Redirect to app with secure session ID in cookie
     const redirectUrl = new URL(
       storedState.redirectUrl || '/dashboard',
       request.url
     );
-    redirectUrl.searchParams.set('auth_code', oneTimeCode);
 
-    return NextResponse.redirect(redirectUrl);
+    const response = NextResponse.redirect(redirectUrl);
+
+    // Set HTTP-only cookie (prevents XSS attacks)
+    response.cookies.set('auth_session', sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60, // 1 minute
+      path: '/',
+    });
+
+    return response;
   } catch (error: any) {
     console.error('LinkedIn OAuth callback error:', error);
 

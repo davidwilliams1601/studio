@@ -87,20 +87,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
   }, []);
 
-  const loadSubscriptionData = (userId: string) => {
+  const loadSubscriptionData = async (userId: string) => {
     try {
-      // Try to load subscription from localStorage or set default
-      const savedSubscription = localStorage.getItem(`subscription_${userId}`);
-      if (savedSubscription) {
-        setSubscription(JSON.parse(savedSubscription));
+      // Fetch subscription from server (secure, tamper-proof)
+      const user = auth?.currentUser;
+      if (!user) {
+        setSubscription({ plan: 'free', monthlyUsage: 0 });
+        return;
+      }
+
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/subscription/status', {
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSubscription({
+          plan: data.plan,
+          monthlyUsage: data.monthlyUsage,
+          upgradeDate: data.upgradeDate,
+        });
       } else {
-        // Default free plan
-        const defaultSubscription = {
-          plan: 'free' as const,
-          monthlyUsage: 0
-        };
-        setSubscription(defaultSubscription);
-        localStorage.setItem(`subscription_${userId}`, JSON.stringify(defaultSubscription));
+        // Fallback to free plan if API fails
+        setSubscription({ plan: 'free', monthlyUsage: 0 });
       }
     } catch (error) {
       console.error('Error loading subscription:', error);
@@ -113,8 +125,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Authentication not available');
     }
     try {
+      console.log('Signing in with email/password...');
       await signInWithEmailAndPassword(auth, email, password);
+      console.log('Sign in successful');
+
+      // Create session cookie for middleware authentication
+      console.log('Getting ID token...');
+      const idToken = await auth.currentUser?.getIdToken();
+      console.log('ID token obtained, creating session cookie...');
+
+      if (idToken) {
+        const sessionResponse = await fetch('/api/auth/create-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        });
+
+        if (!sessionResponse.ok) {
+          const errorData = await sessionResponse.json();
+          console.error('Session cookie creation failed:', errorData);
+          throw new Error(`Failed to create session: ${errorData.error || 'Unknown error'}`);
+        }
+
+        console.log('Session cookie created successfully');
+      }
     } catch (error: any) {
+      console.error('Login error:', error);
       throw new Error(error.message || 'Login failed');
     }
   };
@@ -125,6 +161,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Create session cookie for middleware authentication
+      if (userCredential.user) {
+        const idToken = await userCredential.user.getIdToken();
+        if (idToken) {
+          await fetch('/api/auth/create-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken }),
+          });
+        }
+      }
 
       // Create user document in Firestore and send welcome email
       if (userCredential.user) {
@@ -176,7 +224,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const provider = new GoogleAuthProvider();
+      console.log('Signing in with Google popup...');
       const userCredential = await signInWithPopup(auth, provider);
+      console.log('Google sign in successful, user:', userCredential.user.uid);
+
+      // Create session cookie for middleware authentication
+      if (userCredential.user) {
+        console.log('Getting ID token...');
+        const idToken = await userCredential.user.getIdToken();
+        console.log('ID token obtained, creating session cookie...');
+
+        if (idToken) {
+          const sessionResponse = await fetch('/api/auth/create-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken }),
+          });
+
+          if (!sessionResponse.ok) {
+            const errorData = await sessionResponse.json();
+            console.error('Session cookie creation failed:', errorData);
+            throw new Error(`Failed to create session: ${errorData.error || 'Unknown error'}`);
+          }
+
+          console.log('Session cookie created successfully');
+        }
+      }
 
       // Create user document and send welcome email for new Google users
       if (userCredential.user) {
@@ -234,6 +307,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
+      // Clear session cookie first
+      await fetch('/api/auth/logout', { method: 'POST' });
+
+      // Then sign out from Firebase
       await signOut(auth);
     } catch (error: any) {
       throw new Error(error.message || 'Logout failed');

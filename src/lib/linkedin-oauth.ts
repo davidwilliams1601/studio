@@ -168,29 +168,54 @@ export function decryptToken(encryptedToken: string): string {
 }
 
 /**
- * Store OAuth state in a secure way (in-memory for simplicity, consider Redis for production)
- * This is a simple implementation; for production, use Redis or a database
+ * Store OAuth state in Firestore for serverless compatibility
+ * States expire after 10 minutes for security
  */
-const stateStore = new Map<string, LinkedInOAuthState>();
+export async function storeOAuthState(state: LinkedInOAuthState): Promise<void> {
+  const { getDb } = await import('./firebase-admin');
+  const db = await getDb();
 
-// Clean up old states every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [state, data] of stateStore.entries()) {
-    if (now - data.createdAt > 10 * 60 * 1000) { // 10 minutes
-      stateStore.delete(state);
-    }
+  // Store in Firestore with TTL
+  await db.collection('oauthStates').doc(state.state).set({
+    ...state,
+    expiresAt: new Date(state.createdAt + 10 * 60 * 1000), // 10 minutes
+  });
+}
+
+export async function getOAuthState(state: string): Promise<LinkedInOAuthState | undefined> {
+  const { getDb } = await import('./firebase-admin');
+  const db = await getDb();
+
+  const doc = await db.collection('oauthStates').doc(state).get();
+
+  if (!doc.exists) {
+    return undefined;
   }
-}, 10 * 60 * 1000);
 
-export function storeOAuthState(state: LinkedInOAuthState): void {
-  stateStore.set(state.state, state);
+  const data = doc.data();
+  if (!data) {
+    return undefined;
+  }
+
+  // Check if expired
+  const now = Date.now();
+  if (data.expiresAt && data.expiresAt.toMillis() < now) {
+    // Clean up expired state
+    await doc.ref.delete();
+    return undefined;
+  }
+
+  return {
+    state: data.state,
+    codeVerifier: data.codeVerifier,
+    redirectUrl: data.redirectUrl,
+    createdAt: data.createdAt,
+  };
 }
 
-export function getOAuthState(state: string): LinkedInOAuthState | undefined {
-  return stateStore.get(state);
-}
+export async function deleteOAuthState(state: string): Promise<void> {
+  const { getDb } = await import('./firebase-admin');
+  const db = await getDb();
 
-export function deleteOAuthState(state: string): void {
-  stateStore.delete(state);
+  await db.collection('oauthStates').doc(state).delete();
 }

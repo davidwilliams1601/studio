@@ -86,10 +86,17 @@ export class CalendarReminderService {
 📊 Comprehensive industry trend analysis
 🤝 Team collaboration features
 📈 Unlimited backup and analysis
+🔮 Predictive career opportunity insights`,
+
+      enterprise: `🏢 Enterprise network analysis and intelligence
+🎯 Advanced strategic recommendations
+📊 Comprehensive industry trend analysis
+🤝 Team collaboration features
+📈 Unlimited backup and analysis
 🔮 Predictive career opportunity insights`
     };
-    
-    return `${baseDescription}${tierSpecificBenefits[tier]}\n\n` +
+
+    return `${baseDescription}${tierSpecificBenefits[tier] || tierSpecificBenefits.free}\n\n` +
            `🔗 Quick access: ${appUrl}/dashboard\n` +
            `⏰ This takes just 2-3 minutes\n` +
            `💪 Stay ahead of your professional growth!`;
@@ -200,9 +207,10 @@ export class CalendarReminderService {
     
     const tierColor = {
       free: '#3B82F6',
-      pro: '#10B981', 
-      business: '#8B5CF6'
-    }[tier];
+      pro: '#10B981',
+      business: '#8B5CF6',
+      enterprise: '#8B5CF6'
+    }[tier] || '#3B82F6';
     
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

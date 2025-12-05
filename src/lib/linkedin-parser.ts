@@ -40,8 +40,8 @@ export async function securityCheckZip(
       }
 
       if (!file.dir) {
-        // Get uncompressed size
-        const uncompressedSize = file._data?.uncompressedSize || 0;
+        // Get uncompressed size from internal data
+        const uncompressedSize = (file as any)._data?.uncompressedSize || 0;
 
         // Check individual file size
         if (uncompressedSize > MAX_INDIVIDUAL_FILE) {

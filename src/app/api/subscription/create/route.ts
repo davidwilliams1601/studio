@@ -1,7 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyIdToken } from "@/lib/firebase-admin";
+import { checkRateLimit, getRequestIdentifier, RATE_LIMITS } from "@/lib/rate-limit";
+import { getCsrfTokens, verifyCsrfToken } from "@/lib/csrf";
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify CSRF token
+    const { headerToken, cookieToken } = getCsrfTokens(request);
+    if (!verifyCsrfToken(headerToken, cookieToken)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid CSRF token' },
+        { status: 403 }
+      );
+    }
+
+    // Verify authentication
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const idToken = authHeader.split('Bearer ')[1];
+    let decodedToken;
+    try {
+      decodedToken = await verifyIdToken(idToken);
+    } catch (error) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid authentication token' },
+        { status: 401 }
+      );
+    }
+
+    // Apply rate limiting
+    const identifier = getRequestIdentifier(request, decodedToken.uid);
+    const rateLimit = checkRateLimit(identifier, RATE_LIMITS.STRIPE_CHECKOUT);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Too many requests. Please try again later.',
+          retryAfter: Math.ceil((rateLimit.resetAt - Date.now()) / 1000),
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimit.limit.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': rateLimit.resetAt.toString(),
+          },
+        }
+      );
+    }
+
     const { priceId } = await request.json();
 
     if (!priceId) {
@@ -18,7 +72,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Creating Stripe checkout for price:', priceId);
+    console.log('Creating Stripe checkout for user:', decodedToken.uid, 'price:', priceId);
 
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
@@ -33,6 +87,9 @@ export async function POST(request: NextRequest) {
         'line_items[0][quantity]': '1',
         'success_url': `${request.nextUrl.origin}/dashboard/success?session_id={CHECKOUT_SESSION_ID}`,
         'cancel_url': `${request.nextUrl.origin}/dashboard/subscription?canceled=true`,
+        'client_reference_id': decodedToken.uid,
+        'customer_email': decodedToken.email || '',
+        'metadata[userId]': decodedToken.uid,
       }),
     });
 
@@ -51,12 +108,13 @@ export async function POST(request: NextRequest) {
       sessionId: session.id
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating subscription:', error);
+    // Don't expose internal error details to client
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to create subscription: ' + error.message 
+      {
+        success: false,
+        error: 'Failed to create subscription. Please try again.'
       },
       { status: 500 }
     );

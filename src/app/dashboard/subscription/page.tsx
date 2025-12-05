@@ -17,7 +17,7 @@ export default function Subscription() {
     }
   }, [user, loading, router]);
 
-  const handleUpgrade = async (plan) => {
+  const handleUpgrade = async (plan: any) => {
     setUpgradeLoading(true);
     try {
       alert(`Upgrading to ${plan.name} plan! Stripe integration coming soon.`);

@@ -21,16 +21,16 @@ export async function POST(request: NextRequest) {
       fileName: `linkedin-analysis-${new Date().toISOString().split('T')[0]}.pdf`
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("PDF generation error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to generate PDF: " + error.message },
+      { success: false, error: "Failed to generate PDF: " + (error?.message || 'Unknown error') },
       { status: 500 }
     );
   }
 }
 
-function generatePDFHTML(data, aiInsights) {
+function generatePDFHTML(data: any, aiInsights: any) {
   const stats = data.stats;
   const analytics = data.analytics;
   
@@ -211,7 +211,7 @@ function generatePDFHTML(data, aiInsights) {
         <div class="insights-grid">
             <div class="insight-box">
                 <h4 style="margin-top: 0;">🎯 Key Insights</h4>
-                ${aiInsights.keyInsights.slice(0, 3).map(insight => `<p style="font-size: 0.9rem; margin: 8px 0;">• ${insight}</p>`).join('')}
+                ${aiInsights.keyInsights.slice(0, 3).map((insight: string) => `<p style="font-size: 0.9rem; margin: 8px 0;">• ${insight}</p>`).join('')}
             </div>
             <div class="insight-box">
                 <h4 style="margin-top: 0;">📈 Content Strategy</h4>
@@ -232,9 +232,9 @@ function generatePDFHTML(data, aiInsights) {
             </thead>
             <tbody>
                 ${Object.entries(analytics.industries || {})
-                  .sort(([,a], [,b]) => b - a)
-                  .map(([industry, count]) => 
-                    `<tr><td>${industry}</td><td>${count}</td><td>${((count/stats.connections)*100).toFixed(1)}%</td></tr>`
+                  .sort(([,a], [,b]) => (b as number) - (a as number))
+                  .map(([industry, count]) =>
+                    `<tr><td>${industry}</td><td>${count as number}</td><td>${(((count as number)/stats.connections)*100).toFixed(1)}%</td></tr>`
                   ).join('')}
             </tbody>
         </table>
@@ -246,10 +246,10 @@ function generatePDFHTML(data, aiInsights) {
             </thead>
             <tbody>
                 ${Object.entries(analytics.locations || {})
-                  .sort(([,a], [,b]) => b - a)
+                  .sort(([,a], [,b]) => (b as number) - (a as number))
                   .slice(0, 8)
-                  .map(([location, count]) => 
-                    `<tr><td>${location}</td><td>${count}</td><td>${((count/stats.connections)*100).toFixed(1)}%</td></tr>`
+                  .map(([location, count]) =>
+                    `<tr><td>${location}</td><td>${count as number}</td><td>${(((count as number)/stats.connections)*100).toFixed(1)}%</td></tr>`
                   ).join('')}
             </tbody>
         </table>
@@ -259,7 +259,7 @@ function generatePDFHTML(data, aiInsights) {
     <div class="section">
         <h2>⚡ Recommended Actions</h2>
         <div class="action-items">
-            ${aiInsights.actionItems.map(item => `
+            ${aiInsights.actionItems.map((item: any) => `
                 <div class="action-item priority-${item.priority.toLowerCase()}">
                     <h4 style="margin: 0 0 8px 0; color: #1e293b;">
                         <span style="background: ${item.priority === 'High' ? '#ef4444' : item.priority === 'Medium' ? '#f59e0b' : '#10b981'}; 

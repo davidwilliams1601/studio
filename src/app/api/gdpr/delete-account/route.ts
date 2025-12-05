@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyIdToken, deleteUserData } from '@/lib/firebase-admin';
+import { checkRateLimit, getRequestIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
+import { getCsrfTokens, verifyCsrfToken } from '@/lib/csrf';
 
 /**
  * POST /api/gdpr/delete-account
@@ -12,6 +14,15 @@ import { verifyIdToken, deleteUserData } from '@/lib/firebase-admin';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Verify CSRF token
+    const { headerToken, cookieToken } = getCsrfTokens(request);
+    if (!verifyCsrfToken(headerToken, cookieToken)) {
+      return NextResponse.json(
+        { error: 'Invalid CSRF token' },
+        { status: 403 }
+      );
+    }
+
     // Verify authentication
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -24,6 +35,19 @@ export async function POST(request: NextRequest) {
     const idToken = authHeader.split('Bearer ')[1];
     const decodedToken = await verifyIdToken(idToken);
     const uid = decodedToken.uid;
+
+    // Apply rate limiting (prevent accidental mass deletions)
+    const identifier = getRequestIdentifier(request, uid);
+    const rateLimit = checkRateLimit(identifier, RATE_LIMITS.ACCOUNT_DELETE);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Account deletion request already processed recently. Please contact support if you need assistance.',
+        },
+        { status: 429 }
+      );
+    }
 
     // Get confirmation from request body
     const body = await request.json();

@@ -5,12 +5,59 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
+interface Stats {
+  connections: number;
+  posts: number;
+  messages: number;
+  comments: number;
+  companies: number;
+  skillsCount?: number;
+}
+
+interface Analytics {
+  industries?: Record<string, number>;
+  locations?: Record<string, number>;
+}
+
+interface AnalysisData {
+  stats: Stats;
+  analytics: Analytics;
+  fileName?: string;
+  processedAt?: string;
+}
+
+interface NetworkHealth {
+  score: number;
+  assessment: string;
+  recommendations?: string[];
+}
+
+interface ContentStrategy {
+  rating: string;
+  advice: string;
+  suggestions?: string[];
+}
+
+interface ActionItem {
+  priority: string;
+  action: string;
+  timeline: string;
+  expectedImpact: string;
+}
+
+interface AiInsights {
+  networkHealth?: NetworkHealth;
+  contentStrategy?: ContentStrategy;
+  keyInsights?: string[];
+  actionItems?: ActionItem[];
+}
+
 export default function Results() {
-  const [results, setResults] = useState(null);
-  const [aiInsights, setAiInsights] = useState(null);
+  const [results, setResults] = useState<AnalysisData | null>(null);
+  const [aiInsights, setAiInsights] = useState<AiInsights | null>(null);
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState(null);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
@@ -23,7 +70,7 @@ export default function Results() {
     setLoading(false);
   }, []);
 
-  const generateAiInsights = async (data) => {
+  const generateAiInsights = async (data: AnalysisData) => {
     console.log("Starting AI insights generation...");
     setAiLoading(true);
     setAiError(null);
@@ -50,9 +97,9 @@ export default function Results() {
         console.error('❌ AI insights generation failed:', aiData.error);
         setAiError(aiData.error);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error generating AI insights:', error);
-      setAiError(error.message);
+      setAiError(error?.message || 'Unknown error');
     } finally {
       setAiLoading(false);
     }
@@ -79,22 +126,27 @@ export default function Results() {
       if (pdfData.success) {
         // Create a new window with the HTML content for PDF generation
         const printWindow = window.open('', '_blank');
-        printWindow.document.write(pdfData.html);
-        printWindow.document.close();
-        
-        // Wait for content to load, then trigger print
-        setTimeout(() => {
-          printWindow.focus();
-          printWindow.print();
-        }, 1000);
+        if (printWindow) {
+          printWindow.document.write(pdfData.html);
+          printWindow.document.close();
+
+          // Wait for content to load, then trigger print
+          setTimeout(() => {
+            if (printWindow) {
+              printWindow.focus();
+              printWindow.print();
+            }
+          }, 1000);
+        }
+
         
         console.log('✅ PDF generated successfully');
       } else {
         throw new Error(pdfData.error);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error generating PDF:', error);
-      alert('Failed to generate PDF: ' + error.message);
+      alert('Failed to generate PDF: ' + (error?.message || 'Unknown error'));
     } finally {
       setPdfLoading(false);
     }
@@ -129,20 +181,20 @@ export default function Results() {
     { name: 'Companies', value: results.stats.companies || 0, color: '#8b5cf6' }
   ];
 
-  const industryData = results.analytics?.industries ? 
+  const industryData = results.analytics?.industries ?
     Object.entries(results.analytics.industries).map(([industry, count]) => ({
       name: industry,
-      value: count,
-      percentage: ((count / results.stats.connections) * 100).toFixed(1)
+      value: count as number,
+      percentage: (((count as number) / results.stats.connections) * 100).toFixed(1)
     })) : [];
 
-  const geographicData = results.analytics?.locations ? 
+  const geographicData = results.analytics?.locations ?
     Object.entries(results.analytics.locations)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
       .map(([location, count]) => ({
         name: location,
-        value: count,
-        percentage: ((count / results.stats.connections) * 100).toFixed(1)
+        value: count as number,
+        percentage: (((count as number) / results.stats.connections) * 100).toFixed(1)
       })) : [];
 
   const topRegions = geographicData.slice(0, 5);
@@ -157,7 +209,7 @@ export default function Results() {
         
         <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#1e293b", marginBottom: "1rem" }}>AI-Powered LinkedIn Analytics</h1>
         <p style={{ color: "#64748b", marginBottom: "2rem" }}>
-          File: {results.fileName} • Processed: {new Date(results.processedAt).toLocaleDateString()}
+          File: {results.fileName} • Processed: {results.processedAt ? new Date(results.processedAt).toLocaleDateString() : 'N/A'}
         </p>
 
         {/* AI Insights Section */}
@@ -229,7 +281,7 @@ export default function Results() {
                   </div>
                   <p style={{ opacity: 0.9, marginBottom: "1rem" }}>{aiInsights.networkHealth.assessment}</p>
                   <div style={{ display: "grid", gap: "0.5rem" }}>
-                    {aiInsights.networkHealth.recommendations?.map((rec, index) => (
+                    {aiInsights.networkHealth.recommendations?.map((rec: string, index: number) => (
                       <div key={index} style={{ fontSize: "0.875rem", opacity: 0.8 }}>• {rec}</div>
                     ))}
                   </div>
@@ -241,7 +293,7 @@ export default function Results() {
                 <div style={{ background: "rgba(255,255,255,0.1)", padding: "1.5rem", borderRadius: "8px", marginBottom: "2rem" }}>
                   <h4 style={{ fontSize: "1.125rem", fontWeight: "bold", marginBottom: "1rem" }}>🎯 Key Insights</h4>
                   <div style={{ display: "grid", gap: "0.5rem" }}>
-                    {aiInsights.keyInsights.slice(0, 5).map((insight, index) => (
+                    {aiInsights.keyInsights.slice(0, 5).map((insight: string, index: number) => (
                       <div key={index} style={{ fontSize: "0.875rem", opacity: 0.9 }}>• {insight}</div>
                     ))}
                   </div>
@@ -253,7 +305,7 @@ export default function Results() {
                 <div>
                   <h4 style={{ fontSize: "1.125rem", fontWeight: "bold", marginBottom: "1rem" }}>⚡ Priority Actions</h4>
                   <div style={{ display: "grid", gap: "1rem" }}>
-                    {aiInsights.actionItems.slice(0, 3).map((item, index) => (
+                    {aiInsights.actionItems.slice(0, 3).map((item: ActionItem, index: number) => (
                       <div key={index} style={{ background: "rgba(255,255,255,0.1)", padding: "1rem", borderRadius: "6px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
                           <span style={{ 

@@ -43,7 +43,7 @@ export class EmailService {
     }
   }
 
-  static async sendWelcomeEmail(userEmail: string, userName?: string): Promise<{ success: boolean; error?: string }> {
+  static async sendWelcomeEmail(userEmail: string, userName?: string): Promise<{ success: boolean; error?: string; id?: string }> {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://linkstream.app';
 
     const subject = '🛡️ Welcome to LinkStream - Your LinkedIn is Now Protected!';
@@ -156,7 +156,7 @@ ${appUrl}
     nextBackupDate: Date,
     userName?: string,
     daysUntil?: number
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<{ success: boolean; error?: string; id?: string }> {
     const emailContent = CalendarReminderService.generateEmailReminder(tier, userEmail, nextBackupDate);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://linkstream.app';
 
