@@ -3,7 +3,14 @@ import { Resend } from 'resend';
 import type { SubscriptionTier } from './subscription-tiers';
 import { CalendarReminderService } from './calendar-integration';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialize Resend only when needed to avoid build errors
+let resend: Resend | null = null;
+function getResend(): Resend {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY || 'dummy-key-for-build');
+  }
+  return resend;
+}
 
 export interface SendEmailParams {
   to: string;
@@ -22,7 +29,8 @@ export class EmailService {
         return { success: false, error: 'Email service not configured' };
       }
 
-      const { data, error } = await resend.emails.send({
+      const resendClient = getResend();
+      const { data, error } = await resendClient.emails.send({
         from: this.fromEmail,
         to,
         subject,
