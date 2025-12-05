@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { EmailService } from '@/lib/email-service';
+
+// Force dynamic rendering to avoid build-time import of Resend
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
+  // Lazy import to avoid build-time evaluation
+  const { EmailService } = await import('@/lib/email-service');
   try {
     const { email, name } = await request.json();
 

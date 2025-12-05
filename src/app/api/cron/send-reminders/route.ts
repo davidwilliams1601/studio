@@ -1,7 +1,6 @@
 // src/app/api/cron/send-reminders/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
-import { EmailService } from '@/lib/email-service';
 import { shouldSendReminder, getNextReminderDate } from '@/lib/subscription-tiers';
 import type { SubscriptionTier } from '@/lib/subscription-tiers';
 
@@ -20,6 +19,9 @@ interface UserData {
 }
 
 export async function GET(request: NextRequest) {
+  // Lazy import to avoid build-time evaluation of Resend
+  const { EmailService } = await import('@/lib/email-service');
+
   try {
     // Verify cron secret to prevent unauthorized access
     const authHeader = request.headers.get('authorization');
