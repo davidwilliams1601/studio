@@ -244,7 +244,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (!sessionResponse.ok) {
             const errorData = await sessionResponse.json();
             console.error('Session cookie creation failed:', errorData);
-            throw new Error(`Failed to create session: ${errorData.error || 'Unknown error'}`);
+            console.error('Error code:', errorData.code);
+            console.error('Error message:', errorData.message);
+            console.error('Error details:', errorData.details);
+            throw new Error(
+              `Failed to create session: ${errorData.error || 'Unknown error'}\n` +
+              `Code: ${errorData.code || 'none'}\n` +
+              `Details: ${errorData.message || errorData.details || 'none'}`
+            );
           }
 
           console.log('Session cookie created successfully');

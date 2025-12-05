@@ -23,8 +23,26 @@ export async function POST(request: NextRequest) {
     console.log('[create-session] Getting Firebase Auth instance');
     const auth = await getAuth();
 
-    // Set session to expire in 5 days
+    if (!auth) {
+      console.error('[create-session] Firebase Auth instance is null/undefined');
+      throw new Error('Firebase Admin SDK not properly initialized');
+    }
+
+    console.log('[create-session] Firebase Auth instance obtained successfully');
+
+    // First verify the ID token is valid
+    console.log('[create-session] Verifying ID token...');
+    try {
+      const decodedToken = await auth.verifyIdToken(idToken);
+      console.log('[create-session] ID token verified, user:', decodedToken.uid);
+    } catch (verifyError: any) {
+      console.error('[create-session] ID token verification failed:', verifyError.message);
+      throw verifyError;
+    }
+
+    // Set session to expire in 5 days (max is 14 days)
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days in milliseconds
+    console.log('[create-session] Session will expire in:', expiresIn, 'ms (5 days)');
 
     // Create the session cookie
     console.log('[create-session] Creating session cookie...');
@@ -53,25 +71,45 @@ export async function POST(request: NextRequest) {
     console.log('[create-session] Session cookie set successfully');
     return response;
   } catch (error: any) {
-    console.error('Failed to create session cookie:', error);
+    console.error('[create-session] Failed to create session cookie');
+    console.error('[create-session] Error code:', error.code);
+    console.error('[create-session] Error message:', error.message);
+    console.error('[create-session] Full error:', JSON.stringify(error, null, 2));
 
     // Provide specific error messages for common issues
     if (error.code === 'auth/id-token-expired') {
       return NextResponse.json(
-        { error: 'ID token expired. Please sign in again.' },
+        { error: 'ID token expired. Please sign in again.', code: error.code },
         { status: 401 }
       );
     }
 
     if (error.code === 'auth/invalid-id-token') {
       return NextResponse.json(
-        { error: 'Invalid ID token. Please sign in again.' },
+        { error: 'Invalid ID token. Please sign in again.', code: error.code },
         { status: 401 }
       );
     }
 
+    if (error.code === 'auth/argument-error') {
+      return NextResponse.json(
+        {
+          error: 'Invalid session cookie configuration. Please contact support.',
+          code: error.code,
+          details: error.message
+        },
+        { status: 500 }
+      );
+    }
+
+    // Return detailed error for debugging
     return NextResponse.json(
-      { error: 'Failed to create session' },
+      {
+        error: 'Failed to create session',
+        code: error.code || 'unknown',
+        message: error.message || 'Unknown error',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
