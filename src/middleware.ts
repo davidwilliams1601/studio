@@ -8,8 +8,10 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
-    request.headers.get('RSC') ||
-    request.headers.get('Next-Router-State-Tree')
+    request.headers.get('x-nextjs-data') ||
+    request.headers.get('purpose') === 'prefetch' ||
+    request.headers.get('rsc') === '1' ||
+    request.headers.get('next-router-prefetch')
   ) {
     return NextResponse.next();
   }
