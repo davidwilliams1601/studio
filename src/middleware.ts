@@ -4,6 +4,16 @@ import type { NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Skip middleware for Next.js internal requests and RSC payloads
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    request.headers.get('RSC') ||
+    request.headers.get('Next-Router-State-Tree')
+  ) {
+    return NextResponse.next();
+  }
+
   console.log('[middleware] Request to:', pathname);
 
   // Protected routes that require authentication
