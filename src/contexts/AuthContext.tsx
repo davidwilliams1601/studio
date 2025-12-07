@@ -129,29 +129,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithEmailAndPassword(auth, email, password);
       console.log('Sign in successful');
 
-      // Create session cookie for middleware authentication
+      // Get ID token and redirect through session cookie endpoint
       console.log('Getting ID token...');
       const idToken = await auth.currentUser?.getIdToken();
-      console.log('ID token obtained, creating session cookie...');
+      console.log('ID token obtained, redirecting through session endpoint...');
 
       if (idToken) {
-        const sessionResponse = await fetch('/api/auth/create-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken }),
-          credentials: 'include', // Required for cookies to be set
-        });
-
-        if (!sessionResponse.ok) {
-          const errorData = await sessionResponse.json();
-          console.error('Session cookie creation failed:', errorData);
-          throw new Error(`Failed to create session: ${errorData.error || 'Unknown error'}`);
-        }
-
-        console.log('Session cookie created successfully');
-
-        // Wait a moment for the cookie to be committed by the browser
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Use server-side redirect to set cookie reliably
+        // The redirect will be handled by the GET endpoint
+        const redirect = encodeURIComponent('/dashboard');
+        window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
+        // Don't continue - page will navigate
+        return;
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -165,30 +154,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-      // Create session cookie for middleware authentication
-      if (userCredential.user) {
-        const idToken = await userCredential.user.getIdToken();
-        if (idToken) {
-          const sessionResponse = await fetch('/api/auth/create-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken }),
-            credentials: 'include', // Required for cookies to be set
-          });
-
-          if (!sessionResponse.ok) {
-            const errorData = await sessionResponse.json();
-            console.error('Session cookie creation failed:', errorData);
-            throw new Error(`Failed to create session: ${errorData.error || 'Unknown error'}`);
-          }
-
-          console.log('Session cookie created successfully');
-
-          // Wait a moment for the cookie to be committed by the browser
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
 
       // Create user document in Firestore and send welcome email
       if (userCredential.user) {
@@ -229,6 +194,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Don't throw - signup was successful even if setup failed
         }
       }
+
+      // Get ID token and redirect through session cookie endpoint
+      if (userCredential.user) {
+        const idToken = await userCredential.user.getIdToken();
+        if (idToken) {
+          // Use server-side redirect to set cookie reliably
+          const redirect = encodeURIComponent('/dashboard');
+          window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
+          // Don't continue - page will navigate
+          return;
+        }
+      }
     } catch (error: any) {
       throw new Error(error.message || 'Signup failed');
     }
@@ -243,40 +220,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Signing in with Google popup...');
       const userCredential = await signInWithPopup(auth, provider);
       console.log('Google sign in successful, user:', userCredential.user.uid);
-
-      // Create session cookie for middleware authentication
-      if (userCredential.user) {
-        console.log('Getting ID token...');
-        const idToken = await userCredential.user.getIdToken();
-        console.log('ID token obtained, creating session cookie...');
-
-        if (idToken) {
-          const sessionResponse = await fetch('/api/auth/create-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken }),
-            credentials: 'include', // Required for cookies to be set
-          });
-
-          if (!sessionResponse.ok) {
-            const errorData = await sessionResponse.json();
-            console.error('Session cookie creation failed:', errorData);
-            console.error('Error code:', errorData.code);
-            console.error('Error message:', errorData.message);
-            console.error('Error details:', errorData.details);
-            throw new Error(
-              `Failed to create session: ${errorData.error || 'Unknown error'}\n` +
-              `Code: ${errorData.code || 'none'}\n` +
-              `Details: ${errorData.message || errorData.details || 'none'}`
-            );
-          }
-
-          console.log('Session cookie created successfully');
-
-          // Wait a moment for the cookie to be committed by the browser
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
 
       // Create user document and send welcome email for new Google users
       if (userCredential.user) {
@@ -314,6 +257,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error('Post-login setup error:', error);
           // Don't throw - login was successful
+        }
+      }
+
+      // Get ID token and redirect through session cookie endpoint
+      if (userCredential.user) {
+        console.log('Getting ID token...');
+        const idToken = await userCredential.user.getIdToken();
+        console.log('ID token obtained, redirecting through session endpoint...');
+
+        if (idToken) {
+          // Use server-side redirect to set cookie reliably
+          const redirect = encodeURIComponent('/dashboard');
+          window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
+          // Don't continue - page will navigate
+          return;
         }
       }
     } catch (error: any) {

@@ -5,7 +5,50 @@ import { getAuth } from '@/lib/firebase-admin';
  * Create Firebase session cookie from ID token
  * This endpoint is called after successful client-side authentication
  * to create a server-side session cookie that middleware can verify
+ *
+ * Supports both POST (JSON) and GET (redirect) methods
  */
+export async function GET(request: NextRequest) {
+  // Handle GET request with idToken in query param
+  const searchParams = request.nextUrl.searchParams;
+  const idToken = searchParams.get('idToken');
+  const redirect = searchParams.get('redirect') || '/dashboard';
+
+  if (!idToken) {
+    return NextResponse.redirect(new URL('/login?error=missing_token', request.url));
+  }
+
+  try {
+    const auth = await getAuth();
+    const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+    const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
+
+    // Build cookie header
+    const isProduction = process.env.NODE_ENV === 'production';
+    const maxAge = Math.floor(expiresIn / 1000);
+    const cookieParts = [
+      `session=${sessionCookie}`,
+      'Path=/',
+      `Max-Age=${maxAge}`,
+      'HttpOnly',
+      'SameSite=Lax',
+    ];
+    if (isProduction) {
+      cookieParts.push('Secure');
+    }
+
+    // Redirect with cookie
+    const redirectUrl = new URL(redirect, request.url);
+    const response = NextResponse.redirect(redirectUrl);
+    response.headers.set('Set-Cookie', cookieParts.join('; '));
+
+    return response;
+  } catch (error: any) {
+    console.error('[create-session] GET error:', error);
+    return NextResponse.redirect(new URL('/login?error=session_failed', request.url));
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('[create-session] Received session creation request');

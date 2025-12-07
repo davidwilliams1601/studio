@@ -54,19 +54,18 @@ export default function Login() {
           }
           await signInWithCustomToken(firebaseAuth, customToken);
 
-          // Create session cookie for middleware authentication
+          // Get ID token and redirect through session cookie endpoint
           const user = firebaseAuth.currentUser;
           if (user) {
             const idToken = await user.getIdToken();
-            await fetch('/api/auth/create-session', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ idToken }),
-              credentials: 'include', // Required for cookies to be set
-            });
+            // Use server-side redirect to set cookie reliably
+            const redirect = encodeURIComponent('/dashboard');
+            window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
+            // Don't continue - page will navigate
+            return;
           }
 
-          // Redirect to dashboard
+          // Fallback: redirect to dashboard
           router.push('/dashboard');
         } catch (error: any) {
           console.error('OAuth callback error:', error);
