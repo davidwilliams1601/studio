@@ -52,6 +52,10 @@ export async function POST(request: NextRequest) {
     // Set the session cookie
     const response = NextResponse.json({ success: true });
 
+    // Add CORS headers to ensure browser accepts credentials
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Allow-Origin', request.headers.get('origin') || '*');
+
     const cookieOptions = {
       maxAge: expiresIn / 1000, // Convert to seconds
       httpOnly: true,
@@ -65,6 +69,7 @@ export async function POST(request: NextRequest) {
       ...cookieOptions,
       cookieLength: sessionCookie.length,
       isProduction: process.env.NODE_ENV === 'production',
+      origin: request.headers.get('origin'),
     });
 
     response.cookies.set('session', sessionCookie, cookieOptions);
