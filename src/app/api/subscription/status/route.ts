@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyIdToken, getDb } from '@/lib/firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/subscription/status
  *
