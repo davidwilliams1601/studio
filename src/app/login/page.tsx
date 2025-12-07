@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { signInWithCustomToken } from 'firebase/auth';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -15,71 +14,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { login, signup, loginWithGoogle, loginWithLinkedIn, firebaseReady } = useAuth();
+  const { login, signup, loginWithGoogle, firebaseReady } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  // Handle OAuth callback (LinkedIn returns with auth_code)
-  useEffect(() => {
-    const handleOAuthCallback = async () => {
-      const authCode = searchParams.get('auth_code');
-      const errorParam = searchParams.get('error');
-      const messageParam = searchParams.get('message');
-
-      if (errorParam) {
-        setError(messageParam || 'Authentication failed');
-        return;
-      }
-
-      if (authCode) {
-        setLoading(true);
-        try {
-          // Exchange one-time code for Firebase custom token
-          const response = await fetch('/api/auth/session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ auth_code: authCode }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to exchange authentication code');
-          }
-
-          const { customToken } = await response.json();
-
-          // Sign in to Firebase with custom token
-          const { auth: firebaseAuth } = await import('@/firebase/config');
-          if (!firebaseAuth) {
-            throw new Error('Firebase authentication not available');
-          }
-          await signInWithCustomToken(firebaseAuth, customToken);
-
-          // Get ID token and redirect through session cookie endpoint
-          const user = firebaseAuth.currentUser;
-          if (user) {
-            const idToken = await user.getIdToken();
-            // Use server-side redirect to set cookie reliably
-            const redirect = encodeURIComponent('/dashboard');
-            window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
-            // Don't continue - page will navigate
-            return;
-          }
-
-          // Fallback: redirect to dashboard
-          router.push('/dashboard');
-        } catch (error: any) {
-          console.error('OAuth callback error:', error);
-          setError(error.message || 'Authentication failed');
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    if (firebaseReady) {
-      handleOAuthCallback();
-    }
-  }, [searchParams, router, firebaseReady]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,12 +66,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLinkedInAuth = () => {
-    setLoading(true);
-    setError('');
-    loginWithLinkedIn();
   };
 
   return (
@@ -323,7 +254,7 @@ export default function Login() {
             fontWeight: "500",
             fontSize: "16px",
             cursor: loading ? "not-allowed" : "pointer",
-            marginBottom: "0.75rem",
+            marginBottom: "1.5rem",
             minHeight: "48px",
             display: "flex",
             alignItems: "center",
@@ -333,32 +264,6 @@ export default function Login() {
         >
           <span>🔑</span>
           <span>Continue with Google</span>
-        </button>
-
-        <button
-          onClick={handleLinkedInAuth}
-          disabled={loading || !firebaseReady}
-          style={{
-            width: "100%",
-            padding: "0.875rem",
-            background: "#0077B5",
-            border: "none",
-            borderRadius: "8px",
-            color: "white",
-            fontWeight: "500",
-            fontSize: "16px",
-            cursor: loading ? "not-allowed" : "pointer",
-            marginBottom: "1.5rem",
-            minHeight: "48px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "0.5rem",
-            opacity: loading ? 0.6 : 1
-          }}
-        >
-          <span>💼</span>
-          <span>Continue with LinkedIn</span>
         </button>
 
         {/* Toggle Sign In / Sign Up */}
