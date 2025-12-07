@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax' as const,
       path: '/',
+      // Don't set domain - let browser use current domain automatically
     };
 
     console.log('[create-session] Setting cookie with options:', {

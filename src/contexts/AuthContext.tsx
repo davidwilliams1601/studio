@@ -148,6 +148,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         console.log('Session cookie created successfully');
+
+        // Wait a moment for the cookie to be committed by the browser
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -166,11 +169,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (userCredential.user) {
         const idToken = await userCredential.user.getIdToken();
         if (idToken) {
-          await fetch('/api/auth/create-session', {
+          const sessionResponse = await fetch('/api/auth/create-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken }),
           });
+
+          if (!sessionResponse.ok) {
+            const errorData = await sessionResponse.json();
+            console.error('Session cookie creation failed:', errorData);
+            throw new Error(`Failed to create session: ${errorData.error || 'Unknown error'}`);
+          }
+
+          console.log('Session cookie created successfully');
+
+          // Wait a moment for the cookie to be committed by the browser
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
 
@@ -255,6 +269,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
 
           console.log('Session cookie created successfully');
+
+          // Wait a moment for the cookie to be committed by the browser
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
 
