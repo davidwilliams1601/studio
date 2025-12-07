@@ -49,32 +49,43 @@ export async function POST(request: NextRequest) {
     const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
     console.log('[create-session] Session cookie created successfully');
 
-    // Set the session cookie
-    const response = NextResponse.json({ success: true });
+    // Build cookie header manually to ensure it's set correctly
+    const isProduction = process.env.NODE_ENV === 'production';
+    const maxAge = Math.floor(expiresIn / 1000); // Convert to seconds
 
-    // Add CORS headers to ensure browser accepts credentials
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
-    response.headers.set('Access-Control-Allow-Origin', request.headers.get('origin') || '*');
+    // Manual Set-Cookie header (more reliable than Next.js cookie API)
+    const cookieParts = [
+      `session=${sessionCookie}`,
+      'Path=/',
+      `Max-Age=${maxAge}`,
+      'HttpOnly',
+      'SameSite=Lax',
+    ];
 
-    const cookieOptions = {
-      maxAge: expiresIn / 1000, // Convert to seconds
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
-      path: '/',
-      // Don't set domain - let browser use current domain automatically
-    };
+    if (isProduction) {
+      cookieParts.push('Secure');
+    }
 
-    console.log('[create-session] Setting cookie with options:', {
-      ...cookieOptions,
+    const cookieHeader = cookieParts.join('; ');
+
+    console.log('[create-session] Setting cookie manually:', {
       cookieLength: sessionCookie.length,
-      isProduction: process.env.NODE_ENV === 'production',
-      origin: request.headers.get('origin'),
+      maxAge,
+      isProduction,
+      cookieHeaderLength: cookieHeader.length,
     });
 
-    response.cookies.set('session', sessionCookie, cookieOptions);
+    // Create response with manual Set-Cookie header
+    const response = NextResponse.json({ success: true });
 
-    console.log('[create-session] Session cookie set successfully');
+    // Set cookie using raw header (bypass Next.js cookie API)
+    response.headers.set('Set-Cookie', cookieHeader);
+
+    // Add CORS headers
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Allow-Origin', request.headers.get('origin') || 'https://www.lstream.app');
+
+    console.log('[create-session] Cookie header set successfully');
     return response;
   } catch (error: any) {
     console.error('[create-session] Failed to create session cookie');
