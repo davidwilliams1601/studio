@@ -139,6 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken }),
+          credentials: 'include', // Required for cookies to be set
         });
 
         if (!sessionResponse.ok) {
@@ -173,6 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken }),
+            credentials: 'include', // Required for cookies to be set
           });
 
           if (!sessionResponse.ok) {
@@ -253,6 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken }),
+            credentials: 'include', // Required for cookies to be set
           });
 
           if (!sessionResponse.ok) {
