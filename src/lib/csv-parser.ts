@@ -17,25 +17,43 @@ export function parseCSV(content: string): ParsedCSVRow[] {
     content = content.slice(1);
   }
 
-  const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+  // Split by newlines but handle both \r\n and \n
+  const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line);
 
-  if (lines.length === 0) return [];
+  if (lines.length === 0) {
+    console.log('⚠️ CSV Parser: No lines found in file');
+    return [];
+  }
+
+  console.log(`📊 CSV Parser: Processing ${lines.length} lines`);
 
   // Extract headers (first line)
   const headers = parseCSVLine(lines[0]);
+  console.log(`📊 CSV Parser: Found ${headers.length} headers:`, headers);
 
   // Parse data rows
   const rows: ParsedCSVRow[] = [];
+  let skippedRows = 0;
+
   for (let i = 1; i < lines.length; i++) {
     const values = parseCSVLine(lines[i]);
 
-    if (values.length === headers.length) {
+    // More lenient: accept rows with same or fewer columns
+    if (values.length > 0) {
       const row: ParsedCSVRow = {};
       headers.forEach((header, index) => {
         row[header] = values[index] || '';
       });
       rows.push(row);
+    } else {
+      skippedRows++;
     }
+  }
+
+  console.log(`✅ CSV Parser: Parsed ${rows.length} rows (skipped ${skippedRows} empty rows)`);
+
+  if (rows.length === 0 && lines.length > 1) {
+    console.error('❌ CSV Parser: No rows parsed! First data line:', lines[1]);
   }
 
   return rows;

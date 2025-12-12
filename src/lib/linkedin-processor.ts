@@ -94,10 +94,25 @@ async function processConnections(
   includeList: boolean = false
 ): Promise<void> {
   const file = findFile(zip, 'Connections.csv');
-  if (!file) return;
+  if (!file) {
+    console.log('⚠️ Connections.csv not found in ZIP');
+    return;
+  }
 
+  console.log('📁 Processing Connections.csv...');
   const content = await file.async('text');
+  console.log(`📄 File size: ${content.length} bytes`);
+
   const rows = parseCSV(content);
+  console.log(`👥 Found ${rows.length} connections`);
+
+  if (rows.length > 0) {
+    console.log('📋 First connection sample:', {
+      firstName: rows[0]['First Name'] || rows[0]['first name'],
+      lastName: rows[0]['Last Name'] || rows[0]['last name'],
+      company: rows[0]['Company'] || rows[0]['company']
+    });
+  }
 
   result.stats.connections = rows.length;
 
