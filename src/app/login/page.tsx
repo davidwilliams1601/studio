@@ -259,11 +259,21 @@ export default function Login() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "0.5rem"
+            gap: "0.5rem",
+            opacity: loading ? 0.6 : 1
           }}
         >
-          <span>🔑</span>
-          <span>Continue with Google</span>
+          {loading ? (
+            <>
+              <span>🔄</span>
+              <span>Signing in...</span>
+            </>
+          ) : (
+            <>
+              <span>🔑</span>
+              <span>Continue with Google</span>
+            </>
+          )}
         </button>
 
         {/* Toggle Sign In / Sign Up */}

@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     monthlyUsage: number;
     upgradeDate?: string;
   } | null>(null);
+  const [popupInProgress, setPopupInProgress] = useState(false);
 
   useEffect(() => {
     // Only initialize on client-side
@@ -214,6 +215,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!auth || !firebaseReady) {
       throw new Error('Authentication not available');
     }
+
+    // Prevent multiple simultaneous popup attempts
+    if (popupInProgress) {
+      console.log('Popup already in progress, ignoring...');
+      return;
+    }
+
+    setPopupInProgress(true);
+
     try {
       const provider = new GoogleAuthProvider();
       console.log('Signing in with Google popup...');
@@ -277,9 +287,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Don't throw error if user simply closed the popup
       if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
         console.log('Google login cancelled by user');
+        // Give Firebase a moment to clean up internal state
+        await new Promise(resolve => setTimeout(resolve, 500));
         return; // Silently exit without throwing
       }
       throw new Error(error.message || 'Google login failed');
+    } finally {
+      // Always clear the popup flag
+      setPopupInProgress(false);
     }
   };
 
