@@ -274,6 +274,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error: any) {
+      // Don't throw error if user simply closed the popup
+      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+        console.log('Google login cancelled by user');
+        return; // Silently exit without throwing
+      }
       throw new Error(error.message || 'Google login failed');
     }
   };
