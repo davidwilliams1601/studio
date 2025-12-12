@@ -86,6 +86,52 @@ export default function GuidePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* CTA Cards */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              I've Requested My Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Great! LinkedIn will email you within 24 hours. Once you receive it, come back to upload your data.
+            </p>
+            <Button asChild className="w-full">
+              <Link href="/dashboard">Go to Dashboard</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              I Already Have My Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Perfect! Head to the dashboard to upload your LinkedIn ZIP file and get instant insights.
+            </p>
+            <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+              <Link href="/dashboard">Upload Now</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Info Box */}
+      <Card className="border-amber-200 bg-amber-50">
+        <CardContent className="pt-6">
+          <p className="text-sm text-amber-900">
+            <strong>⏱️ Pro Tip:</strong> LinkedIn typically processes data requests in 10-24 hours. You'll receive an email when it's ready. In the meantime, explore your dashboard and settings!
+          </p>
+        </CardContent>
+      </Card>
     </main>
   );
 }

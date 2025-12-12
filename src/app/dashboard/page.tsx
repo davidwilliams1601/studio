@@ -12,6 +12,39 @@ export default function Dashboard() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState("");
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+
+  // Check if user needs onboarding
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (!user || authLoading) return;
+
+      try {
+        const idToken = await user.getIdToken();
+        const response = await fetch('/api/users/onboarding', {
+          headers: {
+            'Authorization': `Bearer ${idToken}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (!data.hasCompletedOnboarding) {
+            // Redirect to welcome page for first-time users
+            router.push('/dashboard/welcome');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check onboarding:', error);
+        // Don't block user if check fails
+      } finally {
+        setCheckingOnboarding(false);
+      }
+    };
+
+    checkOnboarding();
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -72,7 +105,7 @@ export default function Dashboard() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || checkingOnboarding) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center" }}>
@@ -87,11 +120,53 @@ export default function Dashboard() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", padding: "2rem" }}>
-      <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
-        <h1 style={{ fontSize: "2rem", marginBottom: "1rem" }}>🛡️ LinkStream Dashboard</h1>
-        <p style={{ fontSize: "1.125rem", color: "#64748b", marginBottom: "2rem" }}>
-          Welcome, {user.email}!
-        </p>
+      <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <h1 style={{ fontSize: "2rem", marginBottom: "1rem" }}>🛡️ LinkStream Dashboard</h1>
+          <p style={{ fontSize: "1.125rem", color: "#64748b" }}>
+            Welcome, {user.email}!
+          </p>
+        </div>
+
+        {/* Help Banner */}
+        {!selectedFile && !uploading && (
+          <div style={{
+            background: "#eff6ff",
+            border: "1px solid #93c5fd",
+            borderRadius: "8px",
+            padding: "1rem",
+            marginBottom: "1.5rem",
+            textAlign: "left"
+          }}>
+            <div style={{ display: "flex", alignItems: "start", gap: "0.75rem" }}>
+              <span style={{ fontSize: "1.5rem" }}>💡</span>
+              <div>
+                <p style={{ margin: "0 0 0.5rem 0", fontWeight: "600", color: "#1e40af" }}>
+                  Need to get your LinkedIn data?
+                </p>
+                <p style={{ margin: "0 0 0.75rem 0", fontSize: "0.875rem", color: "#1e40af" }}>
+                  Follow our step-by-step guide to export your data from LinkedIn. It takes about 10 minutes.
+                </p>
+                <a
+                  href="/dashboard/guide"
+                  style={{
+                    display: "inline-block",
+                    background: "#3b82f6",
+                    color: "white",
+                    padding: "0.5rem 1rem",
+                    borderRadius: "6px",
+                    textDecoration: "none",
+                    fontSize: "0.875rem",
+                    fontWeight: "600"
+                  }}
+                >
+                  📖 View Export Guide
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div style={{
           background: "white",
@@ -190,16 +265,46 @@ export default function Dashboard() {
             </>
           )}
         </div>
-        
-        <div style={{ marginTop: "2rem" }}>
-          <a 
-            href="/"
-            style={{ 
-              color: "#3b82f6", 
-              textDecoration: "none"
+
+        {/* Quick Links */}
+        <div style={{
+          display: "flex",
+          gap: "1rem",
+          justifyContent: "center",
+          marginTop: "2rem",
+          flexWrap: "wrap"
+        }}>
+          <a
+            href="/dashboard/guide"
+            style={{
+              color: "#3b82f6",
+              textDecoration: "none",
+              fontSize: "0.875rem"
             }}
           >
-            ← Back to home
+            📖 Export Guide
+          </a>
+          <span style={{ color: "#d1d5db" }}>•</span>
+          <a
+            href="/dashboard/subscription"
+            style={{
+              color: "#3b82f6",
+              textDecoration: "none",
+              fontSize: "0.875rem"
+            }}
+          >
+            💎 Upgrade Plan
+          </a>
+          <span style={{ color: "#d1d5db" }}>•</span>
+          <a
+            href="/"
+            style={{
+              color: "#3b82f6",
+              textDecoration: "none",
+              fontSize: "0.875rem"
+            }}
+          >
+            ← Home
           </a>
         </div>
       </div>
