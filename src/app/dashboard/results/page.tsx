@@ -60,13 +60,22 @@ export default function Results() {
   const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
-    const storedResults = sessionStorage.getItem("analysisResults");
-    if (storedResults) {
-      const data = JSON.parse(storedResults);
-      setResults(data);
-      console.log("Data loaded for AI analysis:", data);
+    try {
+      const storedResults = sessionStorage.getItem("analysisResults");
+      if (storedResults) {
+        const data = JSON.parse(storedResults);
+        setResults(data);
+        console.log("Data loaded for AI analysis:", data);
+        console.log("📊 Connection count:", data.stats?.connections);
+        console.log("📊 All stats:", data.stats);
+      } else {
+        console.warn("⚠️ No analysis results found in session storage");
+      }
+    } catch (error) {
+      console.error("❌ Error loading results:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const generateAiInsights = async (data: AnalysisData) => {
