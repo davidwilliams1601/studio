@@ -1,13 +1,14 @@
 "use client";
 
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { useCsrf } from "@/hooks/use-csrf";
 
 export default function Subscription() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { token: csrfToken } = useCsrf();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
   useEffect(() => {
@@ -17,11 +18,48 @@ export default function Subscription() {
   }, [user, loading, router]);
 
   const handleUpgrade = async (plan: any) => {
+    if (!plan.priceId) {
+      alert('This plan is not available for purchase.');
+      return;
+    }
+
     setUpgradeLoading(true);
     try {
-      alert(`Upgrading to ${plan.name} plan! Stripe integration coming soon.`);
-    } catch (error) {
+      // Get ID token for authentication
+      const idToken = await user?.getIdToken();
+      if (!idToken) {
+        throw new Error('Authentication required');
+      }
+
+      // Create Stripe checkout session
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
+      };
+
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+
+      const response = await fetch('/api/subscription/create', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          priceId: plan.priceId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      // Redirect to Stripe checkout
+      window.location.href = data.url;
+    } catch (error: any) {
       console.error('Error upgrading:', error);
+      alert(error.message || 'Failed to start checkout. Please try again.');
     } finally {
       setUpgradeLoading(false);
     }
