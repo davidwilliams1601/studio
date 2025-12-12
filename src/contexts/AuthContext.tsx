@@ -284,12 +284,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error: any) {
-      // Don't throw error if user simply closed the popup
+      // Special handling for popup cancellation
       if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
         console.log('Google login cancelled by user');
         // Give Firebase a moment to clean up internal state
         await new Promise(resolve => setTimeout(resolve, 500));
-        return; // Silently exit without throwing
+        // Throw a special error that we can catch in the UI
+        const cancelError = new Error('POPUP_CANCELLED');
+        (cancelError as any).code = 'auth/popup-cancelled';
+        throw cancelError;
       }
       throw new Error(error.message || 'Google login failed');
     } finally {

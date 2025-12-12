@@ -58,11 +58,15 @@ export default function Login() {
       console.log('Redirecting to:', redirectTo);
       router.push(redirectTo);
     } catch (error: any) {
-      // Only show error if it's not a user cancellation
-      if (error.message && !error.message.includes('popup-closed-by-user')) {
-        console.error('Google auth error:', error);
-        setError(error.message || 'Google authentication failed');
+      // Silently ignore popup cancellation
+      if (error.message === 'POPUP_CANCELLED' || error.code === 'auth/popup-cancelled') {
+        console.log('User cancelled Google login popup');
+        return; // Don't show error
       }
+
+      // Show error for actual failures
+      console.error('Google auth error:', error);
+      setError(error.message || 'Google authentication failed');
     } finally {
       setLoading(false);
     }
