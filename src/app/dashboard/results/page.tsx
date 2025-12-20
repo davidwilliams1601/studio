@@ -23,6 +23,32 @@ interface AnalysisData {
   analytics: Analytics;
   fileName?: string;
   processedAt?: string;
+  insights?: string[];
+  profile?: {
+    firstName: string;
+    lastName: string;
+    headline: string;
+    industry: string;
+    summary: string;
+  };
+  topValueConnections?: Array<{
+    name: string;
+    company: string;
+    position: string;
+    reason: string;
+  }>;
+  contentStrategy?: {
+    currentActivity: string;
+    recommendations: string[];
+    contentIdeas: string[];
+    postingFrequency: string;
+  };
+  introductionMatches?: Array<{
+    person1: string;
+    person2: string;
+    reason: string;
+    introTemplate: string;
+  }>;
 }
 
 interface NetworkHealth {
@@ -220,6 +246,316 @@ export default function Results() {
           File: {results.fileName} • Processed: {results.processedAt ? new Date(results.processedAt).toLocaleDateString() : 'N/A'}
         </p>
 
+        {/* Generated Insights from Analysis */}
+        {results.insights && results.insights.length > 0 && (
+          <div style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", padding: "2rem", borderRadius: "12px", color: "white", marginBottom: "2rem" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "2rem", marginRight: "1rem" }}>✨</div>
+              <div>
+                <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "0.25rem" }}>AI-Powered Insights</h2>
+                <p style={{ opacity: 0.9, fontSize: "0.875rem" }}>Personalized recommendations based on your LinkedIn network data</p>
+              </div>
+            </div>
+            <div style={{ background: "rgba(255,255,255,0.1)", padding: "1.5rem", borderRadius: "8px" }}>
+              <div style={{ display: "grid", gap: "1rem" }}>
+                {results.insights.map((insight: string, index: number) => (
+                  <div key={index} style={{ display: "flex", gap: "0.75rem", alignItems: "start" }}>
+                    <span style={{
+                      minWidth: "24px",
+                      height: "24px",
+                      background: "rgba(255,255,255,0.2)",
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: "bold",
+                      fontSize: "0.875rem"
+                    }}>
+                      {index + 1}
+                    </span>
+                    <p style={{ margin: 0, lineHeight: "1.6", flex: 1 }}>{insight}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Strategic Connection Recommendations */}
+        {results.topValueConnections && results.topValueConnections.length > 0 && (
+          <div style={{ background: "white", padding: "2rem", borderRadius: "12px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "2rem", marginRight: "1rem" }}>🎯</div>
+              <div>
+                <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#1e293b", marginBottom: "0.25rem" }}>
+                  Who You Should Be Reaching Out To
+                </h2>
+                <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                  Strategic connection types to seek out for maximum career impact based on your profile as {results.profile?.headline}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "grid", gap: "1rem" }}>
+              {results.topValueConnections.map((connection, index) => (
+                <div
+                  key={index}
+                  style={{
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    padding: "1.25rem",
+                    background: "#fafafa",
+                    transition: "all 0.2s"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "#3b82f6";
+                    e.currentTarget.style.background = "#eff6ff";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                    e.currentTarget.style.background = "#fafafa";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "start", gap: "1rem" }}>
+                    <div style={{
+                      minWidth: "32px",
+                      height: "32px",
+                      background: "#3b82f6",
+                      color: "white",
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: "bold",
+                      fontSize: "1rem"
+                    }}>
+                      {index + 1}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        fontWeight: "bold",
+                        color: "#1e40af",
+                        marginBottom: "0.5rem",
+                        fontSize: "1.25rem",
+                        textDecoration: "underline",
+                        textDecorationColor: "#93c5fd",
+                        textUnderlineOffset: "4px"
+                      }}>
+                        {connection.name}
+                      </div>
+                      <div style={{
+                        fontSize: "0.9rem",
+                        color: "#1e293b",
+                        marginBottom: "0.75rem",
+                        background: "#f1f5f9",
+                        padding: "0.5rem 0.75rem",
+                        borderRadius: "6px",
+                        display: "inline-block"
+                      }}>
+                        <span style={{ fontWeight: "600" }}>{connection.position}</span> at <span style={{ fontWeight: "600", color: "#3b82f6" }}>{connection.company}</span>
+                      </div>
+                      <div style={{ fontSize: "0.875rem", color: "#374151", lineHeight: "1.6", marginTop: "0.75rem" }}>
+                        <div style={{
+                          borderLeft: "3px solid #3b82f6",
+                          paddingLeft: "0.75rem",
+                          fontStyle: "italic"
+                        }}>
+                          {connection.reason}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Content Strategy */}
+        {results.contentStrategy && (
+          <div style={{ background: "white", padding: "2rem", borderRadius: "12px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "2rem", marginRight: "1rem" }}>📝</div>
+              <div>
+                <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#1e293b", marginBottom: "0.25rem" }}>
+                  Content Strategy & Ideas
+                </h2>
+                <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                  Personalized recommendations to grow your LinkedIn presence
+                </p>
+              </div>
+            </div>
+
+            {/* Current Activity */}
+            {results.contentStrategy.currentActivity && (
+              <div style={{ background: "#f0f9ff", padding: "1rem", borderRadius: "8px", marginBottom: "1.5rem", borderLeft: "4px solid #3b82f6" }}>
+                <div style={{ fontSize: "0.875rem", fontWeight: "600", color: "#1e40af", marginBottom: "0.25rem" }}>
+                  Current Activity Assessment
+                </div>
+                <div style={{ color: "#1e293b" }}>
+                  {results.contentStrategy.currentActivity}
+                </div>
+              </div>
+            )}
+
+            {/* Recommendations */}
+            {results.contentStrategy.recommendations.length > 0 && (
+              <div style={{ marginBottom: "1.5rem" }}>
+                <h3 style={{ fontSize: "1.125rem", fontWeight: "bold", color: "#1e293b", marginBottom: "1rem" }}>
+                  📊 Strategic Recommendations
+                </h3>
+                <div style={{ display: "grid", gap: "0.75rem" }}>
+                  {results.contentStrategy.recommendations.map((rec, index) => (
+                    <div key={index} style={{
+                      padding: "1rem",
+                      background: "#fafafa",
+                      borderRadius: "6px",
+                      borderLeft: "3px solid #10b981"
+                    }}>
+                      <div style={{ display: "flex", gap: "0.75rem" }}>
+                        <span style={{
+                          minWidth: "24px",
+                          height: "24px",
+                          background: "#10b981",
+                          color: "white",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.875rem",
+                          fontWeight: "bold",
+                          flexShrink: 0
+                        }}>
+                          {index + 1}
+                        </span>
+                        <p style={{ margin: 0, color: "#374151", lineHeight: "1.6" }}>{rec}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Content Ideas */}
+            {results.contentStrategy.contentIdeas.length > 0 && (
+              <div style={{ marginBottom: "1.5rem" }}>
+                <h3 style={{ fontSize: "1.125rem", fontWeight: "bold", color: "#1e293b", marginBottom: "1rem" }}>
+                  💡 Content Ideas to Post About
+                </h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "0.75rem" }}>
+                  {results.contentStrategy.contentIdeas.map((idea, index) => (
+                    <div key={index} style={{
+                      padding: "1rem",
+                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      color: "white",
+                      borderRadius: "8px",
+                      fontSize: "0.875rem",
+                      lineHeight: "1.6"
+                    }}>
+                      <div style={{ fontWeight: "600", marginBottom: "0.25rem" }}>Topic {index + 1}</div>
+                      {idea}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Posting Frequency */}
+            {results.contentStrategy.postingFrequency && (
+              <div style={{ background: "#fef3c7", padding: "1rem", borderRadius: "8px", borderLeft: "4px solid #f59e0b" }}>
+                <div style={{ fontSize: "0.875rem", fontWeight: "600", color: "#92400e", marginBottom: "0.25rem" }}>
+                  Recommended Posting Frequency
+                </div>
+                <div style={{ color: "#78350f" }}>
+                  {results.contentStrategy.postingFrequency}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Introduction Matchmaker */}
+        {results.introductionMatches && results.introductionMatches.length > 0 && (
+          <div style={{ background: "white", padding: "2rem", borderRadius: "12px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "2rem", marginRight: "1rem" }}>🤝</div>
+              <div>
+                <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#1e293b", marginBottom: "0.25rem" }}>
+                  Introduction Matchmaker
+                </h2>
+                <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                  Valuable introduction opportunities in your network - connect people who should know each other
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gap: "1.5rem" }}>
+              {results.introductionMatches.map((match, index) => (
+                <div key={index} style={{
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  padding: "1.5rem",
+                  background: "#fafafa",
+                  transition: "all 0.2s"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#10b981";
+                  e.currentTarget.style.background = "#f0fdf4";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                  e.currentTarget.style.background = "#fafafa";
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+                    <div style={{
+                      minWidth: "40px",
+                      height: "40px",
+                      background: "#10b981",
+                      color: "white",
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: "bold",
+                      fontSize: "1.125rem"
+                    }}>
+                      {index + 1}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "1.125rem", fontWeight: "bold", color: "#1e293b" }}>
+                        {match.person1} <span style={{ color: "#10b981", fontSize: "1.5rem" }}>+</span> {match.person2}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: "1rem", paddingLeft: "3.5rem" }}>
+                    <div style={{ fontSize: "0.875rem", fontWeight: "600", color: "#64748b", marginBottom: "0.25rem" }}>
+                      Why This Introduction Matters:
+                    </div>
+                    <div style={{ color: "#374151", lineHeight: "1.6" }}>
+                      {match.reason}
+                    </div>
+                  </div>
+
+                  <div style={{
+                    background: "#f8fafc",
+                    padding: "1rem",
+                    borderRadius: "8px",
+                    borderLeft: "3px solid #10b981",
+                    marginLeft: "3.5rem"
+                  }}>
+                    <div style={{ fontSize: "0.75rem", fontWeight: "600", color: "#64748b", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      📧 Introduction Template
+                    </div>
+                    <div style={{ color: "#1e293b", fontStyle: "italic", lineHeight: "1.6", fontSize: "0.875rem" }}>
+                      "{match.introTemplate}"
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* AI Insights Section */}
         <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "2rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
@@ -394,25 +730,33 @@ export default function Results() {
             <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
               🏢 Industry Distribution
             </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={industryData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percentage }) => `${name} ${percentage}%`}
-                  labelLine={false}
-                >
-                  {industryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value, name) => [`${value.toLocaleString()} connections`, name]} />
-              </PieChart>
-            </ResponsiveContainer>
+            {industryData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={industryData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percentage }) => `${name} ${percentage}%`}
+                    labelLine={false}
+                  >
+                    {industryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value, name) => [`${value.toLocaleString()} connections`, name]} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
+                <p style={{ marginBottom: "0.5rem", fontWeight: "500" }}>Industry data not available</p>
+                <p style={{ fontSize: "0.875rem" }}>LinkedIn didn't include detailed connection information in your export due to privacy settings.</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -421,48 +765,57 @@ export default function Results() {
           <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1.5rem", textAlign: "center" }}>
             🌍 Geographic Distribution
           </h3>
-          
-          <div style={{ marginBottom: "2rem" }}>
-            <h4 style={{ fontSize: "1rem", fontWeight: "600", marginBottom: "1rem", color: "#374151" }}>Top Regions by Connection Count</h4>
-            <div style={{ display: "grid", gap: "1rem" }}>
-              {topRegions.map((region, index) => (
-                <div key={region.name} style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                  <div style={{ 
-                    minWidth: "140px", 
-                    fontSize: "0.875rem", 
-                    fontWeight: "500",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem"
-                  }}>
-                    <span style={{ 
-                      display: "inline-block",
-                      width: "12px",
-                      height: "12px",
-                      borderRadius: "50%",
-                      backgroundColor: COLORS[index % COLORS.length]
-                    }}></span>
-                    {region.name}
+
+          {topRegions.length > 0 ? (
+            <div style={{ marginBottom: "2rem" }}>
+              <h4 style={{ fontSize: "1rem", fontWeight: "600", marginBottom: "1rem", color: "#374151" }}>Top Regions by Connection Count</h4>
+              <div style={{ display: "grid", gap: "1rem" }}>
+                {topRegions.map((region, index) => (
+                  <div key={region.name} style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                    <div style={{
+                      minWidth: "140px",
+                      fontSize: "0.875rem",
+                      fontWeight: "500",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem"
+                    }}>
+                      <span style={{
+                        display: "inline-block",
+                        width: "12px",
+                        height: "12px",
+                        borderRadius: "50%",
+                        backgroundColor: COLORS[index % COLORS.length]
+                      }}></span>
+                      {region.name}
+                    </div>
+                    <div style={{ flex: 1, background: "#f3f4f6", borderRadius: "4px", height: "24px", position: "relative" }}>
+                      <div style={{
+                        background: COLORS[index % COLORS.length],
+                        height: "100%",
+                        borderRadius: "4px",
+                        width: `${(region.value / topRegions[0].value) * 100}%`,
+                        transition: "width 0.3s ease"
+                      }}></div>
+                    </div>
+                    <div style={{ minWidth: "80px", textAlign: "right", fontSize: "0.875rem", fontWeight: "600" }}>
+                      {region.value.toLocaleString()}
+                    </div>
+                    <div style={{ minWidth: "50px", textAlign: "right", fontSize: "0.875rem", color: "#6b7280" }}>
+                      {region.percentage}%
+                    </div>
                   </div>
-                  <div style={{ flex: 1, background: "#f3f4f6", borderRadius: "4px", height: "24px", position: "relative" }}>
-                    <div style={{ 
-                      background: COLORS[index % COLORS.length],
-                      height: "100%",
-                      borderRadius: "4px",
-                      width: `${(region.value / topRegions[0].value) * 100}%`,
-                      transition: "width 0.3s ease"
-                    }}></div>
-                  </div>
-                  <div style={{ minWidth: "80px", textAlign: "right", fontSize: "0.875rem", fontWeight: "600" }}>
-                    {region.value.toLocaleString()}
-                  </div>
-                  <div style={{ minWidth: "50px", textAlign: "right", fontSize: "0.875rem", color: "#6b7280" }}>
-                    {region.percentage}%
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔒</div>
+              <p style={{ marginBottom: "0.5rem", fontWeight: "500" }}>Geographic data not available</p>
+              <p style={{ fontSize: "0.875rem", marginBottom: "1rem" }}>LinkedIn didn't include detailed connection information in your export due to privacy settings.</p>
+              <p style={{ fontSize: "0.875rem", color: "#3b82f6" }}>💡 Try requesting a new data export from LinkedIn with connection details enabled.</p>
+            </div>
+          )}
         </div>
         
         {/* Action Buttons */}
