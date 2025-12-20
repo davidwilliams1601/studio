@@ -46,23 +46,10 @@ export async function GET(request: NextRequest) {
 
     const userData = userDoc.data();
 
-    // Calculate current month usage
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    // Get backups created this month
-    const backupsSnapshot = await db
-      .collection('backups')
-      .where('uid', '==', uid)
-      .where('createdAt', '>=', monthStart)
-      .get();
-
-    const monthlyUsage = backupsSnapshot.size;
-
-    // Return subscription status
+    // Return subscription status (use stored backup count instead of querying)
     return NextResponse.json({
       plan: userData?.tier || 'free',
-      monthlyUsage,
+      monthlyUsage: userData?.backupsThisMonth || 0,
       upgradeDate: userData?.upgradeDate || null,
       backupsThisMonth: userData?.backupsThisMonth || 0,
       lastBackupDate: userData?.lastBackupDate || null,

@@ -6,10 +6,13 @@ import { useRouter } from "next/navigation";
 import { useCsrf } from "@/hooks/use-csrf";
 
 export default function Subscription() {
-  const { user, loading } = useAuth();
+  const { user, loading, subscription } = useAuth();
   const router = useRouter();
-  const { token: csrfToken } = useCsrf();
+  const { token: csrfToken, loading: csrfLoading } = useCsrf();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [manageLoading, setManageLoading] = useState(false);
+  const [currentTier, setCurrentTier] = useState<'free' | 'pro' | 'business' | 'enterprise'>('free');
+  const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -17,9 +20,99 @@ export default function Subscription() {
     }
   }, [user, loading, router]);
 
+  useEffect(() => {
+    if (subscription) {
+      setCurrentTier(subscription.plan);
+    }
+  }, [subscription]);
+
+  const handleManageSubscription = async () => {
+    setManageLoading(true);
+    try {
+      const idToken = await user?.getIdToken();
+      if (!idToken) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch('/api/subscription/manage', {
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get management portal');
+      }
+
+      if (data.hasSubscription && data.portalUrl) {
+        // Redirect to Stripe billing portal
+        window.location.href = data.portalUrl;
+      } else {
+        alert('No active subscription found');
+      }
+    } catch (error: any) {
+      console.error('Error managing subscription:', error);
+      alert(error.message || 'Failed to open management portal');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!confirm('Are you sure you want to cancel your subscription? You will be downgraded to the free plan at the end of your billing period.')) {
+      return;
+    }
+
+    setManageLoading(true);
+    try {
+      const idToken = await user?.getIdToken();
+      if (!idToken) {
+        throw new Error('Authentication required');
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
+      };
+
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+
+      const response = await fetch('/api/subscription/manage', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          action: 'cancel_at_period_end',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to cancel subscription');
+      }
+
+      alert('Subscription will be cancelled at the end of your billing period. You can reactivate it anytime before then.');
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error cancelling subscription:', error);
+      alert(error.message || 'Failed to cancel subscription');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
   const handleUpgrade = async (plan: any) => {
     if (!plan.priceId) {
       alert('This plan is not available for purchase.');
+      return;
+    }
+
+    if (!csrfToken) {
+      alert('Security token not ready. Please wait a moment and try again.');
       return;
     }
 
@@ -35,11 +128,8 @@ export default function Subscription() {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${idToken}`,
+        'X-CSRF-Token': csrfToken,
       };
-
-      if (csrfToken) {
-        headers['X-CSRF-Token'] = csrfToken;
-      }
 
       const response = await fetch('/api/subscription/create', {
         method: 'POST',
@@ -68,6 +158,7 @@ export default function Subscription() {
   const plans = [
     {
       name: "Free",
+      tier: "free",
       price: "$0",
       interval: "forever",
       features: [
@@ -78,38 +169,56 @@ export default function Subscription() {
         "Essential data preservation"
       ],
       limitations: ["Limited to 1 backup", "No AI insights", "Basic support"],
-      current: true
+      current: currentTier === 'free'
     },
     {
       name: "Pro",
-      price: "$19",
+      tier: "pro",
+      price: "$10",
       interval: "month",
-      priceId: "price_pro_monthly",
+      priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || "price_pro_monthly",
       features: [
-        "Unlimited LinkedIn backups",
-        "Advanced AI-powered insights",
+        "4 LinkedIn backups per month (weekly)",
+        "Advanced AI-powered insights with Gemini",
         "Professional PDF reports",
         "Historical data tracking & comparison",
-        "Account security monitoring",
+        "Network analysis and trends",
         "Priority recovery support"
       ],
       popular: true,
-      current: false
+      current: currentTier === 'pro'
+    },
+    {
+      name: "Business",
+      tier: "business",
+      price: "$29",
+      interval: "month",
+      priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS || "price_business_monthly",
+      features: [
+        "Everything in Pro",
+        "Unlimited backups per user",
+        "Team management (up to 10 members)",
+        "Shared team analytics",
+        "Premium AI insights",
+        "Audit logs & compliance"
+      ],
+      current: currentTier === 'business'
     },
     {
       name: "Enterprise",
-      price: "$99",
+      tier: "enterprise",
+      price: "Custom",
       interval: "month",
-      priceId: "price_enterprise_monthly",
       features: [
-        "Everything in Pro",
-        "Team-wide LinkedIn protection",
-        "Custom security alerts",
+        "Everything in Business",
+        "Unlimited team members",
+        "SSO integration",
         "API access for integrations",
         "Dedicated security consultant",
-        "Priority incident response"
+        "Priority incident response",
+        "White-label options"
       ],
-      current: false
+      current: currentTier === 'enterprise'
     }
   ];
 
@@ -163,9 +272,54 @@ export default function Subscription() {
         </div>
 
         {/* Current Plan Status */}
-        <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "3rem", textAlign: "center" }}>
-          <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "0.5rem" }}>Current Protection: Free Plan</h3>
-          <p style={{ color: "#64748b" }}>You have <strong>1 backup remaining</strong> this month. Upgrade for continuous protection!</p>
+        <div style={{ background: "white", padding: "1.5rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", marginBottom: "3rem" }}>
+          <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "0.5rem" }}>
+              Current Plan: {currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
+            </h3>
+            <p style={{ color: "#64748b" }}>
+              {subscription?.monthlyUsage !== undefined && (
+                <>You have used <strong>{subscription.monthlyUsage}</strong> backups this month.</>
+              )}
+            </p>
+          </div>
+
+          {currentTier !== 'free' && (
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap", marginTop: "1rem" }}>
+              <button
+                onClick={handleManageSubscription}
+                disabled={manageLoading}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: "#3b82f6",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  fontWeight: "bold",
+                  cursor: manageLoading ? "not-allowed" : "pointer",
+                  opacity: manageLoading ? 0.6 : 1,
+                }}
+              >
+                {manageLoading ? "Loading..." : "⚙️ Manage Subscription"}
+              </button>
+              <button
+                onClick={handleCancelSubscription}
+                disabled={manageLoading}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  fontWeight: "bold",
+                  cursor: manageLoading ? "not-allowed" : "pointer",
+                  opacity: manageLoading ? 0.6 : 1,
+                }}
+              >
+                {manageLoading ? "Loading..." : "Cancel Subscription"}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Pricing Plans */}
@@ -237,7 +391,7 @@ export default function Subscription() {
 
               <button
                 onClick={() => handleUpgrade(plan)}
-                disabled={plan.current || upgradeLoading}
+                disabled={plan.current || upgradeLoading || csrfLoading}
                 style={{
                   width: "100%",
                   padding: "1rem",
@@ -246,12 +400,13 @@ export default function Subscription() {
                   border: "none",
                   borderRadius: "8px",
                   fontWeight: "bold",
-                  cursor: plan.current ? "not-allowed" : "pointer",
+                  cursor: (plan.current || csrfLoading) ? "not-allowed" : "pointer",
                   fontSize: "1rem",
-                  transition: "background 0.2s ease"
+                  transition: "background 0.2s ease",
+                  opacity: csrfLoading ? 0.6 : 1
                 }}
               >
-                {plan.current ? "✅ Current Plan" : upgradeLoading ? "🔄 Processing..." : `🛡️ Secure with ${plan.name}`}
+                {plan.current ? "✅ Current Plan" : csrfLoading ? "⏳ Loading..." : upgradeLoading ? "🔄 Processing..." : `🛡️ Secure with ${plan.name}`}
               </button>
             </div>
           ))}

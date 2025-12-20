@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Creating Stripe checkout for user:', decodedToken.uid, 'price:', priceId);
+    console.log('🔑 Stripe API Key (last 10 chars):', process.env.STRIPE_SECRET_KEY?.slice(-10));
 
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
         'client_reference_id': decodedToken.uid,
         'customer_email': decodedToken.email || '',
         'metadata[userId]': decodedToken.uid,
+        'metadata[priceId]': priceId,
       }),
     });
 
