@@ -159,7 +159,7 @@ export default function Subscription() {
     {
       name: "Free",
       tier: "free",
-      price: "$0",
+      price: "£0",
       interval: "forever",
       features: [
         "1 LinkedIn backup per month",
@@ -174,7 +174,7 @@ export default function Subscription() {
     {
       name: "Pro",
       tier: "pro",
-      price: "$10",
+      price: "£10",
       interval: "month",
       priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || "price_pro_monthly",
       features: [
@@ -191,7 +191,7 @@ export default function Subscription() {
     {
       name: "Business",
       tier: "business",
-      price: "$29",
+      price: "£29",
       interval: "month",
       priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS || "price_business_monthly",
       features: [
