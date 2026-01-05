@@ -26,6 +26,13 @@ export default function Subscription() {
     }
   }, [subscription]);
 
+  useEffect(() => {
+    console.log('🔑 Environment Variables:');
+    console.log('  NEXT_PUBLIC_STRIPE_PRICE_PRO:', process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO);
+    console.log('  NEXT_PUBLIC_STRIPE_PRICE_BUSINESS:', process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS);
+    console.log('  NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE:', process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE);
+  }, []);
+
   const handleManageSubscription = async () => {
     setManageLoading(true);
     try {
@@ -106,6 +113,9 @@ export default function Subscription() {
   };
 
   const handleUpgrade = async (plan: any) => {
+    console.log('🔍 Upgrade clicked for plan:', plan.name);
+    console.log('🔍 Price ID being sent:', plan.priceId);
+
     if (!plan.priceId) {
       alert('This plan is not available for purchase.');
       return;
@@ -131,6 +141,7 @@ export default function Subscription() {
         'X-CSRF-Token': csrfToken,
       };
 
+      console.log('📤 Sending request to /api/subscription/create...');
       const response = await fetch('/api/subscription/create', {
         method: 'POST',
         headers,
@@ -140,11 +151,14 @@ export default function Subscription() {
       });
 
       const data = await response.json();
+      console.log('📥 API Response:', data);
 
       if (!response.ok || !data.success) {
+        console.error('❌ API Error:', data.error);
         throw new Error(data.error || 'Failed to create checkout session');
       }
 
+      console.log('✅ Redirecting to Stripe checkout:', data.url);
       // Redirect to Stripe checkout
       window.location.href = data.url;
     } catch (error: any) {
