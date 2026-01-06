@@ -193,6 +193,25 @@ async function handleCheckoutCompleted(session: any) {
   // Verify it was saved
   const updatedDoc = await userRef.get();
   console.log(`🔍 Verification - User tier in Firestore: ${updatedDoc.data()?.tier}`);
+
+  // Send welcome email for paid subscriptions
+  if (tier !== 'free') {
+    try {
+      const { EmailService } = await import('@/lib/email-service');
+      const userDoc = await userRef.get();
+      const userData = userDoc.data();
+      const userEmail = userData?.email || session.customer_details?.email;
+      const userName = userData?.displayName || userData?.email?.split('@')[0];
+
+      if (userEmail) {
+        console.log(`📧 Sending upgrade welcome email to ${userEmail}`);
+        await EmailService.sendUpgradeWelcomeEmail(userEmail, tier, userName);
+      }
+    } catch (emailError) {
+      console.error('❌ Failed to send upgrade welcome email:', emailError);
+      // Don't fail the webhook if email fails
+    }
+  }
 }
 
 /**

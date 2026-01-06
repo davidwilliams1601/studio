@@ -158,6 +158,166 @@ ${appUrl}
     return this.sendEmail({ to: userEmail, subject, html, text });
   }
 
+  static async sendUpgradeWelcomeEmail(
+    userEmail: string,
+    tier: SubscriptionTier,
+    userName?: string
+  ): Promise<{ success: boolean; error?: string; id?: string }> {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://linkstream.app';
+
+    const tierNames = {
+      free: 'Free',
+      pro: 'Pro',
+      business: 'Business',
+      enterprise: 'Enterprise'
+    };
+
+    const tierFeatures = {
+      pro: [
+        '✅ 4 LinkedIn backups per month (weekly)',
+        '✅ Advanced AI-powered insights with Gemini',
+        '✅ Professional PDF reports',
+        '✅ Historical data tracking & comparison',
+        '✅ Network analysis and trends',
+        '✅ Priority recovery support'
+      ],
+      business: [
+        '✅ Everything in Pro',
+        '✅ Unlimited backups per user',
+        '✅ Team management (up to 10 members)',
+        '✅ Shared team analytics',
+        '✅ Premium AI insights',
+        '✅ Audit logs & compliance'
+      ],
+      enterprise: [
+        '✅ Everything in Business',
+        '✅ Unlimited team members',
+        '✅ SSO integration',
+        '✅ API access for integrations',
+        '✅ Dedicated security consultant',
+        '✅ Priority incident response',
+        '✅ White-label options'
+      ]
+    };
+
+    const subject = `🎉 Welcome to LinkStream ${tierNames[tier as keyof typeof tierNames] || 'Pro'}!`;
+
+    const features = tierFeatures[tier as keyof typeof tierFeatures] || tierFeatures.pro;
+    const featuresList = features.map(f => `<li style="margin-bottom: 8px;">${f}</li>`).join('');
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Welcome to LinkStream ${tierNames[tier as keyof typeof tierNames]}</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 600px; max-width: 90%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+
+                  <!-- Header -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 40px 30px; text-align: center;">
+                      <h1 style="color: white; margin: 0; font-size: 32px; font-weight: bold;">🎉 Welcome to ${tierNames[tier as keyof typeof tierNames]}!</h1>
+                      <p style="color: #D1FAE5; margin: 10px 0 0 0; font-size: 16px;">Your LinkedIn is now fully protected</p>
+                    </td>
+                  </tr>
+
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px 30px;">
+                      <h2 style="color: #1F2937; margin: 0 0 20px 0; font-size: 24px;">Thank you${userName ? `, ${userName}` : ''}! 🙏</h2>
+
+                      <p style="color: #4B5563; line-height: 1.6; margin: 0 0 20px 0; font-size: 16px;">
+                        Your payment has been processed and your <strong>${tierNames[tier as keyof typeof tierNames]} subscription</strong> is now active! You've unlocked premium features to keep your professional network safe and analyzed.
+                      </p>
+
+                      <div style="background: #ECFDF5; padding: 24px; border-radius: 12px; margin: 24px 0; border: 2px solid #10B981;">
+                        <h3 style="color: #065F46; margin: 0 0 16px 0; font-size: 18px;">🔓 Your ${tierNames[tier as keyof typeof tierNames]} Features:</h3>
+                        <ul style="color: #047857; line-height: 1.8; margin: 0; padding-left: 20px;">
+                          ${featuresList}
+                        </ul>
+                      </div>
+
+                      <div style="background: #F3F4F6; padding: 24px; border-radius: 12px; margin: 24px 0;">
+                        <h3 style="color: #1F2937; margin: 0 0 16px 0; font-size: 18px;">🚀 Get Started Now:</h3>
+                        <ol style="color: #4B5563; line-height: 1.8; margin: 0; padding-left: 20px;">
+                          <li style="margin-bottom: 8px;"><strong>Download your LinkedIn data</strong> - Go to LinkedIn Settings → Data Privacy → Get a copy of your data</li>
+                          <li style="margin-bottom: 8px;"><strong>Upload to LinkStream</strong> - Upload your export to get AI-powered insights</li>
+                          <li style="margin-bottom: 8px;"><strong>Set up reminders</strong> - We'll email you when it's time for your next backup</li>
+                          <li><strong>Explore your insights</strong> - See network growth, engagement trends, and more</li>
+                        </ol>
+                      </div>
+
+                      <div style="text-align: center; margin: 32px 0;">
+                        <a href="${appUrl}/dashboard" style="display: inline-block; background: #10B981; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                          🛡️ Go to Dashboard
+                        </a>
+                      </div>
+
+                      <div style="background: #DBEAFE; border-left: 4px solid #3B82F6; padding: 16px; border-radius: 8px; margin: 24px 0;">
+                        <p style="color: #1E40AF; margin: 0; font-size: 14px;">
+                          <strong>💼 Manage Your Subscription:</strong> You can view invoices, update payment methods, or manage your subscription anytime from your <a href="${appUrl}/dashboard/subscription" style="color: #3B82F6; text-decoration: underline;">subscription page</a>.
+                        </p>
+                      </div>
+
+                      <p style="color: #6B7280; font-size: 14px; line-height: 1.6; margin: 24px 0 0 0;">
+                        Questions? We're here to help! Reply to this email or check out our <a href="${appUrl}/dashboard/guide" style="color: #3B82F6; text-decoration: none;">help center</a>.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background: #F9FAFB; padding: 24px 30px; border-top: 1px solid #E5E7EB;">
+                      <p style="color: #6B7280; font-size: 12px; line-height: 1.6; margin: 0; text-align: center;">
+                        Thank you for choosing LinkStream ${tierNames[tier as keyof typeof tierNames]}!<br>
+                        <a href="${appUrl}" style="color: #3B82F6; text-decoration: none;">LinkStream</a> - Protect Your Professional Network
+                      </p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const text = `
+Welcome to LinkStream ${tierNames[tier as keyof typeof tierNames]}${userName ? `, ${userName}` : ''}!
+
+Your payment has been processed and your ${tierNames[tier as keyof typeof tierNames]} subscription is now active! You've unlocked premium features to keep your professional network safe and analyzed.
+
+Your ${tierNames[tier as keyof typeof tierNames]} Features:
+${features.join('\n')}
+
+Get Started Now:
+1. Download your LinkedIn data - Go to LinkedIn Settings → Data Privacy → Get a copy of your data
+2. Upload to LinkStream - Upload your export to get AI-powered insights
+3. Set up reminders - We'll email you when it's time for your next backup
+4. Explore your insights - See network growth, engagement trends, and more
+
+Go to Dashboard: ${appUrl}/dashboard
+
+Manage Your Subscription: You can view invoices, update payment methods, or manage your subscription anytime from ${appUrl}/dashboard/subscription
+
+Questions? Reply to this email or check out our help center at ${appUrl}/dashboard/guide
+
+---
+Thank you for choosing LinkStream ${tierNames[tier as keyof typeof tierNames]}!
+LinkStream - Protect Your Professional Network
+${appUrl}
+    `;
+
+    return this.sendEmail({ to: userEmail, subject, html, text });
+  }
+
   static async sendBackupReminderEmail(
     userEmail: string,
     tier: SubscriptionTier,
