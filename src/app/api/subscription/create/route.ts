@@ -5,18 +5,23 @@ import { getCsrfTokens, verifyCsrfToken } from "@/lib/csrf";
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔍 Step 1: Verifying CSRF token...');
     // Verify CSRF token
     const { headerToken, cookieToken } = getCsrfTokens(request);
     if (!verifyCsrfToken(headerToken, cookieToken)) {
+      console.log('❌ CSRF token verification failed');
       return NextResponse.json(
         { success: false, error: 'Invalid CSRF token' },
         { status: 403 }
       );
     }
+    console.log('✅ CSRF token verified');
 
+    console.log('🔍 Step 2: Verifying authentication...');
     // Verify authentication
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
+      console.log('❌ No authorization header');
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
         { status: 401 }
@@ -27,18 +32,22 @@ export async function POST(request: NextRequest) {
     let decodedToken;
     try {
       decodedToken = await verifyIdToken(idToken);
+      console.log('✅ Authentication verified for user:', decodedToken.uid);
     } catch (error) {
+      console.log('❌ Authentication verification failed:', error);
       return NextResponse.json(
         { success: false, error: 'Invalid authentication token' },
         { status: 401 }
       );
     }
 
+    console.log('🔍 Step 3: Checking rate limits...');
     // Apply rate limiting
     const identifier = getRequestIdentifier(request, decodedToken.uid);
     const rateLimit = checkRateLimit(identifier, RATE_LIMITS.STRIPE_CHECKOUT);
 
     if (!rateLimit.allowed) {
+      console.log('❌ Rate limit exceeded');
       return NextResponse.json(
         {
           success: false,
@@ -55,8 +64,11 @@ export async function POST(request: NextRequest) {
         }
       );
     }
+    console.log('✅ Rate limit check passed');
 
+    console.log('🔍 Step 4: Parsing request body...');
     const { priceId } = await request.json();
+    console.log('✅ Request body parsed, priceId:', priceId);
 
     if (!priceId) {
       return NextResponse.json(
@@ -118,12 +130,16 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error creating subscription:', error);
-    // Don't expose internal error details to client
+    console.error('❌ Error creating subscription:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error stack:', error.stack);
+
+    // Return more detailed error for debugging (temporarily)
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to create subscription. Please try again.'
+        error: error.message || 'Failed to create subscription. Please try again.',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       },
       { status: 500 }
     );
