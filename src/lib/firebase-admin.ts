@@ -3,6 +3,7 @@
 import * as admin from 'firebase-admin';
 
 let app: admin.app.App | null = null;
+let firestoreInstance: admin.firestore.Firestore | null = null;
 
 function initializeFirebase() {
   if (app) {
@@ -78,15 +79,36 @@ export async function getAuth() {
 }
 
 export async function getDb() {
+  if (firestoreInstance) {
+    return firestoreInstance;
+  }
+
   const firebaseApp = initializeFirebase();
-  const firestore = admin.firestore(firebaseApp);
+  firestoreInstance = admin.firestore(firebaseApp);
 
-  // Use the 'linkstream' database (not default)
-  firestore.settings({
-    databaseId: 'linkstream'
-  });
+  // Use custom database if specified in environment, otherwise use default
+  const databaseId = process.env.FIRESTORE_DATABASE_ID;
 
-  return firestore;
+  if (databaseId) {
+    // Only call settings() once - it will throw an error if called multiple times
+    try {
+      firestoreInstance.settings({
+        databaseId
+      });
+      console.log(`📊 Using Firestore database: ${databaseId}`);
+    } catch (error: any) {
+      // Settings already called - this is fine, just reuse the instance
+      if (error.message && error.message.includes('already been initialized')) {
+        console.log('🔄 Firestore settings already configured, reusing instance');
+      } else {
+        throw error;
+      }
+    }
+  } else {
+    console.log('📊 Using default Firestore database');
+  }
+
+  return firestoreInstance;
 }
 
 export async function getStorage() {
