@@ -140,24 +140,24 @@ export function UserTable({
                     <MoreVertical size={16} />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onViewDetails(user)}>
+                <DropdownMenuContent align="end" className="z-[100]">
+                  <DropdownMenuItem onSelect={() => onViewDetails(user)}>
                     <Eye size={16} className="mr-2" />
                     View Details
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onChangeTier(user)}>
+                  <DropdownMenuItem onSelect={() => onChangeTier(user)}>
                     <Edit size={16} className="mr-2" />
                     Change Tier
                   </DropdownMenuItem>
                   {user.tier !== 'free' && user.subscriptionStatus === 'active' && (
-                    <DropdownMenuItem onClick={() => onCancelSubscription(user)}>
+                    <DropdownMenuItem onSelect={() => onCancelSubscription(user)}>
                       <Ban size={16} className="mr-2" />
                       Cancel Subscription
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => onDeleteUser(user)}
+                    onSelect={() => onDeleteUser(user)}
                     className="text-red-600 focus:text-red-600"
                   >
                     <Trash2 size={16} className="mr-2" />
