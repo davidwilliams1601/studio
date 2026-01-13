@@ -135,9 +135,11 @@ export function UserTable({
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    icon={<MoreVertical size={16} />}
-                  />
+                    size="icon"
+                    className="h-8 w-8"
+                  >
+                    <MoreVertical size={16} />
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => onViewDetails(user)}>
