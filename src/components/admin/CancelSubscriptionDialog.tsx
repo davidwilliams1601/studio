@@ -172,7 +172,7 @@ export function CancelSubscriptionDialog({
             </Button>
           </AlertDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
