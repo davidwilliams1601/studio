@@ -28,6 +28,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     Users
                   </Link>
                   <Link
+                    href="/dashboard/admin/email"
+                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    Email
+                  </Link>
+                  <Link
                     href="/dashboard"
                     className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
                   >
