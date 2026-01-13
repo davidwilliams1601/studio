@@ -140,17 +140,17 @@ export function UserTable({
                     <MoreVertical size={16} />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="z-[100] bg-white border border-gray-200 shadow-lg">
+                <DropdownMenuContent align="end" className="z-[100] !bg-white !border !border-gray-200 !shadow-lg !text-gray-900">
                   <DropdownMenuItem
                     onSelect={() => onViewDetails(user)}
-                    className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100 cursor-pointer"
+                    className="!text-gray-900 !bg-white hover:!bg-gray-100 focus:!bg-gray-100 cursor-pointer"
                   >
                     <Eye size={16} className="mr-2" />
                     View Details
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => onChangeTier(user)}
-                    className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100 cursor-pointer"
+                    className="!text-gray-900 !bg-white hover:!bg-gray-100 focus:!bg-gray-100 cursor-pointer"
                   >
                     <Edit size={16} className="mr-2" />
                     Change Tier
@@ -158,7 +158,7 @@ export function UserTable({
                   {user.tier !== 'free' && user.subscriptionStatus === 'active' && (
                     <DropdownMenuItem
                       onSelect={() => onCancelSubscription(user)}
-                      className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100 cursor-pointer"
+                      className="!text-gray-900 !bg-white hover:!bg-gray-100 focus:!bg-gray-100 cursor-pointer"
                     >
                       <Ban size={16} className="mr-2" />
                       Cancel Subscription
@@ -167,7 +167,7 @@ export function UserTable({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={() => onDeleteUser(user)}
-                    className="text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-700 cursor-pointer"
+                    className="!text-red-600 !bg-white hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-700 cursor-pointer"
                   >
                     <Trash2 size={16} className="mr-2" />
                     Delete Account
