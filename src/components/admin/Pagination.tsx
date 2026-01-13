@@ -39,7 +39,6 @@ export function Pagination({
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
             icon={<ChevronLeft size={16} />}
-            iconPosition="left"
           >
             Previous
           </Button>
@@ -53,8 +52,7 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            icon={<ChevronRight size={16} />}
-            iconPosition="right"
+            iconRight={<ChevronRight size={16} />}
           >
             Next
           </Button>
