@@ -140,7 +140,7 @@ export function UserTable({
                     <MoreVertical size={16} />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="z-[100]">
+                <DropdownMenuContent align="end" className="z-[100] bg-white border border-gray-200 shadow-lg">
                   <DropdownMenuItem onSelect={() => onViewDetails(user)}>
                     <Eye size={16} className="mr-2" />
                     View Details
