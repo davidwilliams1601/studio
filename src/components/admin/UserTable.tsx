@@ -133,13 +133,12 @@ export function UserTable({
             <TableCell className="text-right">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
+                  <button
+                    className="inline-flex items-center justify-center h-8 w-8 rounded hover:bg-gray-100 transition-colors"
+                    aria-label="User actions"
                   >
                     <MoreVertical size={16} />
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => onViewDetails(user)}>
