@@ -141,16 +141,25 @@ export function UserTable({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="z-[100] bg-white border border-gray-200 shadow-lg">
-                  <DropdownMenuItem onSelect={() => onViewDetails(user)}>
+                  <DropdownMenuItem
+                    onSelect={() => onViewDetails(user)}
+                    className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100 cursor-pointer"
+                  >
                     <Eye size={16} className="mr-2" />
                     View Details
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => onChangeTier(user)}>
+                  <DropdownMenuItem
+                    onSelect={() => onChangeTier(user)}
+                    className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100 cursor-pointer"
+                  >
                     <Edit size={16} className="mr-2" />
                     Change Tier
                   </DropdownMenuItem>
                   {user.tier !== 'free' && user.subscriptionStatus === 'active' && (
-                    <DropdownMenuItem onSelect={() => onCancelSubscription(user)}>
+                    <DropdownMenuItem
+                      onSelect={() => onCancelSubscription(user)}
+                      className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100 cursor-pointer"
+                    >
                       <Ban size={16} className="mr-2" />
                       Cancel Subscription
                     </DropdownMenuItem>
@@ -158,7 +167,7 @@ export function UserTable({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={() => onDeleteUser(user)}
-                    className="text-red-600 focus:text-red-600"
+                    className="text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-700 cursor-pointer"
                   >
                     <Trash2 size={16} className="mr-2" />
                     Delete Account
