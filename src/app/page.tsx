@@ -342,7 +342,7 @@ export default function Home() {
               <div style={{ flex: 1 }}>
                 <h3 style={{ ...typography.heading.h3, marginBottom: spacing[2] }}>Business</h3>
                 <div style={{ fontSize: "2.5rem", fontWeight: typography.fontWeight.bold, marginBottom: spacing[4], color: colors.text.primary }}>
-                  £29<span style={{ fontSize: typography.fontSize.base, fontWeight: typography.fontWeight.normal, color: colors.text.secondary }}>/month</span>
+                  £75<span style={{ fontSize: typography.fontSize.base, fontWeight: typography.fontWeight.normal, color: colors.text.secondary }}>/month</span>
                 </div>
                 <ul style={{ listStyle: "none", padding: 0, marginBottom: spacing[6] }}>
                   <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
@@ -355,7 +355,7 @@ export default function Home() {
                   </li>
                   <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
                     <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
-                    <span>Team management (10 users)</span>
+                    <span><strong>Up to 10 team users</strong></span>
                   </li>
                   <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
                     <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>

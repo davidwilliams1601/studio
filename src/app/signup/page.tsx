@@ -27,7 +27,7 @@ export default function Signup() {
 
   const planDetails = {
     pro: { name: 'Pro', price: '£10/month', priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO },
-    business: { name: 'Business', price: '£29/month', priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS },
+    business: { name: 'Business', price: '£75/month for up to 10 users', priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS },
     enterprise: { name: 'Enterprise', price: 'Custom pricing', priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE }
   };
 
