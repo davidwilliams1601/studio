@@ -1,158 +1,208 @@
-'use client';
+"use client";
 
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { colors, spacing, typography } from "@/styles/design-tokens";
 
-import { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { PlusCircle, TriangleAlert } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import Link from 'next/link';
+interface TeamMember {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: 'owner' | 'member';
+  joinedAt: Date;
+}
 
-const teamMembers = [
-  {
-    email: 'admin@example.com',
-    role: 'Admin',
-  },
-  {
-    email: 'member1@example.com',
-    role: 'Member',
-  },
-  {
-    email: 'member2@example.com',
-    role: 'Member',
-  },
-];
+interface TeamInvite {
+  email: string;
+  token: string;
+  status: string;
+  invitedAt: Date;
+}
+
+interface Team {
+  id: string;
+  ownerId: string;
+  maxSeats: number;
+  memberIds: string[];
+  invites: TeamInvite[];
+  members: TeamMember[];
+}
 
 export default function TeamPage() {
-  // In a real app, this would come from your auth/user state
-  const [userPlan, setUserPlan] = useState('Pro'); 
-  const isBusinessPlan = userPlan === 'Business';
+  const { user } = useAuth();
+  const router = useRouter();
+  const [team, setTeam] = useState<Team | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  if (!isBusinessPlan) {
+  useEffect(() => {
+    if (user) {
+      fetchTeam();
+    }
+  }, [user]);
+
+  const fetchTeam = async () => {
+    if (!user) return;
+
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/team', {
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.team) {
+        setTeam(data.team);
+        setIsOwner(data.isOwner);
+      }
+    } catch (err) {
+      console.error('Failed to fetch team:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviting(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const idToken = await user?.getIdToken();
+      const response = await fetch('/api/team/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ email: inviteEmail }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(`Invitation sent to ${inviteEmail}`);
+        setInviteEmail("");
+        fetchTeam();
+      } else {
+        setError(data.error || 'Failed to send invitation');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to send invitation');
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string, memberEmail: string) => {
+    if (!confirm(`Remove ${memberEmail} from the team?`)) return;
+
+    try {
+      const idToken = await user?.getIdToken();
+      const response = await fetch(`/api/team/members/${memberId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(`Removed ${memberEmail} from team`);
+        fetchTeam();
+      } else {
+        setError(data.error || 'Failed to remove member');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to remove member');
+    }
+  };
+
+  if (loading) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 md:gap-8 md:p-8">
-        <Card className="w-full max-w-lg text-center">
-          <CardHeader>
-            <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit">
-              <TriangleAlert className="h-8 w-8 text-primary" />
-            </div>
-            <CardTitle>Upgrade Required</CardTitle>
-            <CardDescription>
-              Team management is only available on the Business plan.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Please upgrade your plan to invite and manage team members.</p>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <Button asChild>
-              <Link href="/dashboard/settings">Manage Subscription</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </main>
+      <div style={{ padding: spacing[6], textAlign: "center" }}>
+        <h3>Loading team...</h3>
+      </div>
     );
   }
 
-  return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="font-headline text-lg font-semibold md:text-2xl">
-          Team Management
-        </h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Invite Member
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Invite New Member</DialogTitle>
-              <DialogDescription>
-                Enter the email address of the person you want to invite to your team.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@company.com"
-                  className="col-span-3"
-                />
-              </div>
+  if (!team) {
+    return (
+      <div style={{ padding: spacing[6] }}>
+        <Card variant="bordered" padding="lg">
+          <CardContent>
+            <div style={{ textAlign: "center", padding: spacing[8] }}>
+              <h2 style={{ marginBottom: spacing[2] }}>No Team Yet</h2>
+              <p style={{ color: colors.text.secondary, marginBottom: spacing[6] }}>
+                Upgrade to Business tier to create a team.
+              </p>
+              <Button variant="primary" size="lg" onClick={() => router.push('/dashboard/subscription')}>
+                Upgrade to Business
+              </Button>
             </div>
-            <DialogFooter>
-              <Button type="submit">Send Invitation</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </CardContent>
+        </Card>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Team Members</CardTitle>
-          <CardDescription>
-            View and manage who has access to this workspace.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {teamMembers.map((member) => (
-                <TableRow key={member.email}>
-                  <TableCell className="font-medium">{member.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={member.role === 'Admin' ? 'default' : 'secondary'}>
-                      {member.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">Remove</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
+    );
+  }
+
+  const usedSeats = team.memberIds.length + team.invites.filter(i => i.status === 'pending').length;
+  const availableSeats = team.maxSeats - usedSeats;
+
+  return (
+    <div style={{ padding: spacing[6], maxWidth: "900px", margin: "0 auto" }}>
+      <h1 style={{ marginBottom: spacing[2] }}>Team Management</h1>
+
+      {error && <div style={{ background: colors.danger[50], padding: spacing[3], marginBottom: spacing[4] }}>{error}</div>}
+      {success && <div style={{ background: colors.success[50], padding: spacing[3], marginBottom: spacing[4] }}>{success}</div>}
+
+      <Card variant="elevated" padding="lg" style={{ marginBottom: spacing[6] }}>
+        <div>Seats: {usedSeats} / {team.maxSeats} used</div>
       </Card>
-    </main>
+
+      {isOwner && availableSeats > 0 && (
+        <Card variant="bordered" padding="lg" style={{ marginBottom: spacing[6] }}>
+          <h3>Invite Team Member</h3>
+          <form onSubmit={handleInvite} style={{ display: "flex", gap: spacing[3] }}>
+            <input
+              type="email"
+              placeholder="teammate@company.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              required
+              style={{ flex: 1, padding: spacing[3] }}
+            />
+            <Button type="submit" variant="primary" disabled={inviting}>
+              {inviting ? 'Sending...' : 'Send Invite'}
+            </Button>
+          </form>
+        </Card>
+      )}
+
+      <Card variant="elevated" padding="lg">
+        <h3>Team Members ({team.members.length})</h3>
+        {team.members.map((member) => (
+          <div key={member.uid} style={{ padding: spacing[4], borderBottom: `1px solid ${colors.border.light}` }}>
+            <div>{member.displayName || member.email} {member.role === 'owner' && '(Owner)'}</div>
+            <div style={{ fontSize: '0.875rem', color: colors.text.secondary }}>{member.email}</div>
+            {isOwner && member.role !== 'owner' && (
+              <Button variant="danger" size="sm" onClick={() => handleRemoveMember(member.uid, member.email)}>Remove</Button>
+            )}
+          </div>
+        ))}
+      </Card>
+    </div>
   );
 }

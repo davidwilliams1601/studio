@@ -12,18 +12,50 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [teamToken, setTeamToken] = useState<string | null>(null);
+  const [teamInfo, setTeamInfo] = useState<any>(null);
+  const [validatingInvite, setValidatingInvite] = useState(false);
   const { signup } = useAuth();
   const router = useRouter();
   const { token: csrfToken } = useCsrf();
 
-  // Get plan from URL parameter on client side only
+  // Get plan or team invite from URL parameter on client side only
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const plan = params.get('plan');
+      const team = params.get('team');
+
       setSelectedPlan(plan);
+
+      if (team) {
+        setTeamToken(team);
+        validateTeamInvite(team);
+      }
     }
   }, []);
+
+  const validateTeamInvite = async (token: string) => {
+    setValidatingInvite(true);
+    try {
+      const response = await fetch(`/api/team/validate-invite/${token}`);
+      const data = await response.json();
+
+      if (data.success && data.valid) {
+        setTeamInfo(data.team);
+        // Pre-fill email if provided in invite
+        if (data.invite.email) {
+          setEmail(data.invite.email);
+        }
+      } else {
+        setError(data.error || 'Invalid invitation link');
+      }
+    } catch (err) {
+      setError('Failed to validate invitation');
+    } finally {
+      setValidatingInvite(false);
+    }
+  };
 
   const planDetails = {
     pro: { name: 'Pro', price: '£10/month', priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO },
@@ -41,14 +73,47 @@ export default function Signup() {
     setError("");
 
     try {
-      // If user selected a paid plan, create account then redirect to checkout
+      // Create account
+      const newUser = await signup(email, password, '');
+      const idToken = await newUser.getIdToken();
+
+      // If this is a team invite, accept it
+      if (teamToken && teamInfo) {
+        const acceptResponse = await fetch('/api/team/accept-invite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            token: teamToken,
+          }),
+        });
+
+        const acceptData = await acceptResponse.json();
+
+        if (!acceptData.success) {
+          throw new Error(acceptData.error || 'Failed to join team');
+        }
+
+        // Create session cookie
+        await fetch('/api/auth/create-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            idToken,
+          }),
+        });
+
+        // Redirect to dashboard
+        window.location.href = '/dashboard';
+        return;
+      }
+
+      // If user selected a paid plan, redirect to checkout
       if (plan && plan.priceId && csrfToken) {
-        // Create account without auto-redirect (pass empty string)
-        const newUser = await signup(email, password, '');
-
-        // Get ID token for the new user
-        const idToken = await newUser.getIdToken();
-
         // Create Stripe checkout session
         const response = await fetch('/api/subscription/create', {
           method: 'POST',
@@ -93,32 +158,72 @@ export default function Signup() {
     // Note: Don't setLoading(false) here if successful - page will redirect
   };
 
+  if (validatingInvite) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🔄</div>
+          <h3>Validating invitation...</h3>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
       <div style={{ background: "white", padding: "2rem", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", width: "400px" }}>
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#1e293b", marginBottom: "0.5rem" }}>
-            {plan ? `Sign up for ${plan.name}` : 'Create Account'}
-          </h1>
-          <p style={{ color: "#64748b" }}>
-            {plan ? `Get started with LinkStream ${plan.name}` : 'Start analyzing your LinkedIn data'}
-          </p>
-          {plan && (
-            <div style={{
-              marginTop: "1rem",
-              padding: "0.75rem 1rem",
-              background: "#dbeafe",
-              border: "2px solid #3b82f6",
-              borderRadius: "8px",
-              display: "inline-block"
-            }}>
-              <div style={{ fontSize: "0.875rem", color: "#1e40af", fontWeight: "bold" }}>
-                💎 {plan.name} Plan
+          {teamInfo ? (
+            <>
+              <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>👥</div>
+              <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#1e293b", marginBottom: "0.5rem" }}>
+                Join Team
+              </h1>
+              <div style={{
+                marginTop: "1rem",
+                padding: "0.75rem 1rem",
+                background: "#dbeafe",
+                border: "2px solid #3b82f6",
+                borderRadius: "8px",
+                display: "inline-block"
+              }}>
+                <div style={{ fontSize: "0.875rem", color: "#1e40af", fontWeight: "bold" }}>
+                  Invited by {teamInfo.ownerName}
+                </div>
+                <div style={{ fontSize: "0.875rem", color: "#1e40af" }}>
+                  {teamInfo.ownerEmail}
+                </div>
               </div>
-              <div style={{ fontSize: "1.25rem", fontWeight: "bold", color: "#1e40af" }}>
-                {plan.price}
-              </div>
-            </div>
+              <p style={{ color: "#64748b", marginTop: "1rem", fontSize: "0.875rem" }}>
+                You'll get Business tier benefits for free!
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#1e293b", marginBottom: "0.5rem" }}>
+                {plan ? `Sign up for ${plan.name}` : 'Create Account'}
+              </h1>
+              <p style={{ color: "#64748b" }}>
+                {plan ? `Get started with LinkStream ${plan.name}` : 'Start analyzing your LinkedIn data'}
+              </p>
+              {plan && (
+                <div style={{
+                  marginTop: "1rem",
+                  padding: "0.75rem 1rem",
+                  background: "#dbeafe",
+                  border: "2px solid #3b82f6",
+                  borderRadius: "8px",
+                  display: "inline-block"
+                }}>
+                  <div style={{ fontSize: "0.875rem", color: "#1e40af", fontWeight: "bold" }}>
+                    💎 {plan.name} Plan
+                  </div>
+                  <div style={{ fontSize: "1.25rem", fontWeight: "bold", color: "#1e40af" }}>
+                    {plan.price}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -143,7 +248,15 @@ export default function Signup() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            style={{ padding: "0.75rem", border: "1px solid #d1d5db", borderRadius: "4px", width: "100%", boxSizing: "border-box" }}
+            readOnly={!!teamInfo} // Lock email if from team invite
+            style={{
+              padding: "0.75rem",
+              border: "1px solid #d1d5db",
+              borderRadius: "4px",
+              width: "100%",
+              boxSizing: "border-box",
+              background: teamInfo ? "#f9fafb" : "white"
+            }}
           />
           <input
             type="password"
@@ -159,7 +272,7 @@ export default function Signup() {
             disabled={loading || (!!plan && !csrfToken)}
             style={{
               padding: "0.75rem",
-              background: loading || (!!plan && !csrfToken) ? "#9ca3af" : (plan ? "#3b82f6" : "#10b981"),
+              background: loading || (!!plan && !csrfToken) ? "#9ca3af" : (teamInfo ? "#10b981" : plan ? "#3b82f6" : "#10b981"),
               color: "white",
               border: "none",
               borderRadius: "4px",
@@ -168,10 +281,10 @@ export default function Signup() {
             }}
           >
             {loading
-              ? (plan ? "Creating Account & Setting Up Payment..." : "Creating Account...")
+              ? (teamInfo ? "Joining Team..." : plan ? "Creating Account & Setting Up Payment..." : "Creating Account...")
               : (!!plan && !csrfToken)
                 ? "Loading..."
-                : (plan ? `Continue to ${plan.name} Checkout` : "Create Free Account")
+                : (teamInfo ? "Accept Invitation & Create Account" : plan ? `Continue to ${plan.name} Checkout` : "Create Free Account")
             }
           </button>
           <p style={{ textAlign: "center", fontSize: "0.875rem", color: "#64748b" }}>
