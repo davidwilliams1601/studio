@@ -7,6 +7,9 @@
  * This script removes the custom 'admin' claim from the user's Firebase Auth record.
  */
 
+// Load environment variables from .env.local
+require('dotenv').config({ path: '.env.local' });
+
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin SDK

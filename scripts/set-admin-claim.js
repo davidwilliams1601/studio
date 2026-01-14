@@ -8,6 +8,9 @@
  * which is required for accessing the admin portal.
  */
 
+// Load environment variables from .env.local
+require('dotenv').config({ path: '.env.local' });
+
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin SDK
