@@ -108,23 +108,40 @@ export default function Home() {
             <strong>700M+ LinkedIn accounts compromised.</strong> Don't lose years of networking to hackers or platform changes.
           </p>
 
-          <Link href="/login" passHref legacyBehavior>
-            <a style={{ textDecoration: 'none' }}>
-              <Button
-                variant="danger"
-                size="lg"
-                style={{ fontSize: typography.fontSize.xl }}
-              >
-                🛡️ Start Free Protection
-              </Button>
-            </a>
-          </Link>
+          <div style={{ display: "flex", gap: spacing[4], justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/signup?plan=pro" passHref legacyBehavior>
+              <a style={{ textDecoration: 'none' }}>
+                <Button
+                  variant="danger"
+                  size="lg"
+                  style={{ fontSize: typography.fontSize.xl }}
+                >
+                  🛡️ Get Pro Protection
+                </Button>
+              </a>
+            </Link>
+            <Link href="/login" passHref legacyBehavior>
+              <a style={{ textDecoration: 'none' }}>
+                <Button
+                  size="lg"
+                  style={{
+                    fontSize: typography.fontSize.xl,
+                    background: "rgba(255, 255, 255, 0.2)",
+                    color: colors.text.inverse,
+                    border: "2px solid rgba(255, 255, 255, 0.5)"
+                  }}
+                >
+                  Start Free
+                </Button>
+              </a>
+            </Link>
+          </div>
           <p style={{
             fontSize: typography.fontSize.base,
             marginTop: spacing[4],
             opacity: 0.9
           }}>
-            Free • No credit card • 2-minute setup
+            Free plan available • No credit card required • 2-minute setup
           </p>
         </div>
       </section>
@@ -198,6 +215,170 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section style={{
+        padding: `${spacing[16]} ${spacing[4]}`,
+        background: colors.background
+      }}>
+        <div style={{ maxWidth: containers.lg, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: spacing[12] }}>
+            <h2 style={{
+              ...typography.heading.h2,
+              marginBottom: spacing[4]
+            }}>
+              Choose Your Protection Level
+            </h2>
+            <p style={{
+              fontSize: typography.fontSize.lg,
+              color: colors.text.secondary,
+              maxWidth: "600px",
+              margin: "0 auto"
+            }}>
+              Start free or go premium for advanced protection and AI-powered insights
+            </p>
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: spacing[6],
+            maxWidth: "1000px",
+            margin: "0 auto"
+          }}>
+            {/* Free Plan */}
+            <Card variant="bordered" padding="lg" style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ ...typography.heading.h3, marginBottom: spacing[2] }}>Free</h3>
+                <div style={{ fontSize: "2.5rem", fontWeight: typography.fontWeight.bold, marginBottom: spacing[4], color: colors.text.primary }}>
+                  £0<span style={{ fontSize: typography.fontSize.base, fontWeight: typography.fontWeight.normal, color: colors.text.secondary }}>/month</span>
+                </div>
+                <ul style={{ listStyle: "none", padding: 0, marginBottom: spacing[6] }}>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>1 LinkedIn backup per month</span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>Basic data export</span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>Standard charts</span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>Basic PDF reports</span>
+                  </li>
+                </ul>
+              </div>
+              <Link href="/login" passHref legacyBehavior>
+                <a style={{ textDecoration: 'none' }}>
+                  <Button variant="ghost" size="md" fullWidth>
+                    Start Free
+                  </Button>
+                </a>
+              </Link>
+            </Card>
+
+            {/* Pro Plan */}
+            <Card variant="elevated" padding="lg" style={{ display: "flex", flexDirection: "column", border: `3px solid ${colors.primary[500]}`, position: "relative" }}>
+              <div style={{
+                position: "absolute",
+                top: "-12px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                background: colors.primary[500],
+                color: colors.text.inverse,
+                padding: `${spacing[1]} ${spacing[4]}`,
+                borderRadius: "20px",
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.bold
+              }}>
+                🛡️ Most Popular
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ ...typography.heading.h3, marginBottom: spacing[2] }}>Pro</h3>
+                <div style={{ fontSize: "2.5rem", fontWeight: typography.fontWeight.bold, marginBottom: spacing[4], color: colors.primary[600] }}>
+                  £10<span style={{ fontSize: typography.fontSize.base, fontWeight: typography.fontWeight.normal, color: colors.text.secondary }}>/month</span>
+                </div>
+                <ul style={{ listStyle: "none", padding: 0, marginBottom: spacing[6] }}>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span><strong>4 backups per month</strong></span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span><strong>AI-powered insights</strong></span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>Professional PDF reports</span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>Historical tracking</span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>Network analysis</span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>Priority support</span>
+                  </li>
+                </ul>
+              </div>
+              <Link href="/signup?plan=pro" passHref legacyBehavior>
+                <a style={{ textDecoration: 'none' }}>
+                  <Button variant="primary" size="md" fullWidth>
+                    Get Pro
+                  </Button>
+                </a>
+              </Link>
+            </Card>
+
+            {/* Business Plan */}
+            <Card variant="elevated" padding="lg" style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ ...typography.heading.h3, marginBottom: spacing[2] }}>Business</h3>
+                <div style={{ fontSize: "2.5rem", fontWeight: typography.fontWeight.bold, marginBottom: spacing[4], color: colors.text.primary }}>
+                  £29<span style={{ fontSize: typography.fontSize.base, fontWeight: typography.fontWeight.normal, color: colors.text.secondary }}>/month</span>
+                </div>
+                <ul style={{ listStyle: "none", padding: 0, marginBottom: spacing[6] }}>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span><strong>Everything in Pro</strong></span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span><strong>Unlimited backups</strong></span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>Team management (10 users)</span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>Shared team analytics</span>
+                  </li>
+                  <li style={{ marginBottom: spacing[2], display: "flex", alignItems: "start" }}>
+                    <span style={{ color: colors.success[500], marginRight: spacing[2] }}>✓</span>
+                    <span>Audit logs & compliance</span>
+                  </li>
+                </ul>
+              </div>
+              <Link href="/signup?plan=business" passHref legacyBehavior>
+                <a style={{ textDecoration: 'none' }}>
+                  <Button variant="primary" size="md" fullWidth>
+                    Get Business
+                  </Button>
+                </a>
+              </Link>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section style={{
         padding: `${spacing[16]} ${spacing[4]}`,
@@ -221,7 +402,7 @@ export default function Home() {
             Every day you wait is another day your professional network is at risk.
           </p>
 
-          <Link href="/login" passHref legacyBehavior>
+          <Link href="/signup?plan=pro" passHref legacyBehavior>
             <a style={{ textDecoration: 'none' }}>
               <Button
                 size="lg"
@@ -232,7 +413,7 @@ export default function Home() {
                   boxShadow: shadows.xl
                 }}
               >
-                🛡️ Start Free Account
+                🛡️ Get Pro Protection
               </Button>
             </a>
           </Link>

@@ -22,7 +22,7 @@ interface AuthContextType {
     upgradeDate?: string;
   } | null;
   login: (email: string, password: string, redirectTo?: string) => Promise<User>;
-  signup: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, redirectTo?: string) => Promise<User>;
   loginWithGoogle: () => Promise<User>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -156,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signup = async (email: string, password: string) => {
+  const signup = async (email: string, password: string, redirectTo?: string): Promise<User> => {
     if (!auth || !firebaseReady) {
       throw new Error('Authentication not available');
     }
@@ -203,17 +203,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Get ID token and redirect through session cookie endpoint
-      if (userCredential.user) {
+      // If redirectTo is explicitly false or empty string, skip redirect and return user
+      // This allows the caller to handle the redirect themselves
+      if (redirectTo === '' && userCredential.user) {
+        return userCredential.user;
+      }
+
+      // If a redirect is specified, use the session cookie flow
+      if (redirectTo && userCredential.user) {
         const idToken = await userCredential.user.getIdToken();
         if (idToken) {
           // Use server-side redirect to set cookie reliably
-          const redirect = encodeURIComponent('/dashboard');
+          const redirect = encodeURIComponent(redirectTo);
           window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
-          // Don't continue - page will navigate
-          return;
+          // Return user for consistency even though page will navigate
+          return userCredential.user;
         }
       }
+
+      // If no custom redirect, use default dashboard redirect
+      if (userCredential.user) {
+        const idToken = await userCredential.user.getIdToken();
+        if (idToken) {
+          const redirect = encodeURIComponent('/dashboard');
+          window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
+          return userCredential.user;
+        }
+      }
+
+      return userCredential.user;
     } catch (error: any) {
       throw new Error(error.message || 'Signup failed');
     }
