@@ -21,9 +21,9 @@ interface AuthContextType {
     monthlyUsage: number;
     upgradeDate?: string;
   } | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, redirectTo?: string) => Promise<User>;
   signup: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: () => Promise<User>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
@@ -122,28 +122,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, redirectTo?: string): Promise<User> => {
     if (!auth || !firebaseReady) {
       throw new Error('Authentication not available');
     }
     try {
       console.log('Signing in with email/password...');
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log('Sign in successful');
 
-      // Get ID token and redirect through session cookie endpoint
-      console.log('Getting ID token...');
-      const idToken = await auth.currentUser?.getIdToken();
-      console.log('ID token obtained, redirecting through session endpoint...');
+      // If a redirect is specified, use the session cookie flow
+      if (redirectTo) {
+        // Get ID token and redirect through session cookie endpoint
+        console.log('Getting ID token...');
+        const idToken = await userCredential.user.getIdToken();
+        console.log('ID token obtained, redirecting through session endpoint...');
 
-      if (idToken) {
-        // Use server-side redirect to set cookie reliably
-        // The redirect will be handled by the GET endpoint
-        const redirect = encodeURIComponent('/dashboard');
-        window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
-        // Don't continue - page will navigate
-        return;
+        if (idToken) {
+          // Use server-side redirect to set cookie reliably
+          const redirect = encodeURIComponent(redirectTo);
+          window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
+          // Don't continue - page will navigate
+          // Return user for consistency even though page will navigate
+          return userCredential.user;
+        }
       }
+
+      // If no redirect, just return the user
+      return userCredential.user;
     } catch (error: any) {
       console.error('Login error:', error);
       throw new Error(error.message || 'Login failed');
@@ -213,7 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (): Promise<User> => {
     if (!auth || !firebaseReady) {
       throw new Error('Authentication not available');
     }
@@ -221,7 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Prevent multiple simultaneous popup attempts
     if (popupInProgress) {
       console.log('Popup already in progress, ignoring...');
-      return;
+      throw new Error('Authentication already in progress');
     }
 
     setPopupInProgress(true);
@@ -271,20 +277,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Get ID token and redirect through session cookie endpoint
-      if (userCredential.user) {
-        console.log('Getting ID token...');
-        const idToken = await userCredential.user.getIdToken();
-        console.log('ID token obtained, redirecting through session endpoint...');
-
-        if (idToken) {
-          // Use server-side redirect to set cookie reliably
-          const redirect = encodeURIComponent('/dashboard');
-          window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
-          // Don't continue - page will navigate
-          return;
-        }
-      }
+      // Return the user - calling code will handle redirect
+      return userCredential.user;
     } catch (error: any) {
       // Special handling for popup cancellation
       if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {

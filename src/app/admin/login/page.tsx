@@ -52,8 +52,10 @@ export default function AdminLogin() {
       // Verify admin status
       await verifyAdminStatus(user);
 
-      // Redirect to admin dashboard
-      router.push('/dashboard/admin');
+      // Get ID token and redirect through session cookie endpoint
+      const idToken = await user.getIdToken();
+      const redirect = encodeURIComponent('/dashboard/admin');
+      window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
     } catch (error: any) {
       console.error('Admin authentication error:', error);
       setError(error.message || 'Authentication failed');
@@ -72,11 +74,13 @@ export default function AdminLogin() {
       // Verify admin status
       await verifyAdminStatus(user);
 
-      // Redirect to admin dashboard
-      router.push('/dashboard/admin');
+      // Get ID token and redirect through session cookie endpoint
+      const idToken = await user.getIdToken();
+      const redirect = encodeURIComponent('/dashboard/admin');
+      window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
     } catch (error: any) {
       // Silently ignore popup cancellation
-      if (error.message === 'POPUP_CANCELLED' || error.code === 'auth/popup-cancelled') {
+      if (error.message === 'POPUP_CANCELLED' || error.code === 'auth/popup-cancelled' || error.message === 'Authentication already in progress') {
         console.log('User cancelled Google login popup');
         return;
       }

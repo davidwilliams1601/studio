@@ -27,16 +27,16 @@ export default function Login() {
     setError('');
 
     try {
-      if (isLogin) {
-        await login(email, password);
-      } else {
-        await signup(email, password);
-      }
-
       // Use redirect parameter or default to dashboard
       const redirectTo = searchParams.get('redirect') || '/dashboard';
-      console.log('Redirecting to:', redirectTo);
-      router.push(redirectTo);
+
+      if (isLogin) {
+        await login(email, password, redirectTo);
+        // Login function will handle redirect via session cookie
+      } else {
+        await signup(email, password);
+        // Signup already handles its own redirect
+      }
     } catch (error: any) {
       console.error('Authentication error:', error);
       setError(error.message || 'Authentication failed');
@@ -51,16 +51,17 @@ export default function Login() {
 
     try {
       console.log('Starting Google auth...');
-      await loginWithGoogle();
+      const user = await loginWithGoogle();
       console.log('Google auth successful');
 
-      // Use redirect parameter or default to dashboard
+      // Get ID token and redirect through session cookie endpoint
+      const idToken = await user.getIdToken();
       const redirectTo = searchParams.get('redirect') || '/dashboard';
-      console.log('Redirecting to:', redirectTo);
-      router.push(redirectTo);
+      const redirect = encodeURIComponent(redirectTo);
+      window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
     } catch (error: any) {
       // Silently ignore popup cancellation
-      if (error.message === 'POPUP_CANCELLED' || error.code === 'auth/popup-cancelled') {
+      if (error.message === 'POPUP_CANCELLED' || error.code === 'auth/popup-cancelled' || error.message === 'Authentication already in progress') {
         console.log('User cancelled Google login popup');
         return; // Don't show error
       }
