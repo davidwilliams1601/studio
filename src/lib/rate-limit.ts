@@ -121,6 +121,30 @@ export const RATE_LIMITS = {
     maxRequests: 100, // 100 requests
     windowMs: 15 * 60 * 1000, // per 15 minutes
   },
+
+  // Admin bulk email - prevent spam
+  ADMIN_BULK_EMAIL: {
+    maxRequests: 1, // 1 bulk email
+    windowMs: 60 * 60 * 1000, // per hour
+  },
+
+  // Admin users list - reasonable access
+  ADMIN_USERS_LIST: {
+    maxRequests: 100, // 100 requests
+    windowMs: 60 * 60 * 1000, // per hour
+  },
+
+  // Admin user modifications - prevent abuse
+  ADMIN_USER_MODIFY: {
+    maxRequests: 50, // 50 modifications
+    windowMs: 60 * 60 * 1000, // per hour
+  },
+
+  // Admin user deletion - critical action
+  ADMIN_DELETE_USER: {
+    maxRequests: 10, // 10 deletions
+    windowMs: 60 * 60 * 1000, // per hour
+  },
 };
 
 /**

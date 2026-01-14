@@ -159,21 +159,18 @@ export async function PATCH(
     });
 
     // Create audit log
-    await createAuditLog(
-      admin,
-      {
-        type: 'subscription_cancel',
-        details: {
-          immediate,
-          reason: validatedReason,
-          subscriptionId: stripeSubscriptionId,
-        },
-        targetUserId: uid,
-        targetUserEmail: userEmail,
+    await createAuditLog({
+      adminUid: admin.uid,
+      adminEmail: admin.email,
+      action: 'subscription_cancel',
+      targetUid: uid,
+      targetEmail: userEmail,
+      reason: validatedReason,
+      metadata: {
+        immediate,
+        subscriptionId: stripeSubscriptionId,
       },
-      request,
-      'success'
-    );
+    });
 
     return NextResponse.json({
       success: true,
@@ -265,20 +262,17 @@ export async function DELETE(
     console.log(`Deleted user document ${uid}`);
 
     // Create audit log
-    await createAuditLog(
-      admin,
-      {
-        type: 'user_delete',
-        details: {
-          reason: validatedReason,
-          hadSubscription: !!stripeSubscriptionId,
-        },
-        targetUserId: uid,
-        targetUserEmail: userEmail,
+    await createAuditLog({
+      adminUid: admin.uid,
+      adminEmail: admin.email,
+      action: 'user_delete',
+      targetUid: uid,
+      targetEmail: userEmail,
+      reason: validatedReason,
+      metadata: {
+        hadSubscription: !!stripeSubscriptionId,
       },
-      request,
-      'success'
-    );
+    });
 
     return NextResponse.json({
       success: true,
@@ -295,19 +289,17 @@ export async function DELETE(
     // Try to log failed deletion
     try {
       const admin = await verifyAdminAccess(request);
-      await createAuditLog(
-        admin,
-        {
-          type: 'user_delete',
-          details: {
-            error: error.message,
-          },
-          targetUserId: params.uid,
-          targetUserEmail: 'unknown',
+      await createAuditLog({
+        adminUid: admin.uid,
+        adminEmail: admin.email,
+        action: 'user_delete_failed',
+        targetUid: params.uid,
+        targetEmail: 'unknown',
+        reason: `Delete failed: ${error.message}`,
+        metadata: {
+          error: error.message,
         },
-        request,
-        'failed'
-      );
+      });
     } catch {
       // Ignore audit log errors
     }

@@ -105,8 +105,7 @@ export default function AdminDashboard() {
         <KPICard
           title="MRR"
           value={`£${mrrPounds}`}
-          icon={<DollarSign size={20} />}
-          variant="success"
+          icon={DollarSign}
         />
         <KPICard
           title="Total Users"
@@ -115,8 +114,7 @@ export default function AdminDashboard() {
             direction: analytics.growthData.growthRate >= 0 ? 'up' : 'down',
             value: Math.abs(analytics.growthData.growthRate),
           }}
-          icon={<Users size={20} />}
-          variant="success"
+          icon={Users}
         />
         <KPICard
           title="Churn Rate"
@@ -129,13 +127,12 @@ export default function AdminDashboard() {
                 100
             ),
           }}
-          icon={<TrendingDown size={20} />}
-          variant="danger"
+          icon={TrendingDown}
         />
         <KPICard
           title="Conversion Rate"
           value={`${analytics.conversionRate}%`}
-          icon={<Percent size={20} />}
+          icon={Percent}
         />
       </div>
 

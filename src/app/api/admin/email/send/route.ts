@@ -180,25 +180,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Create audit log
-    await createAuditLog(
-      admin,
-      {
-        type: 'bulk_email',
-        details: {
-          subject,
-          tiers,
-          statuses,
-          testMode,
-          recipientCount: results.total,
-          sent: results.sent,
-          failed: results.failed,
-        },
-        targetUserId: undefined,
-        targetUserEmail: undefined,
+    await createAuditLog({
+      adminUid: admin.uid,
+      adminEmail: admin.email,
+      action: 'bulk_email',
+      reason: `Sent email to ${results.total} users (${results.sent} sent, ${results.failed} failed)`,
+      metadata: {
+        subject,
+        tiers,
+        statuses,
+        testMode,
+        recipientCount: results.total,
+        sent: results.sent,
+        failed: results.failed,
+        status: results.failed === 0 ? 'success' : 'failed',
       },
-      request,
-      results.failed === 0 ? 'success' : 'failed'
-    );
+    });
 
     console.log(`✅ Bulk email complete: ${results.sent} sent, ${results.failed} failed`);
 
