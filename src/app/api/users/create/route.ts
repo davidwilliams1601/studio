@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const userData = {
       email,
-      displayName: displayName || email.split('@')[0],
+      displayName: displayName || (email && typeof email === 'string' ? email.split('@')[0] : 'User'),
       tier: (tier as SubscriptionTier) || 'free',
       createdAt: now,
       updatedAt: now,

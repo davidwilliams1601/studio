@@ -201,7 +201,7 @@ async function handleCheckoutCompleted(session: any) {
       const userDoc = await userRef.get();
       const userData = userDoc.data();
       const userEmail = userData?.email || session.customer_details?.email;
-      const userName = userData?.displayName || userData?.email?.split('@')[0];
+      const userName = userData?.displayName || (userData?.email && typeof userData.email === 'string' ? userData.email.split('@')[0] : 'User');
 
       if (userEmail) {
         console.log(`📧 Sending upgrade welcome email to ${userEmail}`);
