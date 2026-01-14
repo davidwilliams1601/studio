@@ -193,11 +193,11 @@ export async function POST(request: NextRequest) {
           sent: results.sent,
           failed: results.failed,
         },
-        targetUserId: null,
-        targetUserEmail: null,
+        targetUserId: undefined,
+        targetUserEmail: undefined,
       },
       request,
-      results.failed === 0 ? 'success' : 'partial_success'
+      results.failed === 0 ? 'success' : 'failed'
     );
 
     console.log(`✅ Bulk email complete: ${results.sent} sent, ${results.failed} failed`);
