@@ -150,20 +150,20 @@ export default function Signup() {
           />
           <button
             type="submit"
-            disabled={loading || (plan && !csrfToken)}
+            disabled={loading || (!!plan && !csrfToken)}
             style={{
               padding: "0.75rem",
-              background: loading || (plan && !csrfToken) ? "#9ca3af" : (plan ? "#3b82f6" : "#10b981"),
+              background: loading || (!!plan && !csrfToken) ? "#9ca3af" : (plan ? "#3b82f6" : "#10b981"),
               color: "white",
               border: "none",
               borderRadius: "4px",
-              cursor: loading || (plan && !csrfToken) ? "not-allowed" : "pointer",
+              cursor: loading || (!!plan && !csrfToken) ? "not-allowed" : "pointer",
               fontWeight: "bold"
             }}
           >
             {loading
               ? (plan ? "Creating Account & Setting Up Payment..." : "Creating Account...")
-              : (plan && !csrfToken)
+              : (!!plan && !csrfToken)
                 ? "Loading..."
                 : (plan ? `Continue to ${plan.name} Checkout` : "Create Free Account")
             }
