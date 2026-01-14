@@ -96,7 +96,7 @@ export async function calculateMRR(): Promise<MRRBreakdown> {
           tierRevenue = 1000; // £10.00
           break;
         case 'business':
-          tierRevenue = 2900; // £29.00
+          tierRevenue = 7500; // £75.00
           break;
         case 'enterprise':
           tierRevenue = 9900; // £99.00

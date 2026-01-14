@@ -205,16 +205,16 @@ export default function Subscription() {
     {
       name: "Business",
       tier: "business",
-      price: "£29",
+      price: "£75",
       interval: "month",
       priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS || "price_business_monthly",
       features: [
         "Everything in Pro",
         "Unlimited backups per user",
-        "Team management (up to 10 members)",
-        "Shared team analytics",
+        "Team management (up to 10 users)",
+        "Shared team analytics (coming soon)",
         "Premium AI insights",
-        "Audit logs & compliance"
+        "Audit logs & compliance (coming soon)"
       ],
       current: currentTier === 'business'
     },

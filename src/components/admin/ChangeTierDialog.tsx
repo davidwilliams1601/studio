@@ -126,7 +126,7 @@ export function ChangeTierDialog({
               <SelectContent>
                 <SelectItem value="free">Free</SelectItem>
                 <SelectItem value="pro">Pro (£10/month)</SelectItem>
-                <SelectItem value="business">Business (£29/month)</SelectItem>
+                <SelectItem value="business">Business (£75/month for up to 10 users)</SelectItem>
                 <SelectItem value="enterprise">Enterprise (£99/month)</SelectItem>
               </SelectContent>
             </Select>

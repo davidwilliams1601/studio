@@ -391,7 +391,7 @@ async function getTierFromSession(session: any): Promise<'free' | 'pro' | 'busin
     const amount = session.amount_total / 100; // Convert from cents
 
     if (amount >= 99) return 'enterprise';
-    if (amount >= 29) return 'business';
+    if (amount >= 75) return 'business';
     if (amount >= 10) return 'pro';
   }
 
@@ -412,7 +412,7 @@ function getTierFromSubscription(subscription: any): 'free' | 'pro' | 'business'
   const amount = subscription.items?.data[0]?.price?.unit_amount / 100;
 
   if (amount >= 99) return 'enterprise';
-  if (amount >= 29) return 'business';
+  if (amount >= 75) return 'business';
   if (amount >= 10) return 'pro';
 
   return 'free';
