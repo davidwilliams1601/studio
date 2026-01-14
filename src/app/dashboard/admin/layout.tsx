@@ -1,3 +1,5 @@
+'use client';
+
 import { ReactNode } from 'react';
 import { AdminGuard } from '@/components/admin/AdminGuard';
 import Link from 'next/link';
