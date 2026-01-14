@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCsrf } from "@/hooks/use-csrf";
 
-function SignupForm() {
+export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -13,11 +13,17 @@ function SignupForm() {
   const [error, setError] = useState("");
   const { signup } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { token: csrfToken } = useCsrf();
 
-  // Get plan from URL parameter (e.g., /signup?plan=pro)
-  const selectedPlan = searchParams.get('plan');
+  // Safely get plan from URL parameter (e.g., /signup?plan=pro)
+  let selectedPlan: string | null = null;
+  try {
+    const params = useSearchParams();
+    selectedPlan = params ? params.get('plan') : null;
+  } catch (e) {
+    // If searchParams fails, just proceed without a plan
+    console.log('SearchParams not available:', e);
+  }
 
   const planDetails = {
     pro: { name: 'Pro', price: '£10/month', priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO },
@@ -115,38 +121,38 @@ function SignupForm() {
             </div>
           )}
         </div>
-        
+
         {error && (
           <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", padding: "0.75rem", borderRadius: "4px", marginBottom: "1rem", fontSize: "0.875rem" }}>
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <input 
-            type="text" 
-            placeholder="Full Name" 
+          <input
+            type="text"
+            placeholder="Full Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            style={{ padding: "0.75rem", border: "1px solid #d1d5db", borderRadius: "4px", width: "100%", boxSizing: "border-box" }} 
+            style={{ padding: "0.75rem", border: "1px solid #d1d5db", borderRadius: "4px", width: "100%", boxSizing: "border-box" }}
           />
-          <input 
-            type="email" 
-            placeholder="Email" 
+          <input
+            type="email"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            style={{ padding: "0.75rem", border: "1px solid #d1d5db", borderRadius: "4px", width: "100%", boxSizing: "border-box" }} 
+            style={{ padding: "0.75rem", border: "1px solid #d1d5db", borderRadius: "4px", width: "100%", boxSizing: "border-box" }}
           />
-          <input 
-            type="password" 
-            placeholder="Password (6+ characters)" 
+          <input
+            type="password"
+            placeholder="Password (6+ characters)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            style={{ padding: "0.75rem", border: "1px solid #d1d5db", borderRadius: "4px", width: "100%", boxSizing: "border-box" }} 
+            style={{ padding: "0.75rem", border: "1px solid #d1d5db", borderRadius: "4px", width: "100%", boxSizing: "border-box" }}
           />
           <button
             type="submit"
@@ -174,20 +180,5 @@ function SignupForm() {
         </form>
       </div>
     </div>
-  );
-}
-
-export default function Signup() {
-  return (
-    <Suspense fallback={
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🔄</div>
-          <h3>Loading...</h3>
-        </div>
-      </div>
-    }>
-      <SignupForm />
-    </Suspense>
   );
 }
