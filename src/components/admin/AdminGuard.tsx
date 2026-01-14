@@ -9,19 +9,26 @@ interface AdminGuardProps {
 }
 
 export function AdminGuard({ children }: AdminGuardProps) {
-  const { user, firebaseReady } = useAuth();
+  const { user, firebaseReady, loading } = useAuth();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     async function checkAdminStatus() {
+      // Wait for Firebase to be ready
       if (!firebaseReady) {
         return;
       }
 
+      // Wait for auth loading to complete
+      if (loading) {
+        return;
+      }
+
+      // If no user after loading is complete, redirect
       if (!user) {
-        console.log('No user found, redirecting to admin login');
+        console.log('No user found after auth loading completed, redirecting to admin login');
         router.push('/admin/login');
         return;
       }
@@ -53,10 +60,10 @@ export function AdminGuard({ children }: AdminGuardProps) {
     }
 
     checkAdminStatus();
-  }, [user, firebaseReady, router]);
+  }, [user, firebaseReady, loading, router]);
 
-  // Show loading state while checking
-  if (checking || !firebaseReady) {
+  // Show loading state while checking or while auth is loading
+  if (checking || !firebaseReady || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
