@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCsrf } from "@/hooks/use-csrf";
 
 export default function Signup() {
@@ -11,19 +11,19 @@ export default function Signup() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const { signup } = useAuth();
   const router = useRouter();
   const { token: csrfToken } = useCsrf();
 
-  // Safely get plan from URL parameter (e.g., /signup?plan=pro)
-  let selectedPlan: string | null = null;
-  try {
-    const params = useSearchParams();
-    selectedPlan = params ? params.get('plan') : null;
-  } catch (e) {
-    // If searchParams fails, just proceed without a plan
-    console.log('SearchParams not available:', e);
-  }
+  // Get plan from URL parameter on client side only
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const plan = params.get('plan');
+      setSelectedPlan(plan);
+    }
+  }, []);
 
   const planDetails = {
     pro: { name: 'Pro', price: '£10/month', priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO },
