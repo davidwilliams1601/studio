@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -191,10 +192,10 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              style={{ 
-                width: "100%", 
-                padding: "0.75rem", 
-                border: "1px solid #d1d5db", 
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                border: "1px solid #d1d5db",
                 borderRadius: "8px",
                 fontSize: "16px", // Prevents zoom on iOS
                 boxSizing: "border-box"
@@ -202,6 +203,22 @@ export default function Login() {
               disabled={loading}
             />
           </div>
+
+          {/* Forgot Password Link - Only show on login */}
+          {isLogin && (
+            <div style={{ textAlign: "right", marginBottom: "1rem" }}>
+              <Link
+                href="/forgot-password"
+                style={{
+                  color: "#667eea",
+                  fontSize: "0.875rem",
+                  textDecoration: "none"
+                }}
+              >
+                Forgot password?
+              </Link>
+            </div>
+          )}
 
           {/* Mobile-Optimized Submit Button */}
           <button

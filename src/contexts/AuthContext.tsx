@@ -1,14 +1,15 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { 
+import {
   User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 
 interface AuthContextType {
@@ -24,6 +25,7 @@ interface AuthContextType {
   signup: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -319,6 +321,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    if (!auth || !firebaseReady) {
+      throw new Error('Authentication not available');
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      console.log('Password reset email sent to:', email);
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      throw new Error(error.message || 'Failed to send password reset email');
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -327,7 +342,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     signup,
     loginWithGoogle,
-    logout
+    logout,
+    resetPassword
   };
 
   return (

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -215,6 +216,20 @@ export default function AdminLogin() {
               }}
               disabled={loading}
             />
+          </div>
+
+          {/* Forgot Password Link */}
+          <div style={{ textAlign: "right", marginBottom: "1rem" }}>
+            <Link
+              href="/forgot-password"
+              style={{
+                color: "#1e293b",
+                fontSize: "0.875rem",
+                textDecoration: "none"
+              }}
+            >
+              Forgot password?
+            </Link>
           </div>
 
           {/* Submit Button */}
