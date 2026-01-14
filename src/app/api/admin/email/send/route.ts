@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         const data = doc.data();
         return {
           email: data.email,
-          name: data.displayName || data.email.split('@')[0],
+          name: data.displayName || (data.email ? data.email.split('@')[0] : 'User'),
           tier: data.tier || 'free',
           status: data.subscriptionStatus || 'active',
         };
