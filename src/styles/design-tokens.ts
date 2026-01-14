@@ -51,8 +51,11 @@ export const colors = {
   warning: {
     50: '#fefce8',
     100: '#fef3c7',
+    300: '#fde047',
     500: '#eab308',
     600: '#ca8a04',
+    700: '#a16207',
+    800: '#854d0e',
   },
 
   // Neutral - Gray

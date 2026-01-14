@@ -30,8 +30,8 @@ export async function GET(
       // Try a more comprehensive search
       const allTeamsSnapshot = await db.collection('teams').get();
 
-      let foundTeam = null;
-      let foundInvite = null;
+      let foundTeam: any = null;
+      let foundInvite: any = null;
 
       for (const teamDoc of allTeamsSnapshot.docs) {
         const teamData = teamDoc.data();

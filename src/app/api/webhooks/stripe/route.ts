@@ -194,6 +194,47 @@ async function handleCheckoutCompleted(session: any) {
   const updatedDoc = await userRef.get();
   console.log(`🔍 Verification - User tier in Firestore: ${updatedDoc.data()?.tier}`);
 
+  // Create team for Business tier subscriptions
+  if (tier === 'business') {
+    try {
+      const userData = updatedDoc.data();
+      const userEmail = userData?.email || session.customer_details?.email;
+
+      // Check if team already exists for this user
+      const existingTeamSnapshot = await db.collection('teams')
+        .where('ownerId', '==', userId)
+        .limit(1)
+        .get();
+
+      if (existingTeamSnapshot.empty) {
+        // Create new team
+        const teamRef = await db.collection('teams').add({
+          ownerId: userId,
+          ownerEmail: userEmail,
+          subscriptionId,
+          maxSeats: 10,
+          memberIds: [userId], // Owner is always a member
+          invites: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        // Update user with team ID
+        await userRef.update({
+          teamId: teamRef.id,
+          updatedAt: new Date(),
+        });
+
+        console.log(`✅ Team created for Business subscriber ${userId}: ${teamRef.id}`);
+      } else {
+        console.log(`ℹ️ Team already exists for user ${userId}`);
+      }
+    } catch (teamError) {
+      console.error('❌ Failed to create team:', teamError);
+      // Don't fail the webhook if team creation fails
+    }
+  }
+
   // Send welcome email for paid subscriptions
   if (tier !== 'free') {
     try {

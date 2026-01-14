@@ -31,9 +31,9 @@ export async function POST(request: NextRequest) {
     // Find team with matching invite token
     const allTeamsSnapshot = await db.collection('teams').get();
 
-    let foundTeam = null;
-    let foundInvite = null;
-    let teamDoc = null;
+    let foundTeam: any = null;
+    let foundInvite: any = null;
+    let teamDoc: any = null;
 
     for (const doc of allTeamsSnapshot.docs) {
       const teamData = doc.data();
