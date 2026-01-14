@@ -52,3 +52,11 @@ deploy.sh
 *.bak
 *.backup
 *.bak.*
+
+# Documentation files that may contain sensitive keys
+*STRIPE_SETUP*.md
+*SUBSCRIPTION_SETUP*.md
+*GOOGLE_AI_SETUP*.md
+*IMPLEMENTATION_SUMMARY*.md
+setup-stripe.sh
+update-stripe-env.sh
