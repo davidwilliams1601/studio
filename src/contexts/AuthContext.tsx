@@ -52,17 +52,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Dynamic import Firebase to avoid SSR issues
     const initializeAuth = async () => {
       try {
-        const { auth: firebaseAuth } = await import('@/firebase/config');
-        
+        const { getAuthInstance } = await import('@/firebase/config');
+        const firebaseAuth = getAuthInstance();
+
         if (firebaseAuth) {
           setAuth(firebaseAuth);
           setFirebaseReady(true);
-          
+
           // Listen for auth state changes
           const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
             setUser(user);
             setLoading(false);
-            
+
             // Load subscription data for the user
             if (user) {
               loadSubscriptionData(user.uid);
@@ -74,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return unsubscribe;
         } else {
           // Firebase not available - set demo mode
+          console.error('Firebase auth instance is null');
           setFirebaseReady(false);
           setLoading(false);
           setSubscription({ plan: 'free', monthlyUsage: 0 });

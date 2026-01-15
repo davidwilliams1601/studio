@@ -10,6 +10,18 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
+// Validate that all required config values are present
+function validateFirebaseConfig() {
+  const required = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
+  for (const key of required) {
+    if (!firebaseConfig[key as keyof typeof firebaseConfig]) {
+      console.error(`Missing Firebase config: ${key}`);
+      return false;
+    }
+  }
+  return true;
+}
+
 // Global variables to store Firebase instances
 let firebaseApp: FirebaseApp | null = null;
 let firebaseAuth: Auth | null = null;
@@ -22,6 +34,12 @@ function initializeFirebase() {
   }
 
   try {
+    // Validate config first
+    if (!validateFirebaseConfig()) {
+      console.error('Firebase config validation failed');
+      return { app: null, auth: null };
+    }
+
     // Check if already initialized
     if (firebaseApp && firebaseAuth) {
       return { app: firebaseApp, auth: firebaseAuth };
@@ -30,6 +48,7 @@ function initializeFirebase() {
     // Initialize or get existing app
     if (getApps().length === 0) {
       firebaseApp = initializeApp(firebaseConfig);
+      console.log('Firebase initialized successfully');
     } else {
       firebaseApp = getApp();
     }
@@ -43,8 +62,17 @@ function initializeFirebase() {
   }
 }
 
-// Export the initialized instances
-const { app, auth } = initializeFirebase();
+// Getter functions to lazy-initialize on client side
+export function getAuthInstance(): Auth | null {
+  if (typeof window === 'undefined') return null;
 
-export { auth };
-export default app;
+  if (!firebaseAuth) {
+    const { auth } = initializeFirebase();
+    return auth;
+  }
+  return firebaseAuth;
+}
+
+// Legacy export for backward compatibility - will be null on server
+export const auth = typeof window !== 'undefined' ? getAuthInstance() : null;
+export default typeof window !== 'undefined' ? firebaseApp : null;
