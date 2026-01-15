@@ -19,9 +19,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    console.log('[create-session] GET: Getting Firebase Auth instance...');
     const auth = await getAuth();
+
+    if (!auth) {
+      console.error('[create-session] GET: Firebase Auth is null');
+      return NextResponse.redirect(new URL('/login?error=auth_unavailable', request.url));
+    }
+
+    console.log('[create-session] GET: Firebase Auth instance obtained');
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
+
+    console.log('[create-session] GET: Creating session cookie...');
     const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
+    console.log('[create-session] GET: Session cookie created successfully');
 
     // Build cookie header
     const isProduction = process.env.NODE_ENV === 'production';

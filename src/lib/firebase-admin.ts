@@ -37,15 +37,23 @@ function initializeFirebase() {
         const projectId = process.env.FIREBASE_PROJECT_ID;
         const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
         const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+        const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
 
         if (!projectId || !clientEmail || !privateKey) {
+          console.error('❌ Missing credentials:', {
+            hasProjectId: !!projectId,
+            hasClientEmail: !!clientEmail,
+            hasPrivateKey: !!privateKey,
+          });
           throw new Error(
             'Missing Firebase Admin credentials. Please set FIREBASE_SERVICE_ACCOUNT_JSON or individual credentials.'
           );
         }
 
         console.log(`📦 Project ID: ${projectId}`);
-        console.log(`🪣 Storage bucket: ${projectId}.appspot.com`);
+        console.log(`📧 Client Email: ${clientEmail}`);
+        console.log(`🔑 Private Key: ${privateKey ? `${privateKey.substring(0, 50)}...` : 'missing'}`);
+        console.log(`🪣 Storage bucket: ${storageBucket || projectId + '.appspot.com'}`);
 
         app = admin.initializeApp({
           credential: admin.credential.cert({
@@ -53,7 +61,7 @@ function initializeFirebase() {
             clientEmail,
             privateKey: privateKey.replace(/\\n/g, '\n'),
           }),
-          storageBucket: projectId + '.appspot.com',
+          storageBucket: storageBucket || projectId + '.appspot.com',
         });
 
         console.log('✅ Firebase Admin SDK initialized with individual credentials');
