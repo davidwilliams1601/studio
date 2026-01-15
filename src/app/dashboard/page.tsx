@@ -477,6 +477,104 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Team Management Card - Business Tier Only */}
+        {userTier === 'business' && (
+          <Card
+            variant="elevated"
+            padding="lg"
+            style={{
+              marginTop: spacing[8],
+              background: `linear-gradient(135deg, ${colors.primary[50]} 0%, ${colors.success[50]} 100%)`,
+              border: `2px solid ${colors.primary[200]}`
+            }}
+          >
+            <CardHeader>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: spacing[4] }}>
+                <div>
+                  <CardTitle as="h2">👥 Team Management</CardTitle>
+                  <p style={{
+                    color: colors.text.secondary,
+                    marginTop: spacing[2],
+                    fontSize: typography.fontSize.sm
+                  }}>
+                    Invite team members and manage your Business tier seats
+                  </p>
+                </div>
+                <Link href="/dashboard/team" passHref legacyBehavior>
+                  <a style={{ textDecoration: 'none' }}>
+                    <Button variant="primary" size="lg">
+                      Manage Team →
+                    </Button>
+                  </a>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: spacing[4],
+                marginTop: spacing[4]
+              }}>
+                <div style={{
+                  background: "white",
+                  padding: spacing[4],
+                  borderRadius: borderRadius.lg,
+                  textAlign: "center"
+                }}>
+                  <div style={{
+                    fontSize: typography.fontSize["2xl"],
+                    fontWeight: typography.fontWeight.bold,
+                    color: colors.primary[600],
+                    marginBottom: spacing[1]
+                  }}>
+                    10
+                  </div>
+                  <div style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary }}>
+                    Available Seats
+                  </div>
+                </div>
+                <div style={{
+                  background: "white",
+                  padding: spacing[4],
+                  borderRadius: borderRadius.lg,
+                  textAlign: "center"
+                }}>
+                  <div style={{
+                    fontSize: typography.fontSize["2xl"],
+                    fontWeight: typography.fontWeight.bold,
+                    color: colors.success[600],
+                    marginBottom: spacing[1]
+                  }}>
+                    ✓
+                  </div>
+                  <div style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary }}>
+                    Team Benefits Active
+                  </div>
+                </div>
+                <div style={{
+                  background: "white",
+                  padding: spacing[4],
+                  borderRadius: borderRadius.lg,
+                  textAlign: "center"
+                }}>
+                  <div style={{
+                    fontSize: typography.fontSize["2xl"],
+                    fontWeight: typography.fontWeight.bold,
+                    color: colors.primary[600],
+                    marginBottom: spacing[1]
+                  }}>
+                    📧
+                  </div>
+                  <div style={{ fontSize: typography.fontSize.sm, color: colors.text.secondary }}>
+                    Email Invitations
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Previous Backups */}
         {!loadingBackups && backups.length > 0 && (
           <Card
@@ -595,6 +693,21 @@ export default function Dashboard() {
               📖 Export Guide
             </a>
           </Link>
+          {userTier === 'business' && (
+            <>
+              <span style={{ color: colors.border.default }}>•</span>
+              <Link href="/dashboard/team" passHref legacyBehavior>
+                <a style={{
+                  color: colors.primary[600],
+                  textDecoration: "none",
+                  fontSize: typography.fontSize.sm,
+                  fontWeight: typography.fontWeight.medium
+                }}>
+                  👥 Team Management
+                </a>
+              </Link>
+            </>
+          )}
           <span style={{ color: colors.border.default }}>•</span>
           <Link href="/dashboard/subscription" passHref legacyBehavior>
             <a style={{
