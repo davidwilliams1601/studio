@@ -54,11 +54,25 @@ export default function Login() {
       const user = await loginWithGoogle();
       console.log('Google auth successful');
 
-      // Get ID token and redirect through session cookie endpoint
+      // Get ID token and create session via POST
       const idToken = await user.getIdToken();
       const redirectTo = searchParams.get('redirect') || '/dashboard';
-      const redirect = encodeURIComponent(redirectTo);
-      window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
+
+      const response = await fetch('/api/auth/create-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idToken }),
+      });
+
+      if (response.ok) {
+        console.log('Session created, redirecting to dashboard...');
+        window.location.href = redirectTo;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create session');
+      }
     } catch (error: any) {
       // Silently ignore popup cancellation
       if (error.message === 'POPUP_CANCELLED' || error.code === 'auth/popup-cancelled' || error.message === 'Authentication already in progress') {

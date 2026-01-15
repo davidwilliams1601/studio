@@ -135,18 +135,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // If a redirect is specified, use the session cookie flow
       if (redirectTo) {
-        // Get ID token and redirect through session cookie endpoint
+        // Get ID token and create session via POST
         console.log('Getting ID token...');
         const idToken = await userCredential.user.getIdToken();
-        console.log('ID token obtained, redirecting through session endpoint...');
+        console.log('ID token obtained, creating session...');
 
         if (idToken) {
-          // Use server-side redirect to set cookie reliably
-          const redirect = encodeURIComponent(redirectTo);
-          window.location.href = `/api/auth/create-session?idToken=${encodeURIComponent(idToken)}&redirect=${redirect}`;
-          // Don't continue - page will navigate
-          // Return user for consistency even though page will navigate
-          return userCredential.user;
+          // Use POST to create session cookie
+          const response = await fetch('/api/auth/create-session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ idToken }),
+          });
+
+          if (response.ok) {
+            console.log('Session created successfully, redirecting...');
+            window.location.href = redirectTo;
+            return userCredential.user;
+          } else {
+            const error = await response.json();
+            console.error('Session creation failed:', error);
+            throw new Error(error.error || 'Failed to create session');
+          }
         }
       }
 
