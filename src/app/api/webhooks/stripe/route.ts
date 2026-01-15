@@ -384,6 +384,8 @@ async function getTierFromSession(session: any): Promise<'free' | 'pro' | 'busin
 
   if (priceId === process.env.STRIPE_PRICE_PRO) return 'pro';
   if (priceId === process.env.STRIPE_PRICE_BUSINESS) return 'business';
+  // Support old Business price ID (£29) for existing subscriptions
+  if (priceId === 'price_1Sg1vpIpQXRH010BuqzOAMi1') return 'business';
   if (priceId === process.env.STRIPE_PRICE_ENTERPRISE) return 'enterprise';
 
   // FALLBACK: Check amount if price ID not in metadata
@@ -392,6 +394,8 @@ async function getTierFromSession(session: any): Promise<'free' | 'pro' | 'busin
 
     if (amount >= 99) return 'enterprise';
     if (amount >= 75) return 'business';
+    // Support old £29 Business price
+    if (amount >= 29) return 'business';
     if (amount >= 10) return 'pro';
   }
 
@@ -406,6 +410,8 @@ function getTierFromSubscription(subscription: any): 'free' | 'pro' | 'business'
 
   if (priceId === process.env.STRIPE_PRICE_PRO) return 'pro';
   if (priceId === process.env.STRIPE_PRICE_BUSINESS) return 'business';
+  // Support old Business price ID (£29) for existing subscriptions
+  if (priceId === 'price_1Sg1vpIpQXRH010BuqzOAMi1') return 'business';
   if (priceId === process.env.STRIPE_PRICE_ENTERPRISE) return 'enterprise';
 
   // Fallback to amount
@@ -413,6 +419,8 @@ function getTierFromSubscription(subscription: any): 'free' | 'pro' | 'business'
 
   if (amount >= 99) return 'enterprise';
   if (amount >= 75) return 'business';
+  // Support old £29 Business price
+  if (amount >= 29) return 'business';
   if (amount >= 10) return 'pro';
 
   return 'free';
