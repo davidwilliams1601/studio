@@ -236,7 +236,7 @@ export default function Subscription() {
     }
   ];
 
-  if (loading) {
+  if (loading || !subscription) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div>Loading...</div>
