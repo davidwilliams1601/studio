@@ -4,6 +4,8 @@ import { CalendarReminderService } from '@/lib/calendar-integration';
 import { SubscriptionTier, getUserTierLimits } from '@/lib/subscription-tiers';
 import { getDb } from '@/lib/firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const { 

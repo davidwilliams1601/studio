@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import type { SubscriptionTier } from '@/lib/subscription-tiers';
 
+export const dynamic = 'force-dynamic';
+
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from '@/lib/firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Create Firebase session cookie from ID token
  * This endpoint is called after successful client-side authentication

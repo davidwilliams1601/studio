@@ -290,6 +290,25 @@ export default function Signup() {
           <p style={{ textAlign: "center", fontSize: "0.875rem", color: "#64748b" }}>
             Already have an account? <a href="/login" style={{ color: "#3b82f6", textDecoration: "none" }}>Sign in</a>
           </p>
+
+          {/* Footer Links */}
+          <div style={{
+            textAlign: "center",
+            marginTop: "2rem",
+            paddingTop: "1.5rem",
+            borderTop: "1px solid #e5e7eb",
+            display: "flex",
+            gap: "1.5rem",
+            justifyContent: "center",
+            flexWrap: "wrap"
+          }}>
+            <a href="/privacy" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>
+              Privacy Policy
+            </a>
+            <a href="/terms" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>
+              Terms of Service
+            </a>
+          </div>
         </form>
       </div>
     </div>

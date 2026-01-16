@@ -16,8 +16,6 @@ export async function generateAIInsights(
 
   console.log('🔍 AI Insights Debug:');
   console.log(`  - API Key configured: ${apiKey ? 'YES' : 'NO'}`);
-  console.log(`  - API Key length: ${apiKey?.length || 0}`);
-  console.log(`  - API Key starts with: ${apiKey?.substring(0, 10) || 'N/A'}...`);
 
   if (!apiKey || apiKey === 'your_google_ai_api_key_here') {
     console.warn('⚠️ Google AI API key not configured. Using basic insights.');

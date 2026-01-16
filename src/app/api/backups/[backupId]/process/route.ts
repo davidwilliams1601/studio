@@ -10,6 +10,8 @@ import {
 } from '@/types/linkedin';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/backups/[backupId]/process
  *

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from '@/lib/firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Debug endpoint to check Firebase Admin SDK status
  * Only enable in development or with proper authentication

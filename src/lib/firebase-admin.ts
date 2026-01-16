@@ -52,7 +52,7 @@ function initializeFirebase() {
 
         console.log(`📦 Project ID: ${projectId}`);
         console.log(`📧 Client Email: ${clientEmail}`);
-        console.log(`🔑 Private Key: ${privateKey ? `${privateKey.substring(0, 50)}...` : 'missing'}`);
+        console.log(`🔑 Private Key: ${privateKey ? 'configured' : 'missing'}`);
         console.log(`🪣 Storage bucket: ${storageBucket || projectId + '.appspot.com'}`);
 
         app = admin.initializeApp({

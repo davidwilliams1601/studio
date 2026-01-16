@@ -6,6 +6,8 @@ import { checkRateLimit, getRequestIdentifier, RATE_LIMITS } from '@/lib/rate-li
 import { getCsrfTokens, verifyCsrfToken } from '@/lib/csrf';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/backups/upload
  *

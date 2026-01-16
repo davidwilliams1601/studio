@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from '@/lib/firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Logout endpoint
  * Clears the session cookie and revokes the refresh tokens

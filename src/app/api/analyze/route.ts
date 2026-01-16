@@ -9,6 +9,8 @@ import {
   generateIntroductionMatches
 } from "@/lib/ai-analysis";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     // Get the file data from the request

@@ -343,16 +343,35 @@ export default function Login() {
 
         {/* Back to Home */}
         <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
-          <a 
+          <a
             href="/"
-            style={{ 
-              color: "#6b7280", 
-              fontSize: "0.875rem", 
+            style={{
+              color: "#6b7280",
+              fontSize: "0.875rem",
               textDecoration: "none"
             }}
           >
             ← Back to home
           </a>
+        </div>
+
+        {/* Footer Links */}
+        <div style={{
+          textAlign: "center",
+          marginTop: "2rem",
+          paddingTop: "1.5rem",
+          borderTop: "1px solid #e5e7eb",
+          display: "flex",
+          gap: "1.5rem",
+          justifyContent: "center",
+          flexWrap: "wrap"
+        }}>
+          <Link href="/privacy" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>
+            Privacy Policy
+          </Link>
+          <Link href="/terms" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>
+            Terms of Service
+          </Link>
         </div>
       </div>
     </div>

@@ -440,11 +440,28 @@ export default function Home() {
         }}>
           Protecting professional networks worldwide
         </p>
+        <div style={{
+          display: "flex",
+          gap: spacing[6],
+          justifyContent: "center",
+          marginBottom: spacing[6],
+          flexWrap: "wrap"
+        }}>
+          <Link href="/privacy" style={{ color: colors.text.inverse, opacity: 0.8, textDecoration: "none", fontSize: typography.fontSize.sm }}>
+            Privacy Policy
+          </Link>
+          <Link href="/terms" style={{ color: colors.text.inverse, opacity: 0.8, textDecoration: "none", fontSize: typography.fontSize.sm }}>
+            Terms of Service
+          </Link>
+          <Link href="/contact" style={{ color: colors.text.inverse, opacity: 0.8, textDecoration: "none", fontSize: typography.fontSize.sm }}>
+            Contact
+          </Link>
+        </div>
         <p style={{
           opacity: 0.6,
           fontSize: typography.fontSize.sm
         }}>
-          © 2024 LinkStream. All rights reserved.
+          © {new Date().getFullYear()} LinkStream. All rights reserved.
         </p>
       </footer>
     </div>

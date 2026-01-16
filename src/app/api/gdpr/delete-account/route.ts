@@ -3,6 +3,8 @@ import { verifyIdToken, deleteUserData } from '@/lib/firebase-admin';
 import { checkRateLimit, getRequestIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
 import { getCsrfTokens, verifyCsrfToken } from '@/lib/csrf';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/gdpr/delete-account
  *

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCsrfToken, CSRF_COOKIE_NAME } from '@/lib/csrf';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/csrf
  *
