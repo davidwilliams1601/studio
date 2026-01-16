@@ -22,6 +22,11 @@ export function TierBadge({ tier, className = '' }: TierBadgeProps) {
       bg: 'bg-purple-100',
       text: 'text-purple-700',
     },
+    business: {
+      label: 'Business',
+      bg: 'bg-green-100',
+      text: 'text-green-700',
+    },
     enterprise: {
       label: 'Enterprise',
       bg: 'bg-orange-100',
