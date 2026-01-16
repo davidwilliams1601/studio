@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb, getStorage } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/cron/cleanup-expired-backups
  *

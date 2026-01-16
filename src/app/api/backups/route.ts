@@ -3,6 +3,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { verifyIdToken } from '@/lib/firebase-admin';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
  * Get user's backup history
