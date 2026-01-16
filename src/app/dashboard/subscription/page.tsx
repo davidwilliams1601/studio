@@ -11,20 +11,16 @@ export default function Subscription() {
   const { token: csrfToken, loading: csrfLoading } = useCsrf();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [manageLoading, setManageLoading] = useState(false);
-  const [currentTier, setCurrentTier] = useState<'free' | 'pro' | 'business' | 'enterprise'>('free');
   const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
+
+  // Use subscription.plan directly instead of copying to state
+  const currentTier = subscription?.plan || 'free';
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
     }
   }, [user, loading, router]);
-
-  useEffect(() => {
-    if (subscription) {
-      setCurrentTier(subscription.plan);
-    }
-  }, [subscription]);
 
   useEffect(() => {
     console.log('🔑 Environment Variables:');
