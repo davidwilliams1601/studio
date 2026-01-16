@@ -3,6 +3,7 @@ import { verifyIdToken, getDb } from '@/lib/firebase-admin';
 import { getCsrfTokens, verifyCsrfToken } from '@/lib/csrf';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/subscription/manage

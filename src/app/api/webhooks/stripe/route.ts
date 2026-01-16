@@ -3,6 +3,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { headers } from 'next/headers';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
  * Stripe Webhook Handler
