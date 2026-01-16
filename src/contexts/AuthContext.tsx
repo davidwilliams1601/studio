@@ -17,7 +17,7 @@ interface AuthContextType {
   loading: boolean;
   firebaseReady: boolean;
   subscription: {
-    plan: 'free' | 'pro' | 'enterprise';
+    plan: 'free' | 'pro' | 'business' | 'enterprise';
     monthlyUsage: number;
     upgradeDate?: string;
   } | null;
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseReady, setFirebaseReady] = useState(false);
   const [auth, setAuth] = useState<any>(null);
   const [subscription, setSubscription] = useState<{
-    plan: 'free' | 'pro' | 'enterprise';
+    plan: 'free' | 'pro' | 'business' | 'enterprise';
     monthlyUsage: number;
     upgradeDate?: string;
   } | null>(null);
