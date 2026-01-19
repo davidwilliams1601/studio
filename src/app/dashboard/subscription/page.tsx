@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useCsrf } from "@/hooks/use-csrf";
+import Link from "next/link";
 
 export default function Subscription() {
   const { user, loading, subscription } = useAuth();
@@ -469,6 +470,40 @@ export default function Subscription() {
               💬 Security Consultation
             </button>
           </div>
+        </div>
+
+        {/* Footer Links */}
+        <div style={{
+          display: "flex",
+          gap: "1rem",
+          justifyContent: "center",
+          marginTop: "3rem",
+          padding: "2rem",
+          borderTop: "1px solid #e5e7eb"
+        }}>
+          <Link href="/privacy" style={{
+            color: "#64748b",
+            textDecoration: "none",
+            fontSize: "0.875rem"
+          }}>
+            Privacy Policy
+          </Link>
+          <span style={{ color: "#e5e7eb" }}>•</span>
+          <Link href="/terms" style={{
+            color: "#64748b",
+            textDecoration: "none",
+            fontSize: "0.875rem"
+          }}>
+            Terms of Service
+          </Link>
+          <span style={{ color: "#e5e7eb" }}>•</span>
+          <Link href="/contact" style={{
+            color: "#64748b",
+            textDecoration: "none",
+            fontSize: "0.875rem"
+          }}>
+            Contact Us
+          </Link>
         </div>
       </div>
     </div>

@@ -34,7 +34,7 @@ import {
 import Link from 'next/link';
 import { createStripePortalSessionAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { SubscriptionManager } from '@/components/subscription-manager';
 import type { SubscriptionTier } from '@/lib/subscription-tiers';
@@ -70,7 +70,13 @@ export default function SettingsPage() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" size="icon" asChild>
+          <Link href="/dashboard">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="sr-only">Back to Dashboard</span>
+          </Link>
+        </Button>
         <h1 className="font-headline text-lg font-semibold md:text-2xl">
           Settings
         </h1>
@@ -182,6 +188,21 @@ export default function SettingsPage() {
             </p>
           </CardContent>
         </Card>
+
+        {/* Footer Links */}
+        <div className="flex gap-4 justify-center p-4 border-t">
+          <Link href="/privacy" className="text-muted-foreground text-sm hover:text-primary">
+            Privacy Policy
+          </Link>
+          <span className="text-muted-foreground">•</span>
+          <Link href="/terms" className="text-muted-foreground text-sm hover:text-primary">
+            Terms of Service
+          </Link>
+          <span className="text-muted-foreground">•</span>
+          <Link href="/contact" className="text-muted-foreground text-sm hover:text-primary">
+            Contact Us
+          </Link>
+        </div>
       </div>
     </main>
   );

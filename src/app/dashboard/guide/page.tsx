@@ -132,6 +132,21 @@ export default function GuidePage() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Footer Links */}
+      <div className="flex gap-4 justify-center p-4 border-t mt-4">
+        <Link href="/privacy" className="text-muted-foreground text-sm hover:text-primary">
+          Privacy Policy
+        </Link>
+        <span className="text-muted-foreground">•</span>
+        <Link href="/terms" className="text-muted-foreground text-sm hover:text-primary">
+          Terms of Service
+        </Link>
+        <span className="text-muted-foreground">•</span>
+        <Link href="/contact" className="text-muted-foreground text-sm hover:text-primary">
+          Contact Us
+        </Link>
+      </div>
     </main>
   );
 }

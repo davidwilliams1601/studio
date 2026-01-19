@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 
 export default function Welcome() {
   const router = useRouter();
@@ -254,6 +255,40 @@ export default function Welcome() {
           >
             Skip for now
           </button>
+        </div>
+
+        {/* Footer Links */}
+        <div style={{
+          display: "flex",
+          gap: "1rem",
+          justifyContent: "center",
+          marginTop: "2rem",
+          padding: "1rem",
+          borderTop: "1px solid #e5e7eb"
+        }}>
+          <Link href="/privacy" style={{
+            color: "#64748b",
+            textDecoration: "none",
+            fontSize: "0.75rem"
+          }}>
+            Privacy Policy
+          </Link>
+          <span style={{ color: "#e5e7eb" }}>•</span>
+          <Link href="/terms" style={{
+            color: "#64748b",
+            textDecoration: "none",
+            fontSize: "0.75rem"
+          }}>
+            Terms of Service
+          </Link>
+          <span style={{ color: "#e5e7eb" }}>•</span>
+          <Link href="/contact" style={{
+            color: "#64748b",
+            textDecoration: "none",
+            fontSize: "0.75rem"
+          }}>
+            Contact Us
+          </Link>
         </div>
       </div>
     </div>

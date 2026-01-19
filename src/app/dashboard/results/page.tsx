@@ -875,6 +875,40 @@ export default function Results() {
             🤖 Download Data
           </button>
         </div>
+
+        {/* Footer Links */}
+        <div style={{
+          display: "flex",
+          gap: "1rem",
+          justifyContent: "center",
+          marginTop: "3rem",
+          padding: "2rem",
+          borderTop: "1px solid #e5e7eb"
+        }}>
+          <a href="/privacy" style={{
+            color: "#64748b",
+            textDecoration: "none",
+            fontSize: "0.875rem"
+          }}>
+            Privacy Policy
+          </a>
+          <span style={{ color: "#e5e7eb" }}>•</span>
+          <a href="/terms" style={{
+            color: "#64748b",
+            textDecoration: "none",
+            fontSize: "0.875rem"
+          }}>
+            Terms of Service
+          </a>
+          <span style={{ color: "#e5e7eb" }}>•</span>
+          <a href="/contact" style={{
+            color: "#64748b",
+            textDecoration: "none",
+            fontSize: "0.875rem"
+          }}>
+            Contact Us
+          </a>
+        </div>
       </div>
     </div>
   );

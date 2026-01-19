@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { colors, spacing, typography } from "@/styles/design-tokens";
@@ -196,6 +197,11 @@ export default function TeamPage() {
 
   return (
     <div style={{ padding: spacing[6], maxWidth: "900px", margin: "0 auto" }}>
+      <div style={{ marginBottom: spacing[6] }}>
+        <Link href="/dashboard" style={{ color: colors.primary[600], textDecoration: "none", fontSize: typography.fontSize.base }}>
+          ← Back to Dashboard
+        </Link>
+      </div>
       <h1 style={{ marginBottom: spacing[2], fontSize: typography.fontSize["2xl"], fontWeight: typography.fontWeight.bold }}>Team Management</h1>
       <p style={{ color: colors.text.secondary, marginBottom: spacing[6] }}>
         Manage your team members and invitations for Business tier access.
@@ -399,6 +405,40 @@ export default function TeamPage() {
           </div>
         </Card>
       )}
+
+      {/* Footer Links */}
+      <div style={{
+        display: "flex",
+        gap: spacing[4],
+        justifyContent: "center",
+        marginTop: spacing[8],
+        padding: spacing[4],
+        borderTop: `1px solid ${colors.border.light}`
+      }}>
+        <Link href="/privacy" style={{
+          color: colors.text.secondary,
+          textDecoration: "none",
+          fontSize: typography.fontSize.sm
+        }}>
+          Privacy Policy
+        </Link>
+        <span style={{ color: colors.border.default }}>•</span>
+        <Link href="/terms" style={{
+          color: colors.text.secondary,
+          textDecoration: "none",
+          fontSize: typography.fontSize.sm
+        }}>
+          Terms of Service
+        </Link>
+        <span style={{ color: colors.border.default }}>•</span>
+        <Link href="/contact" style={{
+          color: colors.text.secondary,
+          textDecoration: "none",
+          fontSize: typography.fontSize.sm
+        }}>
+          Contact Us
+        </Link>
+      </div>
     </div>
   );
 }

@@ -731,6 +731,46 @@ export default function Dashboard() {
             </a>
           </Link>
         </div>
+
+        {/* Footer Links */}
+        <div style={{
+          display: "flex",
+          gap: spacing[4],
+          justifyContent: "center",
+          padding: spacing[4],
+          borderTop: `1px solid ${colors.border.light}`,
+          marginTop: spacing[4]
+        }}>
+          <Link href="/privacy" passHref legacyBehavior>
+            <a style={{
+              color: colors.text.secondary,
+              textDecoration: "none",
+              fontSize: typography.fontSize.sm
+            }}>
+              Privacy Policy
+            </a>
+          </Link>
+          <span style={{ color: colors.border.default }}>•</span>
+          <Link href="/terms" passHref legacyBehavior>
+            <a style={{
+              color: colors.text.secondary,
+              textDecoration: "none",
+              fontSize: typography.fontSize.sm
+            }}>
+              Terms of Service
+            </a>
+          </Link>
+          <span style={{ color: colors.border.default }}>•</span>
+          <Link href="/contact" passHref legacyBehavior>
+            <a style={{
+              color: colors.text.secondary,
+              textDecoration: "none",
+              fontSize: typography.fontSize.sm
+            }}>
+              Contact Us
+            </a>
+          </Link>
+        </div>
       </div>
     </div>
   );
