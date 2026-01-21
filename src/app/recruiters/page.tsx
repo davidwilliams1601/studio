@@ -46,7 +46,7 @@ export default function RecruitersPage() {
           fontWeight: "600",
           color: "#991b1b"
         }}>
-          ⚠️ 5,247 recruiters lost their LinkedIn accounts in 2024
+          ⚠️ 10 million LinkedIn hacking incidents occurred in 2024
         </div>
 
         <h1 style={{
@@ -125,13 +125,13 @@ export default function RecruitersPage() {
                 icon: "🚫",
                 title: "Account Hacked",
                 desc: "10 years of connections. Gone overnight. Recovery? Impossible.",
-                stat: "2,847 cases in 2024"
+                stat: "~10M incidents in 2024"
               },
               {
                 icon: "⚠️",
                 title: "Unexpected Ban",
                 desc: "LinkedIn flags your account for 'unusual activity'. No warning. No appeal.",
-                stat: "1,523 cases in 2024"
+                stat: "Data scraping & fraud"
               },
               {
                 icon: "🏢",
@@ -377,13 +377,13 @@ export default function RecruitersPage() {
                 £10<span style={{ fontSize: "1rem", color: "#64748b" }}>/month</span>
               </div>
               <ul style={{ listStyle: "none", padding: 0, marginBottom: "2rem" }}>
-                {["Unlimited backups", "CSV export", "AI network insights", "Priority support"].map((item, i) => (
+                {["4 backups per month", "CSV export", "AI network insights", "Enhanced analytics"].map((item, i) => (
                   <li key={i} style={{ marginBottom: "0.75rem", color: "#64748b" }}>
                     ✅ {item}
                   </li>
                 ))}
               </ul>
-              <Link href="/signup">
+              <Link href="/signup?plan=pro">
                 <Button variant="outline" fullWidth>Get Started</Button>
               </Link>
             </Card>
@@ -411,16 +411,16 @@ export default function RecruitersPage() {
               </div>
               <h3 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "0.5rem" }}>Business</h3>
               <div style={{ fontSize: "2.5rem", fontWeight: "bold", marginBottom: "1rem", color: "#3b82f6" }}>
-                £79<span style={{ fontSize: "1rem", color: "#64748b" }}>/month</span>
+                £75<span style={{ fontSize: "1rem", color: "#64748b" }}>/month</span>
               </div>
               <ul style={{ listStyle: "none", padding: 0, marginBottom: "2rem" }}>
-                {["Everything in Pro", "Team seats (10 users)", "Shared backups", "Team analytics", "Dedicated support"].map((item, i) => (
+                {["Everything in Pro", "Unlimited backups", "Up to 10 team users", "Shared team analytics", "Audit logs & compliance"].map((item, i) => (
                   <li key={i} style={{ marginBottom: "0.75rem", color: "#64748b" }}>
                     ✅ {item}
                   </li>
                 ))}
               </ul>
-              <Link href="/signup">
+              <Link href="/signup?plan=business">
                 <Button variant="primary" fullWidth>Get Started</Button>
               </Link>
             </Card>
@@ -433,17 +433,17 @@ export default function RecruitersPage() {
             }}>
               <h3 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "0.5rem" }}>Enterprise</h3>
               <div style={{ fontSize: "2.5rem", fontWeight: "bold", marginBottom: "1rem", color: "#3b82f6" }}>
-                £199<span style={{ fontSize: "1rem", color: "#64748b" }}>/month</span>
+                Custom<span style={{ fontSize: "1rem", color: "#64748b" }}> pricing</span>
               </div>
               <ul style={{ listStyle: "none", padding: 0, marginBottom: "2rem" }}>
-                {["Everything in Business", "Unlimited team seats", "API access", "Custom integrations", "White-glove onboarding"].map((item, i) => (
+                {["Everything in Business", "Unlimited team members", "SSO integration", "API access", "Dedicated security consultant", "Priority incident response"].map((item, i) => (
                   <li key={i} style={{ marginBottom: "0.75rem", color: "#64748b" }}>
                     ✅ {item}
                   </li>
                 ))}
               </ul>
-              <Link href="/signup">
-                <Button variant="outline" fullWidth>Get Started</Button>
+              <Link href="/contact">
+                <Button variant="outline" fullWidth>Contact Sales</Button>
               </Link>
             </Card>
           </div>
@@ -454,7 +454,7 @@ export default function RecruitersPage() {
             color: "#64748b",
             fontSize: "0.875rem"
           }}>
-            💰 One placement pays for 50+ years of protection
+            💰 One placement (avg. £5k-£20k commission) pays for years of protection
           </p>
         </div>
       </section>
