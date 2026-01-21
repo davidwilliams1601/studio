@@ -19,7 +19,8 @@ interface Analytics {
 }
 
 interface AnalysisData {
-  id?: string; // Backup ID for CSV export
+  id?: string; // Backup ID for CSV export (from existing backups)
+  backupId?: string; // Backup ID for CSV export (from fresh uploads)
   stats: Stats;
   analytics: Analytics;
   fileName?: string;
@@ -189,7 +190,8 @@ export default function Results() {
   };
 
   const exportConnectionsCSV = async () => {
-    if (!results?.id) {
+    const backupId = results?.id || results?.backupId;
+    if (!backupId) {
       alert('Backup ID not found. Please try re-uploading your data.');
       return;
     }
@@ -209,7 +211,7 @@ export default function Results() {
 
       const idToken = await user.getIdToken();
 
-      const response = await fetch(`/api/backups/${results.id}/export-connections`, {
+      const response = await fetch(`/api/backups/${backupId}/export-connections`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -226,7 +228,7 @@ export default function Results() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `linkedin-connections-${results.id}.csv`;
+      link.download = `linkedin-connections-${backupId}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -932,15 +934,15 @@ export default function Results() {
 
           <button
             onClick={exportConnectionsCSV}
-            disabled={csvLoading || !results?.id}
+            disabled={csvLoading || !(results?.id || results?.backupId)}
             style={{
               padding: "1rem 2rem",
-              background: csvLoading || !results?.id ? "#9ca3af" : "#3b82f6",
+              background: csvLoading || !(results?.id || results?.backupId) ? "#9ca3af" : "#3b82f6",
               color: "white",
               border: "none",
               borderRadius: "8px",
               fontWeight: "bold",
-              cursor: csvLoading || !results?.id ? "not-allowed" : "pointer"
+              cursor: csvLoading || !(results?.id || results?.backupId) ? "not-allowed" : "pointer"
             }}
           >
             {csvLoading ? "🔄 Exporting..." : "📊 Export Connections CSV"}

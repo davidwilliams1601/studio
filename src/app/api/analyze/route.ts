@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processLinkedInZip } from "@/lib/linkedin-processor";
-import { getDb } from "@/lib/firebase-admin";
+import { getDb, getStorage } from "@/lib/firebase-admin";
+import crypto from 'crypto';
 import {
   generateAIInsights,
   generateBasicInsights,
@@ -117,6 +118,35 @@ export async function POST(request: NextRequest) {
       // Increment backup count
       backupsThisMonth += 1;
 
+      // Generate unique backup ID
+      const backupId = crypto.randomBytes(16).toString('hex');
+
+      // Upload raw ZIP to Firebase Storage for future CSV export
+      const storagePath = `users/${userId}/linkedin-exports/${backupId}/raw.zip`;
+      console.log(`📦 Uploading raw ZIP to storage: ${storagePath}`);
+
+      try {
+        const storage = await getStorage();
+        const bucket = storage.bucket();
+        const fileBuffer = Buffer.from(arrayBuffer);
+        const storageFile = bucket.file(storagePath);
+
+        await storageFile.save(fileBuffer, {
+          metadata: {
+            contentType: 'application/zip',
+            metadata: {
+              userId,
+              originalFileName: file.name,
+              uploadedAt: now.toISOString(),
+            },
+          },
+        });
+        console.log(`✅ Raw ZIP uploaded to storage`);
+      } catch (storageError) {
+        console.error('⚠️ Failed to upload raw ZIP to storage:', storageError);
+        // Continue even if storage upload fails
+      }
+
       // Update user document with backup info
       await userRef.set({
         lastBackupDate: now,
@@ -136,6 +166,9 @@ export async function POST(request: NextRequest) {
         insights: results.insights,
         tier: userTier,
         aiAnalysisUsed: hasAIAccess,
+        storagePaths: {
+          raw: storagePath,
+        },
       });
 
       console.log(`✅ Updated backup tracking for user ${userId}, backup ID: ${backupRef.id}`);
