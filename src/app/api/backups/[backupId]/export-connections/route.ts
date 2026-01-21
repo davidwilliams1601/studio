@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyIdToken, getDb, getStorageBucket } from '@/lib/firebase-admin';
+import { verifyIdToken, getDb, getStorage } from '@/lib/firebase-admin';
 import JSZip from 'jszip';
 
 export const runtime = 'nodejs';
@@ -66,7 +66,8 @@ export async function GET(
     console.log(`📦 Retrieving backup from storage: ${storagePath}`);
 
     // Download ZIP from Firebase Storage
-    const bucket = getStorageBucket();
+    const storage = await getStorage();
+    const bucket = storage.bucket();
     const file = bucket.file(storagePath);
 
     const [exists] = await file.exists();
