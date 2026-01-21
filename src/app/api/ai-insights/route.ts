@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  generateValueConnectionRecommendations,
+  generateContentStrategy,
+  generateIntroductionMatches
+} from "@/lib/ai-analysis";
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
     console.log("AI Insights API called");
-    
+
     const { stats, analytics, fileName } = await request.json();
     
     if (!stats || !analytics) {
@@ -85,9 +90,23 @@ export async function POST(request: NextRequest) {
       ]
     };
 
+    // Generate Pro/Business tier features
+    console.log('🎯 Generating valuable connection recommendations...');
+    const resultsData = { stats, analytics, fileName };
+    const topValueConnections = await generateValueConnectionRecommendations(resultsData);
+
+    console.log('📝 Generating content strategy...');
+    const contentStrategyData = await generateContentStrategy(resultsData);
+
+    console.log('🤝 Generating introduction matches...');
+    const introMatches = await generateIntroductionMatches(resultsData);
+
     return NextResponse.json({
       success: true,
       insights: insights,
+      topValueConnections: topValueConnections || [],
+      contentStrategy: contentStrategyData || null,
+      introductionMatches: introMatches || [],
       generatedAt: new Date().toISOString()
     });
 

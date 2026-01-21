@@ -126,9 +126,20 @@ export default function Results() {
       });
 
       const aiData = await response.json();
-      
+
       if (aiData.success) {
         setAiInsights(aiData.insights);
+
+        // Update results with Pro/Business features
+        if (aiData.topValueConnections || aiData.contentStrategy || aiData.introductionMatches) {
+          setResults(prevResults => ({
+            ...prevResults!,
+            topValueConnections: aiData.topValueConnections || prevResults?.topValueConnections,
+            contentStrategy: aiData.contentStrategy || prevResults?.contentStrategy,
+            introductionMatches: aiData.introductionMatches || prevResults?.introductionMatches,
+          }));
+        }
+
         console.log('✅ AI insights generated successfully');
       } else {
         console.error('❌ AI insights generation failed:', aiData.error);
