@@ -19,6 +19,7 @@ interface Analytics {
 }
 
 interface AnalysisData {
+  id?: string; // Backup ID for CSV export
   stats: Stats;
   analytics: Analytics;
   fileName?: string;
@@ -84,6 +85,7 @@ export default function Results() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [csvLoading, setCsvLoading] = useState(false);
 
   useEffect(() => {
     try {
@@ -143,7 +145,7 @@ export default function Results() {
     setPdfLoading(true);
     try {
       console.log("Generating PDF report...");
-      
+
       const response = await fetch('/api/generate-pdf', {
         method: 'POST',
         headers: {
@@ -156,7 +158,7 @@ export default function Results() {
       });
 
       const pdfData = await response.json();
-      
+
       if (pdfData.success) {
         // Create a new window with the HTML content for PDF generation
         const printWindow = window.open('', '_blank');
@@ -173,7 +175,7 @@ export default function Results() {
           }, 1000);
         }
 
-        
+
         console.log('✅ PDF generated successfully');
       } else {
         throw new Error(pdfData.error);
@@ -183,6 +185,59 @@ export default function Results() {
       alert('Failed to generate PDF: ' + (error?.message || 'Unknown error'));
     } finally {
       setPdfLoading(false);
+    }
+  };
+
+  const exportConnectionsCSV = async () => {
+    if (!results?.id) {
+      alert('Backup ID not found. Please try re-uploading your data.');
+      return;
+    }
+
+    setCsvLoading(true);
+    try {
+      console.log("Exporting connections as CSV...");
+
+      // Get auth token (assuming you're using Firebase Auth)
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+
+      const idToken = await user.getIdToken();
+
+      const response = await fetch(`/api/backups/${results.id}/export-connections`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to export connections');
+      }
+
+      // Download the CSV file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `linkedin-connections-${results.id}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      console.log('✅ Connections exported successfully');
+    } catch (error: any) {
+      console.error('❌ Error exporting connections:', error);
+      alert('Failed to export connections: ' + (error?.message || 'Unknown error'));
+    } finally {
+      setCsvLoading(false);
     }
   };
 
@@ -851,7 +906,7 @@ export default function Results() {
             {pdfLoading ? "🔄 Generating..." : "📑 Generate PDF Report"}
           </button>
           
-          <button 
+          <button
             onClick={() => {
               const fullData = { ...results, aiInsights };
               const dataStr = JSON.stringify(fullData, null, 2);
@@ -862,17 +917,33 @@ export default function Results() {
               link.download = 'linkedin-ai-analytics-report.json';
               link.click();
             }}
-            style={{ 
-              padding: "1rem 2rem", 
-              background: "#10b981", 
-              color: "white", 
-              border: "none", 
-              borderRadius: "8px", 
-              fontWeight: "bold", 
-              cursor: "pointer" 
+            style={{
+              padding: "1rem 2rem",
+              background: "#10b981",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontWeight: "bold",
+              cursor: "pointer"
             }}
           >
             🤖 Download Data
+          </button>
+
+          <button
+            onClick={exportConnectionsCSV}
+            disabled={csvLoading || !results?.id}
+            style={{
+              padding: "1rem 2rem",
+              background: csvLoading || !results?.id ? "#9ca3af" : "#3b82f6",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontWeight: "bold",
+              cursor: csvLoading || !results?.id ? "not-allowed" : "pointer"
+            }}
+          >
+            {csvLoading ? "🔄 Exporting..." : "📊 Export Connections CSV"}
           </button>
         </div>
 
