@@ -57,8 +57,9 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
 
     // Process the LinkedIn ZIP file
+    // For Pro/Business/Enterprise: include connections list for enhanced AI features
     const results = await processLinkedInZip(arrayBuffer, {
-      includeConnectionsList: false, // Don't include full list for privacy
+      includeConnectionsList: hasAIAccess, // Include for paid tiers to enable enhanced features
       fileName: file.name,
     });
 
@@ -170,6 +171,24 @@ export async function POST(request: NextRequest) {
         tier: userTier,
         aiAnalysisUsed: hasAIAccess,
       };
+
+      // Store Pro/Business/Enterprise features if generated
+      if (hasAIAccess) {
+        if (results.topValueConnections) {
+          backupData.topValueConnections = results.topValueConnections;
+        }
+        if (results.contentStrategy) {
+          backupData.contentStrategy = results.contentStrategy;
+        }
+        if (results.introductionMatches) {
+          backupData.introductionMatches = results.introductionMatches;
+        }
+        // Store connections list for future AI generation
+        if (results.connectionsList) {
+          backupData.connectionsList = results.connectionsList;
+          console.log(`📋 Stored ${results.connectionsList.length} connections for future AI features`);
+        }
+      }
 
       // Only add storagePaths if upload succeeded
       if (storageUploadSucceeded) {

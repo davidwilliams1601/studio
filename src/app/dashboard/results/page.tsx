@@ -111,7 +111,7 @@ export default function Results() {
     console.log("Starting AI insights generation...");
     setAiLoading(true);
     setAiError(null);
-    
+
     try {
       const response = await fetch('/api/ai-insights', {
         method: 'POST',
@@ -121,7 +121,8 @@ export default function Results() {
         body: JSON.stringify({
           stats: data.stats,
           analytics: data.analytics,
-          fileName: data.fileName
+          fileName: data.fileName,
+          backupId: data.id || data.backupId // Pass backup ID to fetch connections list
         }),
       });
 

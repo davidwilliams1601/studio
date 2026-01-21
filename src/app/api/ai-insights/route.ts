@@ -4,6 +4,7 @@ import {
   generateContentStrategy,
   generateIntroductionMatches
 } from "@/lib/ai-analysis";
+import { getDb } from "@/lib/firebase-admin";
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +12,8 @@ export async function POST(request: NextRequest) {
   try {
     console.log("AI Insights API called");
 
-    const { stats, analytics, fileName } = await request.json();
-    
+    const { stats, analytics, fileName, backupId } = await request.json();
+
     if (!stats || !analytics) {
       return NextResponse.json(
         { success: false, error: "Missing required data" },
@@ -21,6 +22,24 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Processing AI insights for:", fileName);
+    console.log("Backup ID:", backupId);
+
+    // Fetch connections list from backup if available
+    let connectionsList: any[] = [];
+    if (backupId) {
+      try {
+        const db = await getDb();
+        const backupDoc = await db.collection('backups').doc(backupId).get();
+        if (backupDoc.exists) {
+          const backupData = backupDoc.data();
+          connectionsList = backupData?.connectionsList || [];
+          console.log(`📋 Found ${connectionsList.length} stored connections for AI generation`);
+        }
+      } catch (error) {
+        console.error('⚠️ Failed to fetch connections list:', error);
+        // Continue without connections list
+      }
+    }
 
     // Generate intelligent insights based on actual data patterns
     const totalConnections = stats.connections;
@@ -92,7 +111,7 @@ export async function POST(request: NextRequest) {
 
     // Generate Pro/Business tier features
     // Construct a proper LinkedInAnalysisResult object
-    const resultsData = {
+    const resultsData: any = {
       fileName: fileName || 'backup',
       processedAt: new Date().toISOString(),
       stats: {
@@ -114,6 +133,12 @@ export async function POST(request: NextRequest) {
       },
       insights: [],
     };
+
+    // Add connections list if available
+    if (connectionsList.length > 0) {
+      resultsData.connectionsList = connectionsList;
+      console.log(`✅ Added ${connectionsList.length} connections to results data`);
+    }
 
     console.log('🎯 Generating valuable connection recommendations...');
     const topValueConnections = await generateValueConnectionRecommendations(resultsData);
