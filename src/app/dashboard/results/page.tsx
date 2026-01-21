@@ -127,18 +127,36 @@ export default function Results() {
 
       const aiData = await response.json();
 
+      console.log('📦 AI API Response:', {
+        success: aiData.success,
+        hasTopValueConnections: !!aiData.topValueConnections,
+        topValueConnectionsLength: aiData.topValueConnections?.length,
+        hasContentStrategy: !!aiData.contentStrategy,
+        hasIntroMatches: !!aiData.introductionMatches,
+        introMatchesLength: aiData.introductionMatches?.length,
+      });
+
       if (aiData.success) {
         setAiInsights(aiData.insights);
 
         // Update results with Pro/Business features
-        if (aiData.topValueConnections || aiData.contentStrategy || aiData.introductionMatches) {
-          setResults(prevResults => ({
+        console.log('🔄 Updating results state with Pro features...');
+        setResults(prevResults => {
+          const updated = {
             ...prevResults!,
-            topValueConnections: aiData.topValueConnections || prevResults?.topValueConnections,
+            topValueConnections: aiData.topValueConnections || prevResults?.topValueConnections || [],
             contentStrategy: aiData.contentStrategy || prevResults?.contentStrategy,
-            introductionMatches: aiData.introductionMatches || prevResults?.introductionMatches,
-          }));
-        }
+            introductionMatches: aiData.introductionMatches || prevResults?.introductionMatches || [],
+          };
+          console.log('✅ Updated results:', {
+            hasTopValueConnections: !!updated.topValueConnections,
+            topValueConnectionsCount: updated.topValueConnections?.length,
+            hasContentStrategy: !!updated.contentStrategy,
+            hasIntroMatches: !!updated.introductionMatches,
+            introMatchesCount: updated.introductionMatches?.length,
+          });
+          return updated;
+        });
 
         console.log('✅ AI insights generated successfully');
       } else {

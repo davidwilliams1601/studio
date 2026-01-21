@@ -117,21 +117,33 @@ export async function POST(request: NextRequest) {
 
     console.log('🎯 Generating valuable connection recommendations...');
     const topValueConnections = await generateValueConnectionRecommendations(resultsData);
+    console.log(`   ✅ Generated ${topValueConnections?.length || 0} connection recommendations`);
 
     console.log('📝 Generating content strategy...');
     const contentStrategyData = await generateContentStrategy(resultsData);
+    console.log(`   ✅ Content strategy generated:`, !!contentStrategyData);
 
     console.log('🤝 Generating introduction matches...');
     const introMatches = await generateIntroductionMatches(resultsData);
+    console.log(`   ✅ Generated ${introMatches?.length || 0} introduction matches`);
 
-    return NextResponse.json({
+    const response = {
       success: true,
       insights: insights,
       topValueConnections: topValueConnections || [],
       contentStrategy: contentStrategyData || null,
       introductionMatches: introMatches || [],
       generatedAt: new Date().toISOString()
+    };
+
+    console.log('📤 Returning response with:', {
+      insightsCount: insights?.actionItems?.length || 0,
+      topValueConnectionsCount: response.topValueConnections.length,
+      hasContentStrategy: !!response.contentStrategy,
+      introMatchesCount: response.introductionMatches.length,
     });
+
+    return NextResponse.json(response);
 
   } catch (error: any) {
     console.error("AI Insights error:", error);
