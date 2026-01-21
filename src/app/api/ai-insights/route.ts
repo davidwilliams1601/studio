@@ -91,8 +91,31 @@ export async function POST(request: NextRequest) {
     };
 
     // Generate Pro/Business tier features
+    // Construct a proper LinkedInAnalysisResult object
+    const resultsData = {
+      fileName: fileName || 'backup',
+      processedAt: new Date().toISOString(),
+      stats: {
+        connections: stats.connections || 0,
+        messages: stats.messages || 0,
+        posts: stats.posts || 0,
+        comments: stats.comments || 0,
+        reactions: stats.reactions || 0,
+        companies: stats.companies || 0,
+        invitations: stats.invitations || 0,
+      },
+      analytics: {
+        industries: analytics.industries || {},
+        locations: analytics.locations || {},
+        topCompanies: analytics.topCompanies || {},
+        positions: analytics.positions || {},
+        skillsCount: stats.skillsCount || 0,
+        connectionsByMonth: analytics.connectionsByMonth || {},
+      },
+      insights: [],
+    };
+
     console.log('🎯 Generating valuable connection recommendations...');
-    const resultsData = { stats, analytics, fileName };
     const topValueConnections = await generateValueConnectionRecommendations(resultsData);
 
     console.log('📝 Generating content strategy...');
