@@ -57,8 +57,9 @@ export async function GET(
     // Get storage path for raw ZIP
     const storagePath = backup?.storagePaths?.raw;
     if (!storagePath) {
+      console.error(`❌ No storage path found in backup document. Backup data:`, JSON.stringify(backup, null, 2));
       return NextResponse.json(
-        { error: 'Raw backup file not found' },
+        { error: 'Raw backup file path not found in database. This backup may be missing the raw file.' },
         { status: 404 }
       );
     }
@@ -72,8 +73,9 @@ export async function GET(
 
     const [exists] = await file.exists();
     if (!exists) {
+      console.error(`❌ File not found in storage at path: ${storagePath}`);
       return NextResponse.json(
-        { error: 'Backup file no longer exists in storage' },
+        { error: `Backup file no longer exists in storage (path: ${storagePath}). It may have been deleted or expired.` },
         { status: 404 }
       );
     }

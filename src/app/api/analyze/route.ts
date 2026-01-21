@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
       const storagePath = `users/${userId}/linkedin-exports/${backupId}/raw.zip`;
       console.log(`📦 Uploading raw ZIP to storage: ${storagePath}`);
 
+      let storageUploadSucceeded = false;
       try {
         const storage = await getStorage();
         const bucket = storage.bucket();
@@ -141,10 +142,12 @@ export async function POST(request: NextRequest) {
             },
           },
         });
-        console.log(`✅ Raw ZIP uploaded to storage`);
-      } catch (storageError) {
-        console.error('⚠️ Failed to upload raw ZIP to storage:', storageError);
-        // Continue even if storage upload fails
+        console.log(`✅ Raw ZIP uploaded to storage successfully`);
+        storageUploadSucceeded = true;
+      } catch (storageError: any) {
+        console.error('⚠️ Failed to upload raw ZIP to storage:', storageError?.message || storageError);
+        console.error('Storage error details:', JSON.stringify(storageError, null, 2));
+        // Continue even if storage upload fails - users can still see analytics
       }
 
       // Update user document with backup info
@@ -156,7 +159,7 @@ export async function POST(request: NextRequest) {
       }, { merge: true });
 
       // Store the backup analysis result in backups collection
-      const backupRef = await db.collection('backups').add({
+      const backupData: any = {
         userId,
         fileName: file.name,
         fileSize: file.size,
@@ -166,10 +169,16 @@ export async function POST(request: NextRequest) {
         insights: results.insights,
         tier: userTier,
         aiAnalysisUsed: hasAIAccess,
-        storagePaths: {
+      };
+
+      // Only add storagePaths if upload succeeded
+      if (storageUploadSucceeded) {
+        backupData.storagePaths = {
           raw: storagePath,
-        },
-      });
+        };
+      }
+
+      const backupRef = await db.collection('backups').add(backupData);
 
       console.log(`✅ Updated backup tracking for user ${userId}, backup ID: ${backupRef.id}`);
 
