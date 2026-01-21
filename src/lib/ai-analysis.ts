@@ -616,20 +616,24 @@ export async function generateIntroductionMatches(
     return [];
   }
 
-  // Filter connections with names
-  const connectionsWithNames = data.connectionsList.filter(
-    c => (c.firstName || c.lastName)
+  // Filter connections with names AND detailed information (company/position)
+  // We need this info for meaningful introduction matches
+  const connectionsWithDetails = data.connectionsList.filter(
+    c => (c.firstName || c.lastName) &&
+         c.company && c.company !== 'Unknown' &&
+         c.position && c.position !== 'Unknown'
   ).slice(0, 100); // Limit to 100 for performance
 
-  if (connectionsWithNames.length < 10) {
-    console.log('⚠️ Not enough connections for introduction matching');
+  if (connectionsWithDetails.length < 10) {
+    console.log(`⚠️ Not enough detailed connections for introduction matching (only ${connectionsWithDetails.length} with company/position data)`);
+    console.log('💡 Introduction Matchmaker requires connection details (company, position) to make meaningful recommendations');
     return [];
   }
 
   try {
-    const prompt = buildIntroductionMatchPrompt(data, connectionsWithNames);
+    const prompt = buildIntroductionMatchPrompt(data, connectionsWithDetails);
 
-    console.log('🤝 Generating introduction matches...');
+    console.log(`🤝 Generating introduction matches from ${connectionsWithDetails.length} detailed connections...`);
 
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
@@ -652,9 +656,9 @@ export async function generateIntroductionMatches(
     const result = await response.json();
     const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    const matches = parseIntroductionMatchesResponse(text);
+    const matches = parseIntroductionMatchesResponse(text, connectionsWithDetails);
 
-    console.log(`✅ Generated ${matches.length} introduction matches`);
+    console.log(`✅ Generated ${matches.length} validated introduction matches (verified against actual connection names)`);
     return matches;
 
   } catch (error: any) {
@@ -709,9 +713,12 @@ Use ONLY names from the connection list above.`;
 }
 
 /**
- * Parse introduction matches response
+ * Parse introduction matches response and validate names exist in connections
  */
-function parseIntroductionMatchesResponse(text: string): Array<{
+function parseIntroductionMatchesResponse(
+  text: string,
+  connections: Array<{firstName: string; lastName: string; company: string; position: string}>
+): Array<{
   person1: string;
   person2: string;
   reason: string;
@@ -721,6 +728,11 @@ function parseIntroductionMatchesResponse(text: string): Array<{
 
   if (!text) return matches;
 
+  // Build a list of actual connection names for validation
+  const actualNames = connections.map(c => `${c.firstName} ${c.lastName}`.trim().toLowerCase());
+
+  console.log(`🔍 Validating introduction matches against ${actualNames.length} actual connections`);
+
   const lines = text.split('\n');
 
   for (const line of lines) {
@@ -728,13 +740,29 @@ function parseIntroductionMatchesResponse(text: string): Array<{
     const match = line.match(/^\d+\.\s*PAIR:\s*(.+?)\s*\+\s*(.+?)\s*\|\s*REASON:\s*(.+?)\s*\|\s*TEMPLATE:\s*(.+?)$/);
 
     if (match) {
-      matches.push({
-        person1: match[1].trim(),
-        person2: match[2].trim(),
-        reason: match[3].trim(),
-        introTemplate: match[4].trim()
-      });
+      const person1 = match[1].trim();
+      const person2 = match[2].trim();
+
+      // Validate both names exist in actual connections
+      const person1Valid = actualNames.includes(person1.toLowerCase());
+      const person2Valid = actualNames.includes(person2.toLowerCase());
+
+      if (person1Valid && person2Valid) {
+        matches.push({
+          person1: person1,
+          person2: person2,
+          reason: match[3].trim(),
+          introTemplate: match[4].trim()
+        });
+        console.log(`  ✅ Valid match: ${person1} + ${person2}`);
+      } else {
+        console.log(`  ❌ Invalid match (names not found): ${person1} (${person1Valid ? 'valid' : 'INVALID'}) + ${person2} (${person2Valid ? 'valid' : 'INVALID'})`);
+      }
     }
+  }
+
+  if (matches.length === 0) {
+    console.log('⚠️ No valid introduction matches found - AI generated names not in connections list');
   }
 
   return matches;
