@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session')?.value;
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/signup', '/', '/privacy', '/terms', '/contact', '/faq'];
+  const publicRoutes = ['/login', '/signup', '/', '/privacy', '/terms', '/contact', '/faq', '/recruiters'];
   const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith('/api/'));
 
   // Admin routes require special handling
