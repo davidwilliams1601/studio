@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
         name: 'Admin',
         tier: 'admin' as any,
         status: 'test',
+        marketingOptOut: false,
       }];
       console.log(`📧 Test mode: Sending to admin email only (${admin.email})`);
     }
