@@ -1,7 +1,7 @@
 'use client';
 
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -34,8 +34,9 @@ import {
 import Link from 'next/link';
 import { createStripePortalSessionAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Switch } from '@/components/ui/switch';
 import { SubscriptionManager } from '@/components/subscription-manager';
 import type { SubscriptionTier } from '@/lib/subscription-tiers';
 
@@ -46,6 +47,11 @@ export default function SettingsPage() {
   const isBusinessPlan = userPlan === 'business';
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+
+  // Email preferences state
+  const [marketingEmails, setMarketingEmails] = useState(true);
+  const [loadingPreferences, setLoadingPreferences] = useState(true);
+  const [savingPreferences, setSavingPreferences] = useState(false);
 
   const handleManageSubscription = () => {
     if (!user) {
@@ -67,6 +73,77 @@ export default function SettingsPage() {
         }
     });
   }
+
+  // Fetch email preferences on mount
+  useEffect(() => {
+    fetchEmailPreferences();
+  }, [user]);
+
+  const fetchEmailPreferences = async () => {
+    if (!user) return;
+
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/email/preferences', {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMarketingEmails(data.marketing ?? true); // Default to true if not set
+      }
+    } catch (error) {
+      console.error('Failed to fetch email preferences:', error);
+    } finally {
+      setLoadingPreferences(false);
+    }
+  };
+
+  const handleMarketingEmailsChange = async (checked: boolean) => {
+    if (!user) return;
+
+    setMarketingEmails(checked);
+    setSavingPreferences(true);
+
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/email/preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ marketing: checked }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Preferences updated',
+          description: checked
+            ? 'You will now receive marketing emails.'
+            : 'You have unsubscribed from marketing emails.',
+        });
+      } else {
+        // Revert on error
+        setMarketingEmails(!checked);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to update email preferences.',
+        });
+      }
+    } catch (error) {
+      // Revert on error
+      setMarketingEmails(!checked);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update email preferences.',
+      });
+    } finally {
+      setSavingPreferences(false);
+    }
+  };
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -154,6 +231,40 @@ export default function SettingsPage() {
                         <SelectItem value="system">System</SelectItem>
                     </SelectContent>
                 </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Email Preferences
+            </CardTitle>
+            <CardDescription>
+              Manage the types of emails you receive from LinkStream.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="marketing-emails" className="font-medium">Marketing Emails</Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive updates about new features, tips, and special offers.
+                </p>
+              </div>
+              <Switch
+                id="marketing-emails"
+                checked={marketingEmails}
+                onCheckedChange={handleMarketingEmailsChange}
+                disabled={loadingPreferences || savingPreferences}
+              />
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-900">
+                <strong>Note:</strong> You'll always receive important account notifications,
+                security alerts, backup reminders, and billing information regardless of this setting.
+              </p>
             </div>
           </CardContent>
         </Card>

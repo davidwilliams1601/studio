@@ -78,12 +78,22 @@ export async function POST(request: NextRequest) {
           name: data.displayName || (data.email ? data.email.split('@')[0] : 'User'),
           tier: data.tier || 'free',
           status: data.subscriptionStatus || 'active',
+          marketingOptOut: data.emailPreferences?.marketing === false,
         };
       })
       .filter(user => user.email); // Only users with email
 
     // Filter by status (client-side since Firestore can't do IN on both fields)
     recipients = recipients.filter(user => statuses.includes(user.status));
+
+    // Filter out users who have opted out of marketing emails (unless test mode)
+    if (!testMode) {
+      const optedOutCount = recipients.filter(user => user.marketingOptOut).length;
+      recipients = recipients.filter(user => !user.marketingOptOut);
+      if (optedOutCount > 0) {
+        console.log(`📧 Filtered out ${optedOutCount} users who opted out of marketing emails`);
+      }
+    }
 
     if (recipients.length === 0) {
       return NextResponse.json(
@@ -106,8 +116,9 @@ export async function POST(request: NextRequest) {
       console.log(`📧 Test mode: Sending to admin email only (${admin.email})`);
     }
 
-    // Lazy import EmailService
+    // Lazy import EmailService and unsubscribe utility
     const { EmailService } = await import('@/lib/email-service');
+    const { generateUnsubscribeUrl } = await import('@/lib/unsubscribe-token');
 
     // Send emails
     const results = {
@@ -123,6 +134,8 @@ export async function POST(request: NextRequest) {
       const batch = recipients.slice(i, i + batchSize);
       const promises = batch.map(async (recipient) => {
         try {
+          const unsubscribeUrl = generateUnsubscribeUrl(recipient.email);
+
           const html = `
             <!DOCTYPE html>
             <html>
@@ -134,6 +147,8 @@ export async function POST(request: NextRequest) {
                   .content { background: #ffffff; padding: 30px 20px; border: 1px solid #e5e7eb; border-top: none; }
                   .footer { background: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-radius: 0 0 8px 8px; }
                   .message { white-space: pre-wrap; }
+                  .unsubscribe { margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb; }
+                  .unsubscribe a { color: #6b7280; text-decoration: underline; }
                 </style>
               </head>
               <body>
@@ -148,6 +163,10 @@ export async function POST(request: NextRequest) {
                 <div class="footer">
                   <p>This email was sent by LinkStream Admin</p>
                   <p>© ${new Date().getFullYear()} LinkStream. All rights reserved.</p>
+                  <div class="unsubscribe">
+                    <p>Don't want to receive these emails? <a href="${unsubscribeUrl}">Unsubscribe</a></p>
+                    <p style="margin-top: 5px; font-size: 11px;">You can also manage your email preferences in your <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://lstream.app'}/dashboard/settings" style="color: #6b7280;">account settings</a>.</p>
+                  </div>
                 </div>
               </body>
             </html>

@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
 
   // Public routes that don't require authentication
   const publicRoutes = ['/login', '/signup', '/', '/privacy', '/terms', '/contact', '/faq', '/recruiters'];
-  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith('/api/'));
+  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith('/api/') || pathname.startsWith('/unsubscribe/'));
 
   // Admin routes require special handling
   const isAdminRoute = pathname.startsWith('/dashboard/admin');
