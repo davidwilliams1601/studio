@@ -148,12 +148,12 @@ export default function SettingsPage() {
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" asChild>
-          <Link href="/dashboard">
+        <Link href="/dashboard">
+          <Button variant="outline" size="icon">
             <ArrowLeft className="h-4 w-4" />
             <span className="sr-only">Back to Dashboard</span>
-          </Link>
-        </Button>
+          </Button>
+        </Link>
         <h1 className="font-headline text-lg font-semibold md:text-2xl">
           Settings
         </h1>
