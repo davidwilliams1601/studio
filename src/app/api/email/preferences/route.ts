@@ -1,6 +1,6 @@
 // src/app/api/email/preferences/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySessionCookie, getDb } from '@/lib/firebase-admin';
+import { verifyIdToken, getDb } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -16,11 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await verifySessionCookie(idToken);
-
-    if (!decodedToken) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    const decodedToken = await verifyIdToken(idToken);
 
     const db = await getDb();
     const userDoc = await db.collection('users').doc(decodedToken.uid).get();
@@ -59,11 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await verifySessionCookie(idToken);
-
-    if (!decodedToken) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    const decodedToken = await verifyIdToken(idToken);
 
     const { marketing } = await request.json();
 
