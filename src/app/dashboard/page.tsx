@@ -709,6 +709,17 @@ export default function Dashboard() {
             </>
           )}
           <span style={{ color: colors.border.default }}>•</span>
+          <Link href="/dashboard/settings" passHref legacyBehavior>
+            <a style={{
+              color: colors.primary[600],
+              textDecoration: "none",
+              fontSize: typography.fontSize.sm,
+              fontWeight: typography.fontWeight.medium
+            }}>
+              ⚙️ Settings
+            </a>
+          </Link>
+          <span style={{ color: colors.border.default }}>•</span>
           <Link href="/dashboard/subscription" passHref legacyBehavior>
             <a style={{
               color: colors.primary[600],
