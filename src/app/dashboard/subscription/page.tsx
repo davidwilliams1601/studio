@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useCsrf } from "@/hooks/use-csrf";
 import Link from "next/link";
+import { trackBeginCheckout, trackCancelSubscription } from "@/lib/analytics";
 
 export default function Subscription() {
   const { user, loading, subscription } = useAuth();
@@ -69,6 +70,9 @@ export default function Subscription() {
       return;
     }
 
+    // Track cancellation intent
+    trackCancelSubscription(currentTier, 'user_initiated');
+
     setManageLoading(true);
     try {
       const idToken = await user?.getIdToken();
@@ -122,6 +126,10 @@ export default function Subscription() {
       alert('Security token not ready. Please wait a moment and try again.');
       return;
     }
+
+    // Track begin checkout
+    const priceValue = plan.price === '£10' ? 10 : plan.price === '£75' ? 75 : 0;
+    trackBeginCheckout(plan.name, priceValue);
 
     setUpgradeLoading(true);
     try {

@@ -11,6 +11,7 @@ import {
   signInWithPopup,
   sendPasswordResetEmail
 } from 'firebase/auth';
+import { trackLogin, trackSignup, setUserProperties } from '@/lib/analytics';
 
 interface AuthContextType {
   user: User | null;
@@ -114,6 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           monthlyUsage: data.monthlyUsage,
           upgradeDate: data.upgradeDate,
         });
+        // Set GA user properties
+        setUserProperties(userId, data.plan);
       } else {
         // Fallback to free plan if API fails
         setSubscription({ plan: 'free', monthlyUsage: 0 });
@@ -132,6 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Signing in with email/password...');
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log('Sign in successful');
+
+      // Track login event
+      trackLogin('email');
 
       // If a redirect is specified, use the session cookie flow
       if (redirectTo) {
@@ -176,6 +182,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Track signup event
+      trackSignup('email');
 
       // Create user document in Firestore and send welcome email
       if (userCredential.user) {
@@ -270,6 +279,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userCredential = await signInWithPopup(auth, provider);
       console.log('Google sign in successful, user:', userCredential.user.uid);
 
+      // Track login event
+      trackLogin('google');
+
       // Create user document and send welcome email for new Google users
       if (userCredential.user) {
         try {
@@ -289,6 +301,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (createResponse.ok) {
             const data = await createResponse.json();
             if (data.created) {
+              // Track signup for new Google users
+              trackSignup('google');
+
               const emailResponse = await fetch('/api/email/welcome', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

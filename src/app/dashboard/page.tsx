@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SkeletonDashboard } from "@/components/ui/skeleton";
 import { colors, spacing, typography, containers, shadows, borderRadius } from "@/styles/design-tokens";
+import { trackBackupUpload, trackFeatureView } from "@/lib/analytics";
 
 // Helper functions for tier display
 function getTierBadge(tier: string): string {
@@ -136,6 +137,13 @@ export default function Dashboard() {
     fetchData();
   }, [user, authLoading]);
 
+  // Track dashboard view
+  useEffect(() => {
+    if (!authLoading && user) {
+      trackFeatureView('dashboard', userTier);
+    }
+  }, [user, authLoading, userTier]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -220,6 +228,12 @@ export default function Dashboard() {
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Analysis failed');
       }
+
+      // Track backup upload
+      trackBackupUpload(
+        selectedFile.name.split('.').pop() || 'zip',
+        data.data?.stats?.connections || 0
+      );
 
       // Refresh backups list
       try {

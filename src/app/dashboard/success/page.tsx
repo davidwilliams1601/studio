@@ -1,12 +1,35 @@
 "use client";
 
-
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { trackPurchase } from '@/lib/analytics';
+import { SUBSCRIPTION_TIERS } from '@/lib/subscription-tiers';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const session_id = searchParams.get('session_id');
+  const { subscription } = useAuth();
+  const [tracked, setTracked] = useState(false);
+
+  // Track purchase event once when subscription data is available
+  useEffect(() => {
+    if (session_id && subscription && !tracked) {
+      const tier = subscription.plan;
+      const tierData = SUBSCRIPTION_TIERS[tier];
+
+      if (tierData && tierData.price > 0) {
+        // Track the purchase
+        trackPurchase(
+          session_id,
+          tierData.name,
+          tierData.price,
+          false // Not an upgrade if coming from checkout
+        );
+        setTracked(true);
+      }
+    }
+  }, [session_id, subscription, tracked]);
 
   return (
     <div style={{ 

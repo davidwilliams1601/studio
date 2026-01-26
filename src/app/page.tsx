@@ -1,11 +1,18 @@
 "use client";
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { colors, spacing, typography, containers, shadows } from '@/styles/design-tokens';
+import { trackFeatureView } from '@/lib/analytics';
 
 export default function Home() {
+  // Track landing page view
+  useEffect(() => {
+    trackFeatureView('landing_page', 'free');
+  }, []);
+
   return (
     <div style={{ background: colors.background, minHeight: "100vh" }}>
       {/* Header */}

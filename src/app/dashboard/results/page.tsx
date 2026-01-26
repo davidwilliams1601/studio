@@ -1,8 +1,9 @@
 "use client";
 
-
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { trackAIInsightsGenerated, trackExport, trackFeatureView } from "@/lib/analytics";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Stats {
   connections: number;
@@ -80,6 +81,7 @@ interface AiInsights {
 }
 
 export default function Results() {
+  const { subscription } = useAuth();
   const [results, setResults] = useState<AnalysisData | null>(null);
   const [aiInsights, setAiInsights] = useState<AiInsights | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,6 +89,13 @@ export default function Results() {
   const [aiError, setAiError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [csvLoading, setCsvLoading] = useState(false);
+
+  // Track results page view
+  useEffect(() => {
+    if (subscription) {
+      trackFeatureView('results', subscription.plan);
+    }
+  }, [subscription]);
 
   useEffect(() => {
     try {
@@ -140,6 +149,11 @@ export default function Results() {
       if (aiData.success) {
         setAiInsights(aiData.insights);
 
+        // Track AI insights generation
+        if (subscription) {
+          trackAIInsightsGenerated(subscription.plan);
+        }
+
         // Update results with Pro/Business features
         console.log('🔄 Updating results state with Pro features...');
         setResults(prevResults => {
@@ -176,6 +190,11 @@ export default function Results() {
     setPdfLoading(true);
     try {
       console.log("Generating PDF report...");
+
+      // Track PDF export
+      if (subscription) {
+        trackExport('pdf', subscription.plan);
+      }
 
       const response = await fetch('/api/generate-pdf', {
         method: 'POST',
@@ -229,6 +248,11 @@ export default function Results() {
     setCsvLoading(true);
     try {
       console.log("Exporting connections as CSV...");
+
+      // Track CSV export
+      if (subscription) {
+        trackExport('csv', subscription.plan);
+      }
 
       // Get auth token (assuming you're using Firebase Auth)
       const { getAuth } = await import('firebase/auth');
